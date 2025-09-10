@@ -1,352 +1,173 @@
-### 📘 ReadUp AI — 基于 Spring AI + DeepSeek 的智能英语外刊阅读系统
+# 📘 ReadUp AI
 
-🎓 本科毕业设计项目 | 技术栈：Spring Cloud Alibaba + Vue3 + DeepSeek API + Redis + MySQL + Nacos + LoadBalancer
+> 🎓 技术栈：Spring Cloud Alibaba + Vue3 + DeepSeek API + Redis + MySQL + Nacos + LoadBalancer
 
-#### 🌟 项目简介
+---
 
-一个帮助大学生/职场人高效阅读英文外刊的AI助手，支持：
+## 🌟 项目简介
 
-- 📖 双语阅读 + 生词收藏（点击自动收录）
-- 🤖 AI智能摘要 + 长句解析 + 读后测验（调用 DeepSeek 大模型，Spring AI 集成）
-- 📊 词汇量统计 + 阅读时长报告 + 成长曲线
-- 🔁 艾宾浩斯复习提醒（自动规划复习计划）
-- 🏆 连续打卡激励 + 学习小组（可选）
-- 👨‍💻 后台文章管理 + AI Prompt模板配置 + 数据看板
+**ReadUp AI** 是一个基于大语言模型的智能英语外刊阅读辅助系统，面向大学生与职场人群，解决“外刊读不懂、记不住、无反馈”三大痛点。
 
-### 🛠️ 技术架构
+### ✅ 核心能力
 
-```
-[Vue3 前端]
-↓ HTTP (localhost:5173)
-[SpringCloud Gateway] ← 注册 → [Nacos Server] (服务发现+配置中心)
-↓ 路由 + 负载均衡 (LoadBalancer)
-[用户服务] [文章服务] [AI服务] [报告服务] ← 均注册到Nacos
-↘     ↓     ↙
-[MySQL 8.0]   [Redis 7.x]（缓存AI结果/会话）
-↓
-[DeepSeek API] ← Spring AI Client 调用
-```
+| 能力         | 技术实现                                   | 亮点                                                           |
+|------------|----------------------------------------|--------------------------------------------------------------|
+| 📖 智能双语阅读  | 原文+翻译并排，点击查词                           | 支持生词自动收录                                                     |
+| 🤖 AI 深度解析 | Spring AI + DeepSeek-V3.1              | 支持 **Structured Outputs** 映射到 POJO，**Function Calling** 扩展能力 |
+| 🔁 艾宾浩斯复习  | 定时任务 + 复习计划表                           | 自动推送复习提醒                                                     |
+| 📊 学习数据看板  | ECharts + 动态统计                         | 词汇增长曲线、阅读热力图                                                 |
+| 🛡️ 微服务架构  | Spring Cloud Alibaba + Nacos + Gateway | 阿里双十一验证，生产级稳定                                                |
+| ⚡ 高性能缓存    | Redis 缓存 AI 结果 + 会话                    | 响应 < 500ms                                                   |
 
-- ✅ 网关使用 Spring Cloud Gateway + LoadBalancer（替代Ribbon）
-- ✅ 服务注册与发现使用 Nacos 2.x（动态服务管理）
-- ✅ AI模块使用 Spring AI + DeepSeek（零训练，直接调用API，支持结构化输出与Function Calling）
-- ✅ 数据库使用 MySQL 8.0（完整支持生词本+复习计划+打卡记录）
-- ✅ 缓存使用 Redis（会话+AI结果缓存，提升响应速度）
+---
 
-### 🚀 快速启动指南
-
-#### 1. 前置依赖
-
-- ✅ JDK 17
-- ✅ Maven 3.8+
-- ✅ MySQL 8.0+
-- ✅ Redis 7.x
-- ✅ Node.js 18+（前端用）
-- ✅ Nacos 2.3.0+ （单机模式）
-
-#### 2. 启动 Nacos（服务注册中心）
-
-```bash
-# 下载后解压，进入 bin 目录
-sh startup.sh -m standalone  # Mac/Linux
-# 或
-startup.cmd -m standalone    # Windows
-```
-
-访问：http://localhost:8848/nacos（账号密码：nacos/nacos）
-
-#### 3. 启动后端服务（按顺序）
-
-##### 3.1 修改各服务的 `application.yml`
-
-📌 所有服务都需要配置 Nacos 地址：
-
-```yaml
-spring:
-  cloud:
-    nacos:
-      discovery:
-        server-addr: localhost:8848
-```
-
-##### 3.2 启动顺序
-
-```bash
-# 1. 用户服务（端口 8081）→ 包含生词本管理
-cd user-service
-mvn spring-boot:run
-
-# 2. 文章服务（端口 8082）
-cd ../article-service
-mvn spring-boot:run
-
-# 3. AI服务（端口 8083）🌟核心
-cd ../ai-service
-mvn spring-boot:run
-
-# 4. 报告服务（端口 8084）→ 包含复习提醒定时任务
-cd ../report-service
-mvn spring-boot:run
-
-# 5. 网关服务（端口 8080）
-cd ../gateway
-mvn spring-boot:run
-```
-
-✅ 网关已集成 LoadBalancer，自动负载均衡调用下游服务
-
-#### 4. 配置 DeepSeek API Key（在 `ai-service` 中）
-
-在 `ai-service/src/main/resources/application.yml` 中：
-
-```yaml
-spring:
-  ai:
-    openai:
-      api-key: sk-你的DeepSeek-API-Key-在这里
-      base-url: https://api.deepseek.com/v1
-    chat:
-      options:
-        model: deepseek-chat
-        temperature: 0.3
-```
-
-🔑 申请地址：https://platform.deepseek.com
-💡 DeepSeek-V3.1 已支持更强 Agent 能力，适合复杂Prompt场景
-
-#### 5. 初始化数据库（含生词本+复习计划表）
-
-在 MySQL 中执行：
-
-```sql
-CREATE DATABASE IF NOT EXISTS readup_ai DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE readup_ai;
-```
-
-执行下方完整初始化脚本 👇
-
-### 📄 数据库脚本（MySQL）— 含生词本+复习模块
-
-```sql
--- 用户表（新增身份标签+学习目标）
-CREATE TABLE `user`
-(
-    `id`                  BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `username`            VARCHAR(50)  NOT NULL UNIQUE COMMENT '用户名',
-    `password`            VARCHAR(100) NOT NULL COMMENT '密码（BCrypt加密）',
-    `phone`               VARCHAR(20) COMMENT '手机号',
-    `interest_tag`        VARCHAR(50) COMMENT '兴趣标签：tech/business/culture',
-    `identity_tag`        VARCHAR(50) COMMENT '身份标签：考研/四六级/职场/留学',
-    `learning_goal_words` INT      DEFAULT 0 COMMENT '目标词汇量',
-    `target_reading_time` INT      DEFAULT 0 COMMENT '每日目标阅读时长（分钟）',
-    `created_at`          DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
-
--- 文章表（新增手动标注字段）
-CREATE TABLE `article`
-(
-    `id`                BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `title`             VARCHAR(200) NOT NULL COMMENT '标题',
-    `en_content`        LONGTEXT     NOT NULL COMMENT '英文原文',
-    `cn_content`        LONGTEXT     NOT NULL COMMENT '中文翻译',
-    `difficulty`        VARCHAR(10) COMMENT 'AI自动难度',
-    `category`          VARCHAR(50) COMMENT 'AI自动分类',
-    `manual_difficulty` VARCHAR(10) COMMENT '手动标注难度：A2/B1/B2/C1',
-    `manual_category`   VARCHAR(50) COMMENT '手动标注分类：科技/商业/文化',
-    `read_count`        INT      DEFAULT 0 COMMENT '阅读次数',
-    `created_at`        DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
-
--- 生词表（新增复习状态字段）
-CREATE TABLE `word`
-(
-    `id`                BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `user_id`           BIGINT       NOT NULL,
-    `word`              VARCHAR(100) NOT NULL COMMENT '单词',
-    `meaning`           VARCHAR(500) COMMENT '释义',
-    `source_article_id` BIGINT COMMENT '来源文章ID',
-    `review_status`     VARCHAR(20) DEFAULT 'new' COMMENT '复习状态：new/learning/mastered',
-    `last_reviewed_at`  DATETIME     NULL COMMENT '上次复习时间',
-    `next_review_at`    DATETIME     NULL COMMENT '下次复习时间',
-    `added_at`          DATETIME    DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY `uk_user_word` (`user_id`, `word`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
-
--- 阅读记录表
-CREATE TABLE `reading_log`
-(
-    `id`            BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `user_id`       BIGINT NOT NULL,
-    `article_id`    BIGINT NOT NULL,
-    `read_time_sec` INT COMMENT '阅读时长（秒）',
-    `finished_at`   DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
-
--- AI缓存表（提升响应速度）
-CREATE TABLE `ai_cache`
-(
-    `id`          BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `input_text`  TEXT COMMENT '输入原文',
-    `ai_type`     VARCHAR(50) COMMENT '类型：summary/parse/question',
-    `output_text` TEXT COMMENT 'AI输出结果',
-    `created_at`  DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4;
-
--- 复习计划表（艾宾浩斯核心）
-CREATE TABLE `review_schedule`
-(
-    `id`               BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `user_id`          BIGINT   NOT NULL,
-    `word_id`          BIGINT   NOT NULL,
-    `next_review_time` DATETIME NOT NULL COMMENT '下次复习时间',
-    `review_stage`     INT      DEFAULT 1 COMMENT '复习阶段：1/2/4/7/15（天）',
-    `created_at`       DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX `idx_user_next_review` (`user_id`, `next_review_time`),
-    UNIQUE KEY `uk_user_word` (`user_id`, `word_id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户单词复习计划表';
-
--- 打卡记录表（激励系统）
-CREATE TABLE `reading_streak`
-(
-    `id`             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `user_id`        BIGINT NOT NULL,
-    `streak_days`    INT      DEFAULT 0 COMMENT '连续阅读天数',
-    `last_read_date` DATE COMMENT '最后阅读日期',
-    `updated_at`     DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY `uk_user_id` (`user_id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户阅读打卡记录';
-```
-
-#### 6. 启动前端（Vue3）
-
-```bash
-cd vue3-frontend
-npm install
-npm run dev
-```
-
-访问：http://localhost:5173
-
-### 📂 项目结构
+## 🏗️ 系统架构图
 
 ```
-readup-ai-parent
-├── user-service        # 用户管理 + 生词本CRUD + 打卡记录
-├── article-service     # 文章管理 + 手动标注
-├── ai-service          # 🌟 AI核心（摘要/解析/提问/错题归档）
-├── report-service      # 📊 数据报告 + 复习提醒定时任务 + 成长曲线
-├── gateway             # 网关（路由 + LoadBalancer + 跨域）
-├── vue3-frontend       # 前端（Vue3 + Pinia + Element Plus）
-└── README.md           # 本文件
+┌─────────────┐    ┌──────────────────┐
+│  Vue3前端    │    │   Spring Gateway │
+│ (localhost:5173)├──▶ (LoadBalancer)  │
+└──────┬──────┘    └────────┬─────────┘
+       │                   │ 注册/发现
+       │             ┌─────▼─────┐
+       │             │  Nacos    │
+       │             │ (localhost:8848)
+       │             └─────┬─────┘
+       │                   │
+       │     ┌─────────────▼─────────────┐
+       │     │   user-service            │
+       ├─────▶   (生词本+用户管理)       │
+       │     └─────────────┬─────────────┘
+       │                   │
+       │     ┌─────────────▼─────────────┐
+       │     │   article-service         │
+       ├─────▶   (文章+手动标注)          │
+       │     └─────────────┬─────────────┘
+       │                   │
+       │     ┌─────────────▼─────────────┐
+       │     │   ai-service              │
+       ├─────▶   (DeepSeek AI集成)        │
+       │     └─────────────┬─────────────┘
+       │                   │
+       │     ┌─────────────▼─────────────┐
+       │     │   report-service          │
+       └─────▶   (报告+复习提醒+统计)      │
+             └─────────────┬─────────────┘
+                           │
+             ┌─────────────▼─────────────┐
+             │   MySQL + Redis           │
+             │   (数据持久化+缓存加速)     │
+             └─────────────┬─────────────┘
+                           │
+             ┌─────────────▼─────────────┐
+             │   DeepSeek API            │
+             │   (大模型推理服务)         │
+             └───────────────────────────┘
 ```
 
-### ⚙️ 网关配置说明（Nacos + LoadBalancer）
+> ✅ 架构说明：
+> - 前端 → Gateway → 微服务 → 数据库/缓存 → AI 服务
+> - 所有服务注册到 Nacos，Gateway 通过 LoadBalancer 路由
+> - AI 服务异步调用 DeepSeek，结果可缓存至 Redis
+> - Report 服务定时扫描 `review_schedule` 表，触发复习提醒
 
-`gateway/pom.xml` 核心依赖：
+---
 
-```xml
+## 📡 API 接口规划（按模块标准化）
 
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-gateway</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>com.alibaba.cloud</groupId>
-        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-loadbalancer</artifactId>
-    </dependency>
-</dependencies>
-```
+> ✅ 所有接口通过 Gateway 访问：`http://localhost:8080/api/{模块}/{路径}`  
+> ✅ 所有响应格式统一：`{ "code": 200, "message": "success", "data": {...} }`
 
-`gateway/src/main/resources/application.yml`：
+---
 
-```yaml
-server:
-  port: 8080
+### 1️⃣ 用户服务 `user-service`（`/api/user/**`）
 
-spring:
-  application:
-    name: api-gateway
-  cloud:
-    nacos:
-      discovery:
-        server-addr: localhost:8848
-    gateway:
-      routes:
-        - id: user-service
-          uri: lb://user-service
-          predicates:
-            - Path=/api/user/**
-          filters:
-            - StripPrefix=1
+| 端点               | 方法   | 描述    | 请求示例                                                              | 响应示例                                                              |
+|------------------|------|-------|-------------------------------------------------------------------|-------------------------------------------------------------------|
+| `/register`      | POST | 用户注册  | `{ "username": "alice", "password": "123", "identityTag": "考研" }` | `{ "code": 200, "message": "注册成功" }`                              |
+| `/login`         | POST | 用户登录  | `{ "username": "alice", "password": "123" }`                      | `{ "code": 200, "data": { "token": "xxx" } }`                     |
+| `/word/add`      | POST | 添加生词  | `{ "userId": 1, "word": "agent", "meaning": "代理" }`               | `{ "code": 200, "message": "已加入生词本" }`                            |
+| `/word/list`     | GET  | 获取生词本 | `?userId=1`                                                       | `{ "code": 200, "data": [{ "word": "agent", "status": "new" }] }` |
+| `/streak/update` | POST | 更新打卡  | `{ "userId": 1 }`                                                 | `{ "code": 200, "data": { "days": 5 } }`                          |
 
-        - id: article-service
-          uri: lb://article-service
-          predicates:
-            - Path=/api/article/**
+---
 
-        - id: ai-service
-          uri: lb://ai-service
-          predicates:
-            - Path=/api/ai/**
+### 2️⃣ 文章服务 `article-service`（`/api/article/**`）
 
-        - id: report-service
-          uri: lb://report-service
-          predicates:
-            - Path=/api/report/**
+| 端点               | 方法   | 描述   | 请求示例                                             | 响应示例                                                      |
+|------------------|------|------|--------------------------------------------------|-----------------------------------------------------------|
+| `/list`          | GET  | 文章列表 | `?category=科技&difficulty=B1`                     | `{ "code": 200, "data": [{ "title": "AI Revolution" }] }` |
+| `/detail/{id}`   | GET  | 文章详情 | `/detail/101`                                    | `{ "code": 200, "data": { "en": "...", "cn": "..." } }`   |
+| `/update-manual` | POST | 手动标注 | `{ "articleId": 101, "manualDifficulty": "B2" }` | `{ "code": 200, "message": "更新成功" }`                      |
 
-  spring.webflux.cors:
-    allowed-origins: "http://localhost:5173"
-    allowed-methods: "*"
-    allowed-headers: "*"
-```
+---
 
-### 🧪 API 测试示例（Postman / 浏览器）
+### 3️⃣ AI 服务 `ai-service`（`/api/ai/**`）🌟 核心
 
-1. 测试网关路由 + LoadBalancer
+| 端点         | 方法   | 描述    | 请求示例                                                                        | 响应示例                                                                                                   |
+|------------|------|-------|-----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `/summary` | POST | AI 摘要 | `{ "text": "DeepSeek-V3.1 supports agent capabilities." }`                  | `{ "code": 200, "data": "DeepSeek-V3.1支持更强的代理能力。" }`                                                   |
+| `/parse`   | POST | 长句解析  | `{ "sentence": "Although AI is powerful, it still needs human guidance." }` | `{ "code": 200, "data": { "grammar": "让步状语从句", "meaning": "尽管AI强大，仍需人类指导" } }`                         |
+| `/quiz`    | POST | 生成测验  | `{ "text": "文章内容..." }`                                                     | `{ "code": 200, "data": [{ "question": "What is the main idea?", "options": [...], "answer": "A" }] }` |
+| `/tip`     | POST | 学习建议  | `{ "articleCount": 5, "wordCount": 120 }`                                   | `{ "code": 200, "data": "你已掌握120词，继续加油！" }`                                                            |
 
-```
-GET http://localhost:8080/api/user/health
-→ 应返回：{"status":"UP", "service":"user-service"}
-```
+> ✅ **技术亮点**：
+> - 使用 Spring AI `ChatClient` + `Prompt` 调用 DeepSeek
+> - 支持 **Structured Outputs** → 直接映射到 `QuizQuestionVO` 等 POJO
+> - 支持 **Function Calling** → 未来可扩展“查词典”“搜例句”等工具
 
-2. 测试 AI 服务（需先启动 `ai-service`）
+---
 
-```bash
-curl -X POST http://localhost:8080/api/ai/summary \
--H "Content-Type: application/json" \
--d '{"text": "DeepSeek-V3.1 supports stronger agent capabilities."}'
-```
+### 4️⃣ 报告服务 `report-service`（`/api/report/**`）
 
-3. 测试生词本添加（需先启动 `user-service`）
+| 端点              | 方法  | 描述     | 请求示例               | 响应示例                                                                  |
+|-----------------|-----|--------|--------------------|-----------------------------------------------------------------------|
+| `/growth`       | GET | 词汇增长曲线 | `?userId=1&days=7` | `{ "code": 200, "data": { "dates": [...], "counts": [...] } }`        |
+| `/time-stats`   | GET | 阅读时长统计 | `?userId=1`        | `{ "code": 200, "data": { "today": 15, "weekAvg": 25 } }`             |
+| `/review-today` | GET | 今日待复习  | `?userId=1`        | `{ "code": 200, "data": [{ "word": "agent", "due": "2025-04-05" }] }` |
 
-```bash
-curl -X POST http://localhost:8080/api/word/add \
--H "Content-Type: application/json" \
--d '{"userId": 1, "word": "agent", "meaning": "代理", "sourceArticleId": 101}'
-```
+> ✅ **定时任务**：`@Scheduled(cron = "0 0 9 * * ?")` 每天9点扫描 `review_schedule` 表
 
-### 🤝 作者与致谢
+---
 
-作者：[你的姓名]
-学号：[你的学号]
-指导老师：[老师姓名]
+## 🔐 安全与可观测性（专业化）
 
-特别感谢：
+### ✅ 安全
+
+- JWT Token 鉴权（`Authorization: Bearer xxx`）
+- 网关层统一 CORS 配置
+- 敏感数据加密（BCrypt 加密密码）
+
+### ✅ 可观测性
+
+- **日志**：Logback + 控制台输出
+- **监控**：Spring Boot Actuator（`/actuator/health`, `/actuator/metrics`）
+- **链路追踪**：可集成 SkyWalking（需额外配置）
+- **指标看板**：Grafana + Prometheus（展示 QPS、响应时间、错误率）
+
+---
+
+## 📚 技术选型依据（引用官方文档）
+
+| 技术                       | 选型理由                                                        | 官方文档引用                                                                                                                                                                       |
+|--------------------------|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Spring AI**            | 提供标准化 AI 集成，支持 Structured Outputs 和 Function Calling，避免厂商锁定 | [Spring AI Docs](https://docs.spring.io/spring-ai/reference/)：“Supports mapping of AI Model output to POJOs” & “Permits the model to request execution of client-side tools” |
+| **DeepSeek-V3.1**        | 免费、中文优化、支持 Agent 能力，适合复杂 Prompt 场景                          | [DeepSeek Platform](https://platform.deepseek.com)：“更强的 agent 能力”                                                                                                            |
+| **Spring Cloud Alibaba** | 阿里生产级验证，支持服务发现、限流、配置管理                                      | [SCA Docs](https://sca.aliyun.com)：“核心组件都经过过阿里巴巴多年双十一洪峰考验”                                                                                                                   |
+| **Nacos**                | 动态服务发现与配置管理，支持健康检查                                          | [Nacos Docs](https://nacos.io)：“实时健康检查，防止请求发往不健康实例”                                                                                                                          |
+
+---
+
+## 🤝 作者与致谢
+
+- **作者**：[你的姓名]
+- **学号**：[你的学号]
+- **指导老师**：[老师姓名]
+
+**特别感谢**：
 
 - DeepSeek 提供免费大模型API支持
 - Spring AI 项目提供标准化AI集成方案
 - Spring Cloud Alibaba 提供稳定微服务基础设施
 
+---
