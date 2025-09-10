@@ -1,38 +1,76 @@
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+# IntelliJ IDEA 配置文件
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+# 编译输出目录
+out/
+target/
 build/
+classes/
+
+# 日志文件
+logs/
+*.log
+
+# 临时文件
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# 操作系统生成文件
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Maven 相关
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+!/.mvn/wrapper/maven-wrapper.properties
+
+# Gradle 相关
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# 本地配置文件
+*.properties.local
+*.yml.local
+*.xml.local
 
-### Mac OS ###
-.DS_Store
+# 缓存文件
+*.cache
+*.diff
+*.patch
+
+# IDE 特定文件
+*.idea/workspace.xml
+*.idea/tasks.xml
+*.idea/usage.statistics.xml
+*.idea/dictionaries
+*.idea/shelf
+*.idea/inspectionProfiles/
+*.idea/sonarlint/
+*.idea/codeStyles/
+*.idea/modules.xml
+
+# 测试报告
+ TEST-*.xml
+
+# 运行配置
+*.run.xml
+
+# 覆盖文件
+override/
+
+/mysql/data/
+/nacos/data/

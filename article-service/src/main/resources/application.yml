@@ -1,0 +1,87 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: article-service
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/readup_ai?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    username: root
+    password: 123456
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 123456
+      database: 1
+  cloud:
+    nacos:
+          discovery:
+            server-addr: localhost:8848
+            namespace: public
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Knife4j配置
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.xreadup.ai.articleservice.controller
+
+# Knife4j增强配置
+knife4j:
+  enable: true
+  openapi:
+    title: 文章服务API文档
+    description: 文章服务RESTful API接口文档
+    version: 1.0.0
+    group:
+      default:
+        group-name: 文章管理
+        api-rule: package
+        api-rule-resources:
+          - com.xreadup.ai.articleservice.controller
+
+# Nacos配置
+
+# 日志配置
+logging:
+  level:
+    com.xreadup.ai.articleservice: debug
+
+# 自定义配置
+article:
+  # gnews.io API配置
+  gnews:
+    api-key: ${GNEWS_API_KEY:1ff143298425f0b83a18593906c234b7}
+    base-url: https://gnews.io/api/v4
+    max-results: 100
+    language: en
+    country: us
+  
+  # 缓存配置
+  cache:
+    article-ttl: 3600  # 文章缓存1小时
+    list-ttl: 1800     # 列表缓存30分钟

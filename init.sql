@@ -21,14 +21,24 @@ CREATE TABLE `article`
 (
     `id`                BIGINT PRIMARY KEY AUTO_INCREMENT,
     `title`             VARCHAR(200) NOT NULL COMMENT '标题',
-    `en_content`        LONGTEXT     NOT NULL COMMENT '英文原文',
-    `cn_content`        LONGTEXT     NOT NULL COMMENT '中文翻译',
-    `difficulty`        VARCHAR(10) COMMENT 'AI自动难度',
+    `content_en`        LONGTEXT     NOT NULL COMMENT '英文原文',
+    `content_cn`        LONGTEXT     NOT NULL COMMENT '中文翻译',
+    `description`       VARCHAR(500) COMMENT '文章描述',
+    `url`               VARCHAR(500) COMMENT '原文链接',
+    `image`             VARCHAR(500) COMMENT '文章图片',
+    `published_at`    DATETIME COMMENT '发布时间',
+    `source`            VARCHAR(100) COMMENT '文章来源',
     `category`          VARCHAR(50) COMMENT 'AI自动分类',
+    `difficulty_level`  VARCHAR(10) COMMENT 'AI自动难度等级：A1/A2/B1/B2/C1/C2',
     `manual_difficulty` VARCHAR(10) COMMENT '手动标注难度：A2/B1/B2/C1',
     `manual_category`   VARCHAR(50) COMMENT '手动标注分类：科技/商业/文化',
+    `word_count`        INT      DEFAULT 0 COMMENT '单词数量',
     `read_count`        INT      DEFAULT 0 COMMENT '阅读次数',
-    `created_at`        DATETIME DEFAULT CURRENT_TIMESTAMP
+    `like_count`        INT      DEFAULT 0 COMMENT '点赞次数',
+    `is_featured`       TINYINT  DEFAULT 0 COMMENT '是否精选：0否 1是',
+    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted`           TINYINT  DEFAULT 0 COMMENT '是否删除：0否 1是'
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 

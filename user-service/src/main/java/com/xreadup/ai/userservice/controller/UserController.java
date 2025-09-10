@@ -17,7 +17,7 @@ import java.util.List;
  * 用户控制器
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 @CrossOrigin(origins = "*")
 @Tag(name = "用户服务", description = "用户管理相关接口")
 public class UserController {
