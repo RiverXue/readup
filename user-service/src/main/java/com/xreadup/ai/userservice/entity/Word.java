@@ -8,27 +8,27 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体类
+ * 生词实体类
  */
 @Data
-@TableName("user")
-public class User {
+@TableName("word")
+public class Word {
     @TableId(type = IdType.AUTO)
     private Long id;
     
-    private String username;
+    private Long userId;
     
-    private String password;
+    private String word;
     
-    private String phone;
+    private String meaning;
     
-    private String interestTag;
+    private Long sourceArticleId;
     
-    private String identityTag;
+    private String reviewStatus;
     
-    private Integer learningGoalWords;
+    private LocalDateTime lastReviewedAt;
     
-    private Integer targetReadingTime;
+    private LocalDateTime nextReviewAt;
     
-    private LocalDateTime createdAt;
+    private LocalDateTime addedAt;
 }

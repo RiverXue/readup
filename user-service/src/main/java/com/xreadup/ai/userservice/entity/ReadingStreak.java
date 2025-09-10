@@ -5,30 +5,23 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体类
+ * 用户阅读打卡记录实体类
  */
 @Data
-@TableName("user")
-public class User {
+@TableName("reading_streak")
+public class ReadingStreak {
     @TableId(type = IdType.AUTO)
     private Long id;
     
-    private String username;
+    private Long userId;
     
-    private String password;
+    private Integer streakDays;
     
-    private String phone;
+    private LocalDate lastReadDate;
     
-    private String interestTag;
-    
-    private String identityTag;
-    
-    private Integer learningGoalWords;
-    
-    private Integer targetReadingTime;
-    
-    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

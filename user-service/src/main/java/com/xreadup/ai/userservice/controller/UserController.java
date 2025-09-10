@@ -1,0 +1,113 @@
+package com.xreadup.ai.userservice.controller;
+
+import com.xreadup.ai.userservice.dto.*;
+import com.xreadup.ai.userservice.entity.Word;
+import com.xreadup.ai.userservice.service.UserService;
+import com.xreadup.ai.userservice.util.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 用户控制器
+ */
+@RestController
+@RequestMapping("/user")
+@CrossOrigin(origins = "*")
+@Tag(name = "用户服务", description = "用户管理相关接口")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    /**
+     * 用户注册
+     */
+    @PostMapping("/register")
+    @Operation(summary = "用户注册", description = "新用户注册接口")
+    public ResponseEntity<?> register(@RequestBody UserRegisterRequest request) {
+        try {
+            return ResponseEntity.ok(new ApiResponse(200, "注册成功", userService.register(request)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
+
+    /**
+     * 用户登录
+     */
+    @PostMapping("/login")
+    @Operation(summary = "用户登录", description = "用户登录验证接口")
+    public ResponseEntity<?> login(@RequestBody UserLoginRequest request) {
+        try {
+            return ResponseEntity.ok(new ApiResponse(200, "登录成功", userService.login(request)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
+
+    /**
+     * 添加生词
+     */
+    @PostMapping("/word/add")
+    @Operation(summary = "添加生词", description = "将单词添加到用户的生词本")
+    public ResponseEntity<?> addWord(@RequestBody AddWordRequest request) {
+        try {
+            return ResponseEntity.ok(new ApiResponse(200, "已加入生词本", userService.addWord(request)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
+
+    /**
+     * 获取生词本
+     */
+    @GetMapping("/word/list")
+    @Operation(summary = "获取生词本", description = "获取用户的生词列表")
+    public ResponseEntity<?> getWordList(@Parameter(description = "用户ID", required = true) @RequestParam Long userId) {
+        try {
+            List<Word> words = userService.getWordList(userId);
+            return ResponseEntity.ok(new ApiResponse(200, "success", words));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
+
+    /**
+     * 更新阅读打卡
+     */
+    @PostMapping("/streak/update")
+    @Operation(summary = "更新阅读打卡", description = "更新用户的连续阅读天数")
+    public ResponseEntity<?> updateStreak(@Parameter(description = "用户ID", required = true) @RequestParam Long userId) {
+        try {
+            int days = userService.updateStreak(userId);
+            return ResponseEntity.ok(new ApiResponse(200, "success", days));
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
+
+    /**
+     * 统一的API响应格式
+     */
+    @lombok.Data
+    public static class ApiResponse {
+        private int code;
+        private String message;
+        private Object data;
+
+        public ApiResponse(int code, String message, Object data) {
+            this.code = code;
+            this.message = message;
+            this.data = data;
+        }
+    }
+}

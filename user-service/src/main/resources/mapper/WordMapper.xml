@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xreadup.ai.userservice.mapper.WordMapper">
+
+    <select id="findByUserId" resultType="com.xreadup.ai.userservice.entity.Word">
+        SELECT * FROM word WHERE user_id = #{userId} ORDER BY added_at DESC
+    </select>
+
+</mapper>
