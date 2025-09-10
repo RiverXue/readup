@@ -6,7 +6,11 @@
 
 ## 🌟 项目简介
 
-**ReadUp AI** 是一个基于大语言模型的智能英语外刊阅读辅助系统，面向大学生与职场人群，解决“外刊读不懂、记不住、无反馈”三大痛点。
+**ReadUp AI** 是一个基于大语言模型的智能英语外刊阅读辅助系统，面向大学生与职场人群，解决“外刊读不懂、记不住、无反馈”三大痛点。系统以优质外刊内容为基础，融合传统英语阅读模式与AI智能辅助功能，打造一站式英语学习体验。
+
+### 核心定位
+
+传统英语阅读系统的智能化升级，通过AI技术赋能外刊阅读全流程：从文章获取到深度解析，从学习反馈到记忆强化，构建完整学习闭环。
 
 ### ✅ 核心能力
 
@@ -60,14 +64,15 @@
              └─────────────┬─────────────┘
                            │
              ┌─────────────▼─────────────┐
-             │   DeepSeek API            │
-             │   (大模型推理服务)         │
+             │   第三方服务集成            │
+             │  (gnews.io + DeepSeek API) │
              └───────────────────────────┘
 ```
 
 > ✅ 架构说明：
 > - 前端 → Gateway → 微服务 → 数据库/缓存 → AI 服务
 > - 所有服务注册到 Nacos，Gateway 通过 LoadBalancer 路由
+> - 文章服务通过 gnews.io API 获取优质外刊内容，确保内容时效性与多样性
 > - AI 服务异步调用 DeepSeek，结果可缓存至 Redis
 > - Report 服务定时扫描 `review_schedule` 表，触发复习提醒
 
@@ -99,6 +104,13 @@
 | `/list`          | GET  | 文章列表 | `?category=科技&difficulty=B1`                     | `{ "code": 200, "data": [{ "title": "AI Revolution" }] }` |
 | `/detail/{id}`   | GET  | 文章详情 | `/detail/101`                                    | `{ "code": 200, "data": { "en": "...", "cn": "..." } }`   |
 | `/update-manual` | POST | 手动标注 | `{ "articleId": 101, "manualDifficulty": "B2" }` | `{ "code": 200, "message": "更新成功" }`                      |
+| `/refresh`       | POST | 刷新文章 | `{ "category": "科技", "count": 10 }`              | `{ "code": 200, "data": { "updatedCount": 8 } }`          |
+
+> ✅ **文章来源说明**：
+> - 通过 gnews.io API 实时获取全球优质英文外刊内容
+> - 支持按分类、难度、发布时间等多维度筛选
+> - `/refresh` 接口可手动触发文章更新，补充最新内容
+> - 所有文章均经过版权合规性审核，支持原文链接跳转
 
 ---
 
@@ -115,16 +127,18 @@
 > - 使用 Spring AI `ChatClient` + `Prompt` 调用 DeepSeek
 > - 支持 **Structured Outputs** → 直接映射到 `QuizQuestionVO` 等 POJO
 > - 支持 **Function Calling** → 未来可扩展“查词典”“搜例句”等工具
+> - AI 功能与阅读场景深度融合，提供沉浸式学习体验
 
 ---
 
 ### 4️⃣ 报告服务 `report-service`（`/api/report/**`）
 
-| 端点              | 方法  | 描述     | 请求示例               | 响应示例                                                                  |
-|-----------------|-----|--------|--------------------|-----------------------------------------------------------------------|
-| `/growth`       | GET | 词汇增长曲线 | `?userId=1&days=7` | `{ "code": 200, "data": { "dates": [...], "counts": [...] } }`        |
-| `/time-stats`   | GET | 阅读时长统计 | `?userId=1`        | `{ "code": 200, "data": { "today": 15, "weekAvg": 25 } }`             |
-| `/review-today` | GET | 今日待复习  | `?userId=1`        | `{ "code": 200, "data": [{ "word": "agent", "due": "2025-04-05" }] }` |
+| 端点              | 方法  | 描述     | 请求示例               | 响应示例                                                                          |
+|-----------------|-----|--------|--------------------|-------------------------------------------------------------------------------|
+| `/growth`       | GET | 词汇增长曲线 | `?userId=1&days=7` | `{ "code": 200, "data": { "dates": [...], "counts": [...] } }`                |
+| `/time-stats`   | GET | 阅读时长统计 | `?userId=1`        | `{ "code": 200, "data": { "today": 15, "weekAvg": 25 } }`                     |
+| `/review-today` | GET | 今日待复习  | `?userId=1`        | `{ "code": 200, "data": [{ "word": "agent", "due": "2025-04-05" }] }`         |
+| `/quiz-history` | GET | 测验历史记录 | `?userId=1`        | `{ "code": 200, "data": [{ "articleId": 101, "score": 80, "date": "..." }] }` |
 
 > ✅ **定时任务**：`@Scheduled(cron = "0 0 9 * * ?")` 每天9点扫描 `review_schedule` 表
 
@@ -137,6 +151,7 @@
 - JWT Token 鉴权（`Authorization: Bearer xxx`）
 - 网关层统一 CORS 配置
 - 敏感数据加密（BCrypt 加密密码）
+- 第三方 API 密钥安全管理（环境变量+配置中心）
 
 ### ✅ 可观测性
 
@@ -144,6 +159,7 @@
 - **监控**：Spring Boot Actuator（`/actuator/health`, `/actuator/metrics`）
 - **链路追踪**：可集成 SkyWalking（需额外配置）
 - **指标看板**：Grafana + Prometheus（展示 QPS、响应时间、错误率）
+- **第三方 API 监控**：gnews.io 与 DeepSeek 调用成功率监控告警
 
 ---
 
@@ -155,6 +171,27 @@
 | **DeepSeek-V3.1**        | 免费、中文优化、支持 Agent 能力，适合复杂 Prompt 场景                          | [DeepSeek Platform](https://platform.deepseek.com)：“更强的 agent 能力”                                                                                                            |
 | **Spring Cloud Alibaba** | 阿里生产级验证，支持服务发现、限流、配置管理                                      | [SCA Docs](https://sca.aliyun.com)：“核心组件都经过过阿里巴巴多年双十一洪峰考验”                                                                                                                   |
 | **Nacos**                | 动态服务发现与配置管理，支持健康检查                                          | [Nacos Docs](https://nacos.io)：“实时健康检查，防止请求发往不健康实例”                                                                                                                          |
+| **gnews.io**             | 提供丰富的英文新闻资源，API 集成简单，支持多维度筛选，适合学习场景                         | [gnews.io Docs](https://gnews.io/docs/v4)：“提供全球范围内的新闻内容，支持按语言、国家、分类等多维度筛选”                                                                                                   |
+
+---
+
+## 📝 功能流程说明
+
+1. **内容获取流程**：
+    - 系统定时调用 gnews.io API 获取最新外刊文章
+    - AI 服务自动为文章生成中文译文和难度评级
+    - 处理后的文章存入数据库，供用户阅读
+
+2. **阅读学习流程**：
+    - 用户选择感兴趣的文章，查看双语对照内容
+    - 遇到生词可点击添加到生词本，遇到长难句可请求 AI 解析
+    - 阅读完成后，可生成针对性测验检验学习效果
+    - 系统根据学习数据提供个性化学习建议
+
+3. **复习巩固流程**：
+    - 系统基于艾宾浩斯遗忘曲线自动生成复习计划
+    - 定时提醒用户复习生词和重点内容
+    - 记录复习情况，优化后续复习计划
 
 ---
 
@@ -169,5 +206,4 @@
 - DeepSeek 提供免费大模型API支持
 - Spring AI 项目提供标准化AI集成方案
 - Spring Cloud Alibaba 提供稳定微服务基础设施
-
----
+- gnews.io 提供优质外刊内容资源支持
