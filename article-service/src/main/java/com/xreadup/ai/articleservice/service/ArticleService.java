@@ -9,6 +9,8 @@ import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
 import com.xreadup.ai.articleservice.model.vo.ArticleVO;
 import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
 
+import java.util.List;
+
 public interface ArticleService {
     
     /**
@@ -22,14 +24,30 @@ public interface ArticleService {
     ArticleVO getArticleDetail(Long id);
     
     /**
-     * 获取文章详情及AI分析结果
+     * 精读分析：AI深度理解文章
+     * 智能Token策略：根据文章长度自动优化
      */
-    ArticleDetailVO getArticleDetailWithAiAnalysis(Long id);
+    ArticleDetailVO deepDiveAnalysis(Long id);
     
     /**
-     * 对文章进行AI分析
+     * 全文翻译：英文→中文逐句精译
      */
-    ArticleDetailVO analyzeArticleWithAI(Long id);
+    String translate(Long id);
+    
+    /**
+     * 智能速读：30秒生成100字摘要
+     */
+    String quickRead(Long id);
+    
+    /**
+     * 核心要点：5秒提取关键词
+     */
+    List<String> keyPoints(Long id);
+    
+    /**
+     * 短文精学：800字内深度学习
+     */
+    ArticleDetailVO microStudy(Long id);
     
     /**
      * 更新文章手动难度

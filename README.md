@@ -59,33 +59,90 @@ mvn spring-boot:run
 - **高性能**: 支持并发处理和缓存
 - **可扩展**: 易于添加新的分析维度
 
-### API端点
-```bash
-# 健康检查
-GET http://localhost:8084/api/ai/health
+### 📋 文章模块API接口详解
 
-# 文章全面分析
+#### 🔍 AI服务接口 (端口: 8084)
+| 接口 | 用途说明 | 适用场景 | Token消耗 |
+|---|---|---|---|
+| `POST /api/ai/analyze` | **全面分析** - 完整7项分析 | 短文章(&lt;800字) | 100% |
+| `POST /api/ai/quick-analyze` | **快速分析** - 智能截断前400字 | 长文章快速预览 | 30% (节省70%) |
+| `POST /api/ai/chunked-analyze` | **分段分析** - 分析前30%内容推断整体 | 超长文章(&gt;800字) | 35% (节省65%) |
+| `POST /api/ai/translate` | **专项翻译** - 仅英文翻译中文 | 只需翻译功能 | 低 |
+| `POST /api/ai/summary` | **专项摘要** - 仅生成中文摘要 | 只需摘要功能 | 低 |
+| `POST /api/ai/keywords` | **专项关键词** - 仅提取关键词 | 只需关键词功能 | 低 |
+| `GET /api/ai/health` | **健康检查** - 服务状态检测 | 系统监控 | 无 |
+
+#### 📰 文章服务接口 (端口: 8082)
+| 接口 | 用途说明 | 返回内容 | 是否增加阅读量 |
+|---|---|---|---|
+| `GET /api/article/list` | **文章列表** - 分页查询文章 | 文章基础信息列表 | 否 |
+| `GET /api/article/detail/{id}` | **文章详情** - 获取单篇文章完整内容 | 文章完整信息 | **是** |
+| `GET /api/article/detail/{id}/ai` | **智能详情** - 文章+AI分析结果 | 文章详情+AI分析 | **是** |
+| `POST /api/article/{id}/analyze` | **触发分析** - 对文章进行AI分析 | 文章详情+新AI分析 | 否 |
+| `POST /api/article/update-manual` | **难度标注** - 用户手动设置难度 | 更新结果 | 否 |
+
+#### 🎯 使用场景选择指南
+
+**场景1: 新文章首次分析**
+- 文章&lt;800字 → `POST /api/ai/analyze` (全面分析)
+- 文章800-2000字 → `POST /api/ai/quick-analyze` (快速预览)
+- 文章&gt;2000字 → `POST /api/ai/chunked-analyze` (分段推断)
+
+**场景2: 已分析文章查看**
+- 直接访问 → `GET /api/article/detail/{id}/ai` (包含缓存的AI结果)
+
+**场景3: 重新分析文章**
+- 触发重新分析 → `POST /api/article/{id}/analyze` (强制重新调用AI)
+
+**场景4: 专项功能需求**
+- 仅翻译 → `POST /api/ai/translate`
+- 仅摘要 → `POST /api/ai/summary`
+- 仅关键词 → `POST /api/ai/keywords`
+
+#### 📊 Token优化策略
+- **快速分析**: 智能截断长文章，节省70% Token
+- **分段分析**: 用前30%内容推断整体质量，节省65% Token
+- **缓存机制**: 已分析文章直接返回结果，零Token消耗
+
+### API调用示例
+
+#### 1. 全面分析 (推荐用于新文章)
+```bash
 POST http://localhost:8084/api/ai/analyze
 Content-Type: application/json
 
 {
-  "title": "文章标题",
-  "content": "文章内容",
-  "category": "科技",
-  "wordCount": 500
+  "title": "The Future of AI in Education",
+  "content": "Artificial intelligence is revolutionizing the way we learn...",
+  "category": "education",
+  "wordCount": 450
 }
+```
 
-# 英文翻译中文
+#### 2. 快速分析 (推荐用于长文章)
+```bash
+POST http://localhost:8084/api/ai/quick-analyze
+Content-Type: application/json
+
+{
+  "title": "Comprehensive Guide to Machine Learning",
+  "content": "Machine learning is a subset of artificial intelligence... [长文章内容]",
+  "category": "technology",
+  "wordCount": 2500
+}
+```
+
+#### 3. 获取文章详情 (包含AI分析)
+```bash
+GET http://localhost:8082/api/article/detail/123/ai
+```
+
+#### 4. 专项翻译
+```bash
 POST http://localhost:8084/api/ai/translate
 Content-Type: text/plain
 
-# 生成摘要
-POST http://localhost:8084/api/ai/summary
-Content-Type: text/plain
-
-# 提取关键词
-POST http://localhost:8084/api/ai/keywords
-Content-Type: text/plain
+Artificial intelligence is transforming modern education by providing personalized learning experiences.
 ```
 
 ## 🗄️ 数据库设计

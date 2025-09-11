@@ -13,9 +13,9 @@ import java.util.Map;
 @Tag(name = "报表服务", description = "提供学习统计和报表生成功能")
 public class ReportController {
 
-    @GetMapping("/daily-stats")
-    @Operation(summary = "获取每日学习统计", description = "获取用户的每日学习数据统计")
-    public ResponseEntity<Map<String, Object>> getDailyStats() {
+    @GetMapping("/today/summary")
+    @Operation(summary = "【今日小结】学习日报", description = "今日阅读成果一目了然")
+    public ResponseEntity<Map<String, Object>> todaySummary() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("articlesRead", 5);
         stats.put("wordsLearned", 25);
@@ -23,9 +23,9 @@ public class ReportController {
         return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/weekly-report")
-    @Operation(summary = "获取周学习报告", description = "生成用户的周学习报告")
-    public ResponseEntity<Map<String, Object>> getWeeklyReport() {
+    @GetMapping("/weekly/insights")
+    @Operation(summary = "【一周洞察】学习周报", description = "本周学习成果深度分析")
+    public ResponseEntity<Map<String, Object>> weeklyInsights() {
         Map<String, Object> report = new HashMap<>();
         report.put("totalArticles", 35);
         report.put("totalWords", 175);
@@ -34,9 +34,9 @@ public class ReportController {
         return ResponseEntity.ok(report);
     }
 
-    @GetMapping("/streak")
-    @Operation(summary = "获取连续学习天数", description = "获取用户的连续学习天数统计")
-    public ResponseEntity<Map<String, Object>> getStreak() {
+    @GetMapping("/streak/achievement")
+    @Operation(summary = "【学习成就】连续打卡", description = "见证你的坚持，记录每一个学习里程碑")
+    public ResponseEntity<Map<String, Object>> streakAchievement() {
         Map<String, Object> streak = new HashMap<>();
         streak.put("currentStreak", 7);
         streak.put("longestStreak", 15);

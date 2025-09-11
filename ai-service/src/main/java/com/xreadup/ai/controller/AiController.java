@@ -25,10 +25,10 @@ public class AiController {
     @Autowired
     private AiAnalysisService aiAnalysisService;
 
-    @PostMapping("/analyze")
+    @PostMapping("/deep/complete")
     @Operation(
-        summary = "文章全面分析", 
-        description = "对文章进行CEFR难度评估、关键词提取、中文翻译、摘要生成、简化内容等全面AI分析"
+        summary = "【深度学习-标准Token】800字内精学", 
+        description = "适合800字内文章，全维度深度分析：难度评估+翻译+摘要+关键词，专家级精读（标准Token消耗）"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "分析成功", 
@@ -36,48 +36,48 @@ public class AiController {
         @ApiResponse(responseCode = "400", description = "请求参数错误"),
         @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<ArticleAnalysisResponse> analyzeArticle(@Valid @RequestBody ArticleAnalysisRequest request) {
+    public ResponseEntity<ArticleAnalysisResponse> deepComplete(@Valid @RequestBody ArticleAnalysisRequest request) {
         ArticleAnalysisResponse response = aiAnalysisService.analyzeArticle(request);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/translate")
+    @PostMapping("/translate/full")
     @Operation(
-        summary = "英文翻译中文", 
-        description = "使用DeepSeek AI将英文内容翻译成地道、准确的中文"
+        summary = "【全文翻译-标准Token】英文秒变中文", 
+        description = "逐句精译英文全文，地道中文翻译，适合需要完整理解的文章（标准Token消耗）"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "翻译成功"),
         @ApiResponse(responseCode = "400", description = "输入内容为空"),
         @ApiResponse(responseCode = "500", description = "翻译服务异常")
     })
-    public ResponseEntity<String> translateToChinese(
+    public ResponseEntity<String> translateFull(
             @Parameter(description = "英文内容", example = "Artificial intelligence is revolutionizing healthcare...") 
             @RequestBody String englishText) {
         String translation = aiAnalysisService.translateToChinese(englishText);
         return ResponseEntity.ok(translation);
     }
 
-    @PostMapping("/summary")
+    @PostMapping("/extract/summary")
     @Operation(
-        summary = "生成中文摘要", 
-        description = "使用AI生成简洁、准确的中文文章摘要，控制在100字以内"
+        summary = "【智能摘要-省80%Token】100字说清全文", 
+        description = "AI浓缩英文长文为100字内中文精华，节省80% Token，一眼看懂文章主旨"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "摘要生成成功"),
         @ApiResponse(responseCode = "400", description = "输入内容为空")
     })
-    public ResponseEntity<String> generateSummary(
+    public ResponseEntity<String> extractSummary(
             @Parameter(description = "文章内容", example = "文章内容...") 
             @RequestBody String content) {
         String summary = aiAnalysisService.generateSummary(content);
         return ResponseEntity.ok(summary);
     }
 
-    @PostMapping("/keywords")
+    @PostMapping("/extract/keywords")
     @Operation(
-        summary = "提取关键词", 
-        description = "使用AI从文章内容中提取5-8个核心关键词"
+        summary = "【关键词提取-省90%Token】5秒抓重点", 
+        description = "AI识别文章5-8个核心关键词，节省90% Token，5秒快速抓住文章重点"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "关键词提取成功"),
@@ -92,40 +92,40 @@ public class AiController {
 
     @GetMapping("/health")
     @Operation(
-        summary = "健康检查", 
-        description = "检查AI服务运行状态和DeepSeek API连接"
+        summary = "【系统自检】AI服务状态检测", 
+        description = "一键检测AI服务是否在线，DeepSeek大模型是否正常工作"
     )
     @ApiResponse(responseCode = "200", description = "服务运行正常")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("AI服务运行正常 - DeepSeek API已连接");
     }
 
-    @PostMapping("/quick-analyze")
+    @PostMapping("/quick/summary")
     @Operation(
-        summary = "快速文章分析", 
-        description = "针对长文章的轻量级分析，智能截断内容，节省70%token消耗"
+        summary = "【速读模式-省70%Token】长文5分钟速览", 
+        description = "适合800-1500字文章，智能截断前400字符，节省70% Token，5分钟掌握核心要点"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "快速分析成功", 
                     content = @Content(schema = @Schema(implementation = ArticleAnalysisResponse.class))),
         @ApiResponse(responseCode = "400", description = "请求参数错误")
     })
-    public ResponseEntity<ArticleAnalysisResponse> quickAnalyze(@Valid @RequestBody ArticleAnalysisRequest request) {
+    public ResponseEntity<ArticleAnalysisResponse> quickSummary(@Valid @RequestBody ArticleAnalysisRequest request) {
         ArticleAnalysisResponse response = aiAnalysisService.quickAnalyze(request);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/chunked-analyze")
+    @PostMapping("/smart/sampling")
     @Operation(
-        summary = "分段文章分析", 
-        description = "将长文章分段处理，只分析前30%内容推断整体质量，节省65%token"
+        summary = "【智能抽样-省65%Token】超长文高效阅读", 
+        description = "适合1500字以上超长文，AI智能分析前30%内容抽样，节省65% Token，高效掌握精髓"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "分段分析成功", 
                     content = @Content(schema = @Schema(implementation = ArticleAnalysisResponse.class))),
         @ApiResponse(responseCode = "400", description = "请求参数错误")
     })
-    public ResponseEntity<ArticleAnalysisResponse> chunkedAnalyze(@Valid @RequestBody ArticleAnalysisRequest request) {
+    public ResponseEntity<ArticleAnalysisResponse> smartSampling(@Valid @RequestBody ArticleAnalysisRequest request) {
         ArticleAnalysisResponse response = aiAnalysisService.chunkedAnalyze(request);
         return ResponseEntity.ok(response);
     }

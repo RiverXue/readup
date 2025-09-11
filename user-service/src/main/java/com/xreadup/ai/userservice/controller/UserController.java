@@ -57,9 +57,9 @@ public class UserController {
     /**
      * 添加生词
      */
-    @PostMapping("/word/add")
-    @Operation(summary = "添加生词", description = "将单词添加到用户的生词本")
-    public ResponseEntity<?> addWord(@RequestBody AddWordRequest request) {
+    @PostMapping("/vocabulary/add")
+    @Operation(summary = "【收藏词汇】加入生词本", description = "一键收藏难词，打造专属词汇库")
+    public ResponseEntity<?> addToVocabulary(@RequestBody AddWordRequest request) {
         try {
             return ResponseEntity.ok(new ApiResponse(200, "已加入生词本", userService.addWord(request)));
         } catch (Exception e) {
@@ -70,9 +70,9 @@ public class UserController {
     /**
      * 获取生词本
      */
-    @GetMapping("/word/list")
-    @Operation(summary = "获取生词本", description = "获取用户的生词列表")
-    public ResponseEntity<?> getWordList(@Parameter(description = "用户ID", required = true) @RequestParam Long userId) {
+    @GetMapping("/vocabulary/my-words")
+    @Operation(summary = "【我的词汇】查看生词本", description = "回顾你的词汇收藏，温故而知新")
+    public ResponseEntity<?> getMyVocabulary(@Parameter(description = "用户ID", required = true) @RequestParam Long userId) {
         try {
             List<Word> words = userService.getWordList(userId);
             return ResponseEntity.ok(new ApiResponse(200, "success", words));
@@ -84,12 +84,12 @@ public class UserController {
     /**
      * 更新阅读打卡
      */
-    @PostMapping("/streak/update")
-    @Operation(summary = "更新阅读打卡", description = "更新用户的连续阅读天数")
-    public ResponseEntity<?> updateStreak(@Parameter(description = "用户ID", required = true) @RequestParam Long userId) {
+    @PostMapping("/progress/check-in")
+    @Operation(summary = "【每日打卡】记录学习足迹", description = "每日阅读打卡，积累学习成就")
+    public ResponseEntity<?> dailyCheckIn(@Parameter(description = "用户ID", required = true) @RequestParam Long userId) {
         try {
             int days = userService.updateStreak(userId);
-            return ResponseEntity.ok(new ApiResponse(200, "success", days));
+            return ResponseEntity.ok(new ApiResponse(200, "打卡成功", days));
         } catch (Exception e) {
             return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
         }

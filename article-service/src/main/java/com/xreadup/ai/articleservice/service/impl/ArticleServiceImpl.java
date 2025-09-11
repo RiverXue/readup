@@ -3,6 +3,7 @@ package com.xreadup.ai.articleservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.articleservice.mapper.ArticleMapper;
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
@@ -66,32 +67,8 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    @Cacheable(value = "articleDetailWithAi", key = "#id")
-    public ArticleDetailVO getArticleDetailWithAiAnalysis(Long id) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
-            return null;
-        }
-
-        ArticleDetailVO detailVO = new ArticleDetailVO();
-        detailVO.setArticle(convertToVO(article));
-        
-        // 调用AI服务进行分析
-        try {
-            ArticleAnalysisResponse aiAnalysis = aiIntegrationService.analyzeArticle(article);
-            detailVO.setAiAnalysis(aiAnalysis);
-            detailVO.setHasAiAnalysis(true);
-        } catch (Exception e) {
-            log.error("获取AI分析结果失败，文章ID: {}", id, e);
-            detailVO.setHasAiAnalysis(false);
-        }
-        
-        return detailVO;
-    }
-
-    @Override
-    @CacheEvict(value = {"articleDetailWithAi", "articleDetail"}, key = "#id")
-    public ArticleDetailVO analyzeArticleWithAI(Long id) {
+    @CacheEvict(value = "articleDetail", key = "#id")
+    public ArticleDetailVO deepDiveAnalysis(Long id) {
         Article article = articleMapper.selectById(id);
         if (article == null || article.getDeleted() == 1) {
             return null;
@@ -271,5 +248,75 @@ public class ArticleServiceImpl implements ArticleService {
         }
         
         return "general";
+    }
+    
+    @Override
+    public String translate(Long id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getDeleted() == 1) {
+            return null;
+        }
+        
+        try {
+            ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
+            return response.getChineseTranslation();
+        } catch (Exception e) {
+            log.error("文章翻译失败，文章ID: {}", id, e);
+            return "翻译服务暂时不可用";
+        }
+    }
+    
+    @Override
+    public String quickRead(Long id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getDeleted() == 1) {
+            return null;
+        }
+        
+        try {
+            ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
+            return response.getSummary();
+        } catch (Exception e) {
+            log.error("文章摘要失败，文章ID: {}", id, e);
+            return "摘要服务暂时不可用";
+        }
+    }
+    
+    @Override
+    public List<String> keyPoints(Long id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getDeleted() == 1) {
+            return null;
+        }
+        
+        try {
+            ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
+            return response.getKeywords();
+        } catch (Exception e) {
+            log.error("关键词提取失败，文章ID: {}", id, e);
+            return List.of("服务暂时不可用");
+        }
+    }
+    
+    @Override
+    public ArticleDetailVO microStudy(Long id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getDeleted() == 1) {
+            return null;
+        }
+        
+        ArticleDetailVO detailVO = new ArticleDetailVO();
+        detailVO.setArticle(convertToVO(article));
+        
+        try {
+            ArticleAnalysisResponse aiAnalysis = aiIntegrationService.analyzeArticle(article);
+            detailVO.setAiAnalysis(aiAnalysis);
+            detailVO.setHasAiAnalysis(true);
+        } catch (Exception e) {
+            log.error("短文精学分析失败，文章ID: {}", id, e);
+            detailVO.setHasAiAnalysis(false);
+        }
+        
+        return detailVO;
     }
 }
