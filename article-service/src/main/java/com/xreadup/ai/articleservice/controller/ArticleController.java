@@ -56,7 +56,7 @@ public class ArticleController {
     @PostMapping("/refresh")
     @Operation(summary = "刷新文章", description = "从gnews.io获取最新文章")
     public ApiResponse<Object> refreshArticles(
-            @RequestParam(required = false, defaultValue = "general") String category,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false, defaultValue = "100") Integer count) {
         int updatedCount = articleService.refreshArticles(category, count);
         return ApiResponse.success("成功更新 " + updatedCount + " 篇文章");

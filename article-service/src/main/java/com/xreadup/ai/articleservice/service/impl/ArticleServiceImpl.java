@@ -75,15 +75,21 @@ public class ArticleServiceImpl implements ArticleService {
     @CacheEvict(value = {"articlePage"}, allEntries = true)
     public int refreshArticles(String category, Integer count) {
         try {
+            log.info("Starting refresh with category: {} and count: {}", category, count);
+            
             // 从gnews.io获取文章
             List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchArticlesByCategory(category, count);
             
+            log.info("GNews API returned {} articles for category: {} with requested count: {}", 
+                    gnewsArticles.size(), category, count);
+            
             if (gnewsArticles.isEmpty()) {
-                log.warn("No articles fetched from gnews.io for category: {}", category);
+                log.warn("No articles fetched from gnews.io for category: {} with count: {}", category, count);
                 return 0;
             }
             
             int savedCount = 0;
+            int duplicateCount = 0;
             
             for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
                 try {
@@ -93,6 +99,7 @@ public class ArticleServiceImpl implements ArticleService {
                     Article existingArticle = articleMapper.selectOne(wrapper);
                     if (existingArticle != null) {
                         log.debug("Article already exists: {}", gnewsArticle.getUrl());
+                        duplicateCount++;
                         continue;
                     }
                     
@@ -128,8 +135,8 @@ public class ArticleServiceImpl implements ArticleService {
                 }
             }
             
-            log.info("Successfully refreshed {} articles from gnews.io for category {}", 
-                    savedCount, category);
+            log.info("Refresh completed: {} new articles saved, {} duplicates skipped from {} total articles", 
+                    savedCount, duplicateCount, gnewsArticles.size());
             return savedCount;
             
         } catch (Exception e) {
