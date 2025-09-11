@@ -1,0 +1,103 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  profiles:
+    active: dev
+
+  # 云原生网关配置
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # 用户服务路由
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
+        # 文章服务路由
+        - id: article-service
+          uri: lb://article-service
+          predicates:
+            - Path=/api/article/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
+        # AI服务路由
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
+        # 报告服务路由
+        - id: report-service
+          uri: lb://report-service
+          predicates:
+            - Path=/api/report/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
+        # 文档路由
+        - id: doc-route
+          uri: lb://user-service
+          predicates:
+            - Path=/doc.html, /webjars/**, /v3/api-docs/**
+
+      # 全局跨域配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+
+  # Redis配置（用于限流）
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 123456
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: debug
+    org.springframework.data.redis: info

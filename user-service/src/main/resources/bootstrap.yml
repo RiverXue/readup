@@ -1,9 +1,14 @@
+# 用户服务Nacos配置 - 仅用于服务发现
 spring:
   application:
     name: user-service
   cloud:
     nacos:
+      server-addr: localhost:8848
+      username: nacos
+      password: nacos
       discovery:
-        server-addr: localhost:8848
         namespace: public
         group: DEFAULT_GROUP
+        metadata:
+          management.context-path: /actuator

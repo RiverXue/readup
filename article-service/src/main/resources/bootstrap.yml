@@ -1,0 +1,14 @@
+# 文章服务Nacos配置 - 仅用于服务发现
+spring:
+  application:
+    name: article-service
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: public
+        group: DEFAULT_GROUP
+        username: nacos
+        password: nacos

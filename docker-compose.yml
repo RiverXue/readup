@@ -23,8 +23,17 @@ services:
       MYSQL_DATABASE: projectmanager
       TZ: Asia/Shanghai
     ports:
-      - "3336:3306"
+      - "3307:3306"  # 使用3307端口避免冲突，应用程序连接localhost:3307
     volumes:
       - ./mysql/data:/var/lib/mysql
       - ./mysql/conf:/etc/mysql/conf.d
+    restart: always
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: project-redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/data
     restart: always

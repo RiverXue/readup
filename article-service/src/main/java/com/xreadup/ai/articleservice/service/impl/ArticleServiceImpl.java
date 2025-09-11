@@ -3,13 +3,16 @@ package com.xreadup.ai.articleservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.articleservice.mapper.ArticleMapper;
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
 import com.xreadup.ai.articleservice.model.dto.GnewsResponse;
 import com.xreadup.ai.articleservice.model.dto.ManualDifficultyDTO;
 import com.xreadup.ai.articleservice.model.entity.Article;
+import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
 import com.xreadup.ai.articleservice.model.vo.ArticleVO;
 import com.xreadup.ai.articleservice.service.ArticleService;
+import com.xreadup.ai.articleservice.service.AiIntegrationService;
 import com.xreadup.ai.articleservice.service.GnewsService;
 import com.xreadup.ai.articleservice.util.DifficultyEvaluator;
 import lombok.RequiredArgsConstructor;
@@ -31,18 +34,19 @@ public class ArticleServiceImpl implements ArticleService {
     private final ArticleMapper articleMapper;
     private final GnewsService gnewsService;
     private final DifficultyEvaluator difficultyEvaluator;
+    private final AiIntegrationService aiIntegrationService;
     
     @Override
     @Cacheable(value = "articlePage", key = "#query.toString()")
-    public IPage<ArticleVO> getArticlePage(ArticleQueryDTO query) {
+    public IPage<com.xreadup.ai.articleservice.model.vo.ArticleListVO> getArticlePage(ArticleQueryDTO query) {
         Page<Article> page = new Page<>(query.getPage(), query.getSize());
         IPage<Article> articlePage = articleMapper.selectArticlePage(page, query);
         
-        List<ArticleVO> articleVOList = articlePage.getRecords().stream()
-                .map(this::convertToVO)
+        List<com.xreadup.ai.articleservice.model.vo.ArticleListVO> articleVOList = articlePage.getRecords().stream()
+                .map(this::convertToListVO)
                 .collect(Collectors.toList());
         
-        IPage<ArticleVO> resultPage = new Page<>();
+        IPage<com.xreadup.ai.articleservice.model.vo.ArticleListVO> resultPage = new Page<>();
         resultPage.setRecords(articleVOList);
         resultPage.setTotal(articlePage.getTotal());
         resultPage.setCurrent(articlePage.getCurrent());
@@ -59,6 +63,50 @@ public class ArticleServiceImpl implements ArticleService {
             return null;
         }
         return convertToVO(article);
+    }
+
+    @Override
+    @Cacheable(value = "articleDetailWithAi", key = "#id")
+    public ArticleDetailVO getArticleDetailWithAiAnalysis(Long id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getDeleted() == 1) {
+            return null;
+        }
+
+        ArticleDetailVO detailVO = new ArticleDetailVO();
+        detailVO.setArticle(convertToVO(article));
+        
+        // 调用AI服务进行分析
+        try {
+            ArticleAnalysisResponse aiAnalysis = aiIntegrationService.analyzeArticle(article);
+            detailVO.setAiAnalysis(aiAnalysis);
+            detailVO.setHasAiAnalysis(true);
+        } catch (Exception e) {
+            log.error("获取AI分析结果失败，文章ID: {}", id, e);
+            detailVO.setHasAiAnalysis(false);
+        }
+        
+        return detailVO;
+    }
+
+    @Override
+    @CacheEvict(value = {"articleDetailWithAi", "articleDetail"}, key = "#id")
+    public ArticleDetailVO analyzeArticleWithAI(Long id) {
+        Article article = articleMapper.selectById(id);
+        if (article == null || article.getDeleted() == 1) {
+            return null;
+        }
+
+        ArticleDetailVO detailVO = new ArticleDetailVO();
+        detailVO.setArticle(convertToVO(article));
+        
+        // 强制重新分析文章
+        ArticleAnalysisResponse aiAnalysis = aiIntegrationService.analyzeArticle(article);
+        detailVO.setAiAnalysis(aiAnalysis);
+        detailVO.setHasAiAnalysis(true);
+        
+        log.info("成功对文章进行AI分析: {} (ID: {})", article.getTitle(), id);
+        return detailVO;
     }
     
     @Override
@@ -83,66 +131,89 @@ public class ArticleServiceImpl implements ArticleService {
             log.info("GNews API returned {} articles for category: {} with requested count: {}", 
                     gnewsArticles.size(), category, count);
             
-            if (gnewsArticles.isEmpty()) {
-                log.warn("No articles fetched from gnews.io for category: {} with count: {}", category, count);
-                return 0;
-            }
-            
-            int savedCount = 0;
-            int duplicateCount = 0;
-            
-            for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
-                try {
-                    // 检查文章是否已存在（根据URL去重）
-                    LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-                    wrapper.eq(Article::getUrl, gnewsArticle.getUrl());
-                    Article existingArticle = articleMapper.selectOne(wrapper);
-                    if (existingArticle != null) {
-                        log.debug("Article already exists: {}", gnewsArticle.getUrl());
-                        duplicateCount++;
-                        continue;
-                    }
-                    
-                    // 创建新文章实体
-                    Article article = new Article();
-                    article.setTitle(gnewsArticle.getTitle());
-                    article.setDescription(gnewsArticle.getDescription());
-                    article.setContentEn(gnewsArticle.getContent());
-                    article.setContentCn(""); // 中文翻译可后续通过AI服务生成
-                    article.setUrl(gnewsArticle.getUrl());
-                    article.setImage(gnewsArticle.getImage());
-                    article.setPublishedAt(gnewsArticle.getPublishedAt());
-                    article.setSource(gnewsArticle.getSource().getName());
-                    article.setCategory(mapToCategory(gnewsArticle.getTitle(), gnewsArticle.getDescription()));
-                    article.setDifficultyLevel(difficultyEvaluator.evaluateDifficulty(gnewsArticle.getContent()));
-                    article.setWordCount(gnewsArticle.getContent() != null ? 
-                                       gnewsArticle.getContent().split("\\s+").length : 0);
-                    article.setReadCount(0);
-                    article.setLikeCount(0);
-                    article.setIsFeatured(false);
-                    article.setCreateTime(LocalDateTime.now());
-                    article.setUpdateTime(LocalDateTime.now());
-                    
-                    // 保存到数据库
-                    articleMapper.insert(article);
-                    savedCount++;
-                    
-                    log.info("Successfully saved article: {} (difficulty: {})", 
-                            article.getTitle(), article.getDifficultyLevel());
-                    
-                } catch (Exception e) {
-                    log.error("Error saving article: {}", gnewsArticle.getTitle(), e);
-                }
-            }
-            
-            log.info("Refresh completed: {} new articles saved, {} duplicates skipped from {} total articles", 
-                    savedCount, duplicateCount, gnewsArticles.size());
-            return savedCount;
+            return processAndSaveArticles(gnewsArticles);
             
         } catch (Exception e) {
             log.error("Error refreshing articles from gnews.io", e);
             return 0;
         }
+    }
+    
+    @Override
+    @CacheEvict(value = {"articlePage"}, allEntries = true)
+    public int refreshTopHeadlines(Integer count) {
+        try {
+            log.info("Starting refresh top headlines with count: {}", count);
+            
+            // 从gnews.io获取头条新闻
+            List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchTopHeadlines(count);
+            
+            log.info("GNews API returned {} top headlines", gnewsArticles.size());
+            
+            return processAndSaveArticles(gnewsArticles);
+            
+        } catch (Exception e) {
+            log.error("Error refreshing top headlines from gnews.io", e);
+            return 0;
+        }
+    }
+    
+    private int processAndSaveArticles(List<GnewsResponse.GnewsArticle> gnewsArticles) {
+        if (gnewsArticles.isEmpty()) {
+            log.warn("No articles fetched from gnews.io");
+            return 0;
+        }
+        
+        int savedCount = 0;
+        int duplicateCount = 0;
+        
+        for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+            try {
+                // 检查文章是否已存在（根据URL去重）
+                LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(Article::getUrl, gnewsArticle.getUrl());
+                Article existingArticle = articleMapper.selectOne(wrapper);
+                if (existingArticle != null) {
+                    log.debug("Article already exists: {}", gnewsArticle.getUrl());
+                    duplicateCount++;
+                    continue;
+                }
+                
+                // 创建新文章实体
+                Article article = new Article();
+                article.setTitle(gnewsArticle.getTitle());
+                article.setDescription(gnewsArticle.getDescription());
+                article.setContentEn(gnewsArticle.getContent());
+                article.setContentCn(""); // 中文翻译可后续通过AI服务生成
+                article.setUrl(gnewsArticle.getUrl());
+                article.setImage(gnewsArticle.getImage());
+                article.setPublishedAt(gnewsArticle.getPublishedAt());
+                article.setSource(gnewsArticle.getSource().getName());
+                article.setCategory(mapToCategory(gnewsArticle.getTitle(), gnewsArticle.getDescription()));
+                article.setDifficultyLevel(difficultyEvaluator.evaluateDifficulty(gnewsArticle.getContent()));
+                article.setWordCount(gnewsArticle.getContent() != null ? 
+                                   gnewsArticle.getContent().split("\\s+").length : 0);
+                article.setReadCount(0);
+                article.setLikeCount(0);
+                article.setIsFeatured(false);
+                article.setCreateTime(LocalDateTime.now());
+                article.setUpdateTime(LocalDateTime.now());
+                
+                // 保存到数据库
+                articleMapper.insert(article);
+                savedCount++;
+                
+                log.info("Successfully saved article: {} (difficulty: {})", 
+                        article.getTitle(), article.getDifficultyLevel());
+                
+            } catch (Exception e) {
+                log.error("Error saving article: {}", gnewsArticle.getTitle(), e);
+            }
+        }
+        
+        log.info("Refresh completed: {} new articles saved, {} duplicates skipped from {} total articles", 
+                savedCount, duplicateCount, gnewsArticles.size());
+        return savedCount;
     }
     
     @Override
@@ -157,6 +228,12 @@ public class ArticleServiceImpl implements ArticleService {
     
     private ArticleVO convertToVO(Article article) {
         ArticleVO vo = new ArticleVO();
+        BeanUtils.copyProperties(article, vo);
+        return vo;
+    }
+    
+    private com.xreadup.ai.articleservice.model.vo.ArticleListVO convertToListVO(Article article) {
+        com.xreadup.ai.articleservice.model.vo.ArticleListVO vo = new com.xreadup.ai.articleservice.model.vo.ArticleListVO();
         BeanUtils.copyProperties(article, vo);
         return vo;
     }
