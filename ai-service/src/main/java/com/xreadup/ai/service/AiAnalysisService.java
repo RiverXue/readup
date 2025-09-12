@@ -1,5 +1,6 @@
 package com.xreadup.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xreadup.ai.model.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.model.dto.ArticleAnalysisResponse;
 import org.springframework.ai.chat.client.ChatClient;
@@ -101,24 +102,41 @@ public class AiAnalysisService {
      * 解析AI响应
      * <p>
      * 解析DeepSeek AI返回的JSON响应，转换为ArticleAnalysisResponse对象
-     * 当前为模拟实现，后续将接入真实的JSON解析
      * </p>
      * 
      * @param response AI返回的JSON格式响应
      * @return 解析后的文章分析响应对象
      */
     private ArticleAnalysisResponse parseResponse(String response) {
-        // 这里应该解析JSON响应，暂时返回模拟数据
-        ArticleAnalysisResponse result = new ArticleAnalysisResponse();
-        result.setDifficultyLevel("B2");
-        result.setKeywords(Arrays.asList("technology", "innovation", "development", "future"));
-        result.setSummary("这是一篇关于技术创新的重要文章，探讨了未来发展的关键趋势。");
-        result.setChineseTranslation("这是文章的中文翻译内容...");
-        result.setSimplifiedContent("This is a simplified version of the article...");
-        result.setKeyPhrases(Arrays.asList("cutting-edge technology", "breakthrough innovation", "future trends"));
-        result.setReadabilityScore(75.5);
-        
-        return result;
+        try {
+            // 清理响应，移除可能的Markdown格式
+            String cleanResponse = response.trim();
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            }
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+            cleanResponse = cleanResponse.trim();
+            
+            // 解析JSON响应
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(cleanResponse, ArticleAnalysisResponse.class);
+        } catch (Exception e) {
+            log.error("解析AI响应失败，使用降级响应: {}", response, e);
+            
+            // 降级响应
+            ArticleAnalysisResponse result = new ArticleAnalysisResponse();
+            result.setDifficultyLevel("B2");
+            result.setKeywords(Arrays.asList("technology", "analysis", "content"));
+            result.setSummary("AI分析结果获取失败，请稍后重试");
+            result.setChineseTranslation("翻译服务暂时不可用");
+            result.setSimplifiedContent("Analysis temporarily unavailable");
+            result.setKeyPhrases(Arrays.asList("content analysis", "AI processing"));
+            result.setReadabilityScore(70.0);
+            
+            return result;
+        }
     }
 
     /**
@@ -260,22 +278,40 @@ public class AiAnalysisService {
      * 解析快速分析响应
      * <p>
      * 解析快速分析模式的AI响应，返回简化的分析结果
-     * 当前为模拟实现，后续将接入真实的JSON解析
      * </p>
      * 
      * @param response AI返回的JSON格式响应
      * @return 简化的文章分析响应对象
      */
     private ArticleAnalysisResponse parseQuickResponse(String response) {
-        ArticleAnalysisResponse result = new ArticleAnalysisResponse();
-        result.setDifficultyLevel("B2");
-        result.setKeywords(Arrays.asList("AI", "technology", "innovation"));
-        result.setSummary("高效分析：这是一篇关于技术创新的文章，适合中级英语学习者。");
-        result.setChineseTranslation("【快速翻译】文章核心内容已提取...");
-        result.setSimplifiedContent("This article discusses key technology trends.");
-        result.setKeyPhrases(Arrays.asList("key technology", "innovation trends"));
-        result.setReadabilityScore(75.0);
-        
-        return result;
+        try {
+            // 清理响应，移除可能的Markdown格式
+            String cleanResponse = response.trim();
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            }
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+            cleanResponse = cleanResponse.trim();
+            
+            // 解析JSON响应
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(cleanResponse, ArticleAnalysisResponse.class);
+        } catch (Exception e) {
+            log.error("解析快速分析响应失败，使用降级响应: {}", response, e);
+            
+            // 降级响应
+            ArticleAnalysisResponse result = new ArticleAnalysisResponse();
+            result.setDifficultyLevel("B2");
+            result.setKeywords(Arrays.asList("quick", "analysis", "content"));
+            result.setSummary("快速分析：文章内容已提取");
+            result.setChineseTranslation("快速翻译服务暂时不可用");
+            result.setSimplifiedContent("Quick analysis temporarily unavailable");
+            result.setKeyPhrases(Arrays.asList("quick analysis", "content summary"));
+            result.setReadabilityScore(75.0);
+            
+            return result;
+        }
     }
 }

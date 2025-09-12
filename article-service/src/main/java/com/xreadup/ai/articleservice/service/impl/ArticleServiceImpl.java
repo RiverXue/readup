@@ -251,6 +251,7 @@ public class ArticleServiceImpl implements ArticleService {
     }
     
     @Override
+    @CacheEvict(value = {"articleDetail", "articlePage"}, allEntries = true)
     public String translate(Long id) {
         Article article = articleMapper.selectById(id);
         if (article == null || article.getDeleted() == 1) {
@@ -259,7 +260,17 @@ public class ArticleServiceImpl implements ArticleService {
         
         try {
             ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
-            return response.getChineseTranslation();
+            String translation = response.getChineseTranslation();
+            
+            // 将翻译结果保存到数据库
+            if (translation != null && !"翻译服务暂时不可用".equals(translation)) {
+                article.setContentCn(translation);
+                article.setUpdateTime(LocalDateTime.now());
+                articleMapper.updateById(article);
+                log.info("文章翻译已保存到数据库，文章ID: {}", id);
+            }
+            
+            return translation;
         } catch (Exception e) {
             log.error("文章翻译失败，文章ID: {}", id, e);
             return "翻译服务暂时不可用";
