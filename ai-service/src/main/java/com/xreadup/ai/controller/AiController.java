@@ -16,10 +16,14 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/ai")
 @Tag(name = "AI分析服务", description = "提供文章智能分析、翻译、摘要等AI功能，基于DeepSeek大模型")
+@Slf4j
 public class AiController {
 
     @Autowired
@@ -41,6 +45,59 @@ public class AiController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 全文翻译接口
+     * <p>
+     * 将英文文章全文翻译成中文，使用DeepSeek大模型确保翻译质量
+     * 添加异常处理和更准确的错误返回
+     * </p>
+     * 
+     * @param text 英文文章内容
+     * @return 翻译结果响应
+     */
+    @GetMapping("/translate/full")
+    public ResponseEntity<Map<String, Object>> translateFullText(@RequestParam("text") String text) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            if (text == null || text.trim().isEmpty()) {
+                response.put("code", 400);
+                response.put("message", "翻译内容不能为空");
+                response.put("data", null);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            if (text.length() > 5000) {
+                response.put("code", 400);
+                response.put("message", "翻译内容过长，请分段翻译");
+                response.put("data", null);
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            String translation = aiAnalysisService.translateToChinese(text);
+            
+            // 检查是否是错误提示
+            if (translation.contains("翻译服务暂时不可用")) {
+                response.put("code", 503);
+                response.put("message", translation);
+                response.put("data", null);
+                return ResponseEntity.status(503).body(response);
+            }
+            
+            response.put("code", 200);
+            response.put("message", "翻译成功");
+            response.put("data", translation);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("翻译接口调用失败", e);
+            response.put("code", 500);
+            response.put("message", "翻译服务异常，请稍后重试");
+            response.put("data", null);
+            return ResponseEntity.status(500).body(response);
+        }
+    }
     @PostMapping("/translate/full")
     @Operation(
         summary = "【全文翻译-标准Token】英文秒变中文", 

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * AI分析服务
@@ -25,6 +26,7 @@ import java.util.List;
  * @since 2024-01-01
  */
 @Service
+@Slf4j
 public class AiAnalysisService {
 
     @Autowired
@@ -123,17 +125,34 @@ public class AiAnalysisService {
      * 英文翻译中文
      * <p>
      * 使用DeepSeek大模型将英文内容翻译成地道、准确的中文
+     * 添加异常处理和降级策略
      * </p>
      * 
      * @param englishText 英文内容
-     * @return 中文翻译结果
+     * @return 中文翻译结果，如果API失败则返回友好的错误提示
      */
     public String translateToChinese(String englishText) {
-        return chatClient.prompt()
-            .system("你是一个专业的中英翻译专家，请将英文翻译成准确、流畅的中文。")
-            .user("请将以下英文内容翻译成地道的中文：\n\n" + englishText)
-            .call()
-            .content();
+        try {
+            if (englishText == null || englishText.trim().isEmpty()) {
+                return "翻译内容不能为空";
+            }
+            
+            if (englishText.length() > 5000) {
+                return "翻译内容过长，请分段翻译";
+            }
+            
+            String translation = chatClient.prompt()
+                .system("你是一个专业的中英翻译专家，请将英文翻译成准确、流畅的中文。")
+                .user("请将以下英文内容翻译成地道的中文：\n\n" + englishText)
+                .call()
+                .content();
+            
+            return translation != null ? translation : "翻译服务暂时不可用，请稍后重试";
+            
+        } catch (Exception e) {
+            log.error("翻译服务调用失败", e);
+            return "翻译服务暂时不可用，请稍后重试";
+        }
     }
 
     /**

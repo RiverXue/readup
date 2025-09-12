@@ -20,7 +20,7 @@ public interface AiServiceClient {
      * @param request 文章分析请求
      * @return AI分析结果
      */
-    @PostMapping("/analyze")
+    @PostMapping("/deep/complete")
     ArticleAnalysisResponse analyzeArticle(@RequestBody ArticleAnalysisRequest request);
 
     /**
@@ -28,7 +28,7 @@ public interface AiServiceClient {
      * @param request 文章分析请求
      * @return AI分析结果
      */
-    @PostMapping("/quick-analyze")
+    @PostMapping("/quick/summary")
     ArticleAnalysisResponse quickAnalyze(@RequestBody ArticleAnalysisRequest request);
 
     /**
@@ -36,7 +36,7 @@ public interface AiServiceClient {
      * @param request 文章分析请求
      * @return AI分析结果
      */
-    @PostMapping("/chunked-analyze")
+    @PostMapping("/smart/sampling")
     ArticleAnalysisResponse chunkedAnalyze(@RequestBody ArticleAnalysisRequest request);
 
     /**
