@@ -3,71 +3,58 @@ package com.xreadup.ai.articleservice.client;
 import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 /**
- * AI服务Feign客户端
- * 用于文章服务调用AI服务的文章分析接口
+ * AI服务Feign客户端 - 重构版
+ * 从9个API精简为3个核心API，消除冗余
+ * 
+ * @version 3.0.0
  */
 @FeignClient(name = "ai-service", path = "/api/ai")
 public interface AiServiceClient {
 
     /**
-     * 文章全面分析
+     * 【统一分析API】智能选择分析策略
+     * 整合：深度学习、快速分析、分段分析
+     * 
      * @param request 文章分析请求
+     * @param save 是否保存分析结果到数据库
+     * @param forceRegenerate 是否强制重新生成
      * @return AI分析结果
      */
-    @PostMapping("/deep/complete")
-    ArticleAnalysisResponse analyzeArticle(@RequestBody ArticleAnalysisRequest request);
+    @PostMapping("/analyze")
+    ArticleAnalysisResponse analyzeArticle(
+            @RequestBody ArticleAnalysisRequest request,
+            @RequestParam(value = "save", defaultValue = "false") boolean save,
+            @RequestParam(value = "forceRegenerate", defaultValue = "false") boolean forceRegenerate);
 
     /**
-     * 快速文章分析（节省70% token）
-     * @param request 文章分析请求
-     * @return AI分析结果
+     * 【状态检查API】检查文章分析状态
+     * 
+     * @param articleId 文章ID
+     * @return 分析状态信息
      */
-    @PostMapping("/quick/summary")
-    ArticleAnalysisResponse quickAnalyze(@RequestBody ArticleAnalysisRequest request);
+    @GetMapping("/status/{articleId}")
+    Map<String, Object> checkAnalysisStatus(@PathVariable("articleId") Long articleId);
 
     /**
-     * 分段文章分析（节省65% token）
-     * @param request 文章分析请求
-     * @return AI分析结果
+     * 【结果获取API】获取已保存的分析结果
+     * 
+     * @param articleId 文章ID
+     * @return 文章分析结果
      */
-    @PostMapping("/smart/sampling")
-    ArticleAnalysisResponse chunkedAnalyze(@RequestBody ArticleAnalysisRequest request);
+    @GetMapping("/result/{articleId}")
+    ArticleAnalysisResponse getAnalysisResult(@PathVariable("articleId") Long articleId);
 
     /**
-     * 全文翻译
-     * @param englishText 英文内容
-     * @return 中文翻译
+     * 【结果删除API】删除已保存的分析结果
+     * 
+     * @param articleId 文章ID
+     * @return 删除结果信息
      */
-    @PostMapping("/translate/full")
-    String translateFull(@RequestBody String englishText);
-
-    /**
-     * 智能摘要
-     * @param content 文章内容
-     * @return 中文摘要
-     */
-    @PostMapping("/extract/summary")
-    String extractSummary(@RequestBody String content);
-
-    /**
-     * 关键词提取
-     * @param content 文章内容
-     * @return 关键词列表
-     */
-    @PostMapping("/extract/keywords")
-    List<String> extractKeywords(@RequestBody String content);
-
-    /**
-     * 深度学习分析
-     * @param request 文章分析请求
-     * @return 深度分析结果
-     */
-    @PostMapping("/deep/complete")
-    ArticleAnalysisResponse deepComplete(@RequestBody ArticleAnalysisRequest request);
+    @DeleteMapping("/result/{articleId}")
+    Map<String, Object> deleteAnalysisResult(@PathVariable("articleId") Long articleId);
 }

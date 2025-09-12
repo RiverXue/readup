@@ -3,11 +3,9 @@ package com.xreadup.ai.articleservice.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisRequest;
-import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.articleservice.mapper.ArticleMapper;
+import com.xreadup.ai.articleservice.model.common.PageResult;
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
-import com.xreadup.ai.articleservice.model.dto.GnewsResponse;
 import com.xreadup.ai.articleservice.model.dto.ManualDifficultyDTO;
 import com.xreadup.ai.articleservice.model.entity.Article;
 import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
@@ -15,319 +13,285 @@ import com.xreadup.ai.articleservice.model.vo.ArticleVO;
 import com.xreadup.ai.articleservice.service.ArticleService;
 import com.xreadup.ai.articleservice.service.AiIntegrationService;
 import com.xreadup.ai.articleservice.service.GnewsService;
-import com.xreadup.ai.articleservice.util.DifficultyEvaluator;
+import com.xreadup.ai.articleservice.model.dto.ArticleAnalysisRequest;
+import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
+import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
+import com.xreadup.ai.articleservice.model.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ArticleServiceImpl implements ArticleService {
-    
+
     private final ArticleMapper articleMapper;
-    private final GnewsService gnewsService;
-    private final DifficultyEvaluator difficultyEvaluator;
     private final AiIntegrationService aiIntegrationService;
-    
+    private final GnewsService gnewsService;
+
     @Override
-    @Cacheable(value = "articlePage", key = "#query.toString()")
-    public IPage<com.xreadup.ai.articleservice.model.vo.ArticleListVO> getArticlePage(ArticleQueryDTO query) {
+    public IPage<ArticleVO> getArticlePage(ArticleQueryDTO query) {
         Page<Article> page = new Page<>(query.getPage(), query.getSize());
-        IPage<Article> articlePage = articleMapper.selectArticlePage(page, query);
         
-        List<com.xreadup.ai.articleservice.model.vo.ArticleListVO> articleVOList = articlePage.getRecords().stream()
-                .map(this::convertToListVO)
-                .collect(Collectors.toList());
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<Article>()
+                .orderByDesc(Article::getPublishedAt);
         
-        IPage<com.xreadup.ai.articleservice.model.vo.ArticleListVO> resultPage = new Page<>();
-        resultPage.setRecords(articleVOList);
-        resultPage.setTotal(articlePage.getTotal());
-        resultPage.setCurrent(articlePage.getCurrent());
-        resultPage.setSize(articlePage.getSize());
+        if (query.getCategory() != null && !query.getCategory().isEmpty()) {
+            wrapper.eq(Article::getCategory, query.getCategory());
+        }
         
-        return resultPage;
+        if (query.getDifficultyLevel() != null) {
+            wrapper.eq(Article::getDifficultyLevel, query.getDifficultyLevel());
+        }
+        
+        IPage<Article> articlePage = articleMapper.selectPage(page, wrapper);
+        
+        return articlePage.convert(article -> {
+            ArticleVO vo = new ArticleVO();
+             vo.setId(article.getId());
+             vo.setTitle(article.getTitle());
+             vo.setContentEn(article.getContentEn());
+             vo.setDescription(article.getDescription());
+             vo.setUrl(article.getUrl());
+             vo.setImage(article.getImage());
+             vo.setCategory(article.getCategory());
+             vo.setPublishedAt(article.getPublishedAt());
+             vo.setSource(article.getSource());
+             vo.setReadCount(article.getReadCount());
+             vo.setDifficultyLevel(article.getDifficultyLevel());
+             vo.setWordCount(article.getWordCount());
+            return vo;
+        });
     }
-    
+
     @Override
-    @Cacheable(value = "articleDetail", key = "#id")
     public ArticleVO getArticleDetail(Long id) {
         Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
+        if (article == null) {
             return null;
         }
-        return convertToVO(article);
+        
+        ArticleVO vo = new ArticleVO();
+        vo.setId(article.getId());
+        vo.setTitle(article.getTitle());
+        vo.setContentEn(article.getContentEn());
+        vo.setContentCn(article.getContentCn());
+        vo.setDescription(article.getDescription());
+        vo.setUrl(article.getUrl());
+        vo.setImage(article.getImage());
+        vo.setCategory(article.getCategory());
+        vo.setPublishedAt(article.getPublishedAt());
+        vo.setSource(article.getSource());
+        vo.setReadCount(article.getReadCount());
+        vo.setDifficultyLevel(article.getDifficultyLevel());
+        vo.setWordCount(article.getWordCount());
+        return vo;
     }
 
     @Override
-    @CacheEvict(value = "articleDetail", key = "#id")
-    public ArticleDetailVO deepDiveAnalysis(Long id) {
+    public ApiResponse<ArticleDetailVO> deepDiveAnalysis(Long id) {
         Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
+        if (article == null) {
             return null;
         }
-
-        ArticleDetailVO detailVO = new ArticleDetailVO();
-        detailVO.setArticle(convertToVO(article));
         
-        // 强制重新分析文章
-        ArticleAnalysisResponse aiAnalysis = aiIntegrationService.analyzeArticle(article);
-        detailVO.setAiAnalysis(aiAnalysis);
-        detailVO.setHasAiAnalysis(true);
-        
-        log.info("成功对文章进行AI分析: {} (ID: {})", article.getTitle(), id);
-        return detailVO;
+        try {
+            // 调用AI服务获取完整分析并保存结果
+            var response = aiIntegrationService.analyzeAndSaveArticle(article);
+            
+            ArticleDetailVO vo = new ArticleDetailVO();
+            
+            // 创建ArticleVO对象
+            ArticleVO articleVO = new ArticleVO();
+            articleVO.setId(article.getId());
+            articleVO.setTitle(article.getTitle());
+            articleVO.setContentEn(article.getContentEn());
+            articleVO.setContentCn(article.getContentCn());
+            articleVO.setDescription(article.getDescription());
+            articleVO.setUrl(article.getUrl());
+            articleVO.setImage(article.getImage());
+            articleVO.setCategory(article.getCategory());
+            articleVO.setPublishedAt(article.getPublishedAt());
+            articleVO.setSource(article.getSource());
+            articleVO.setReadCount(article.getReadCount());
+            articleVO.setDifficultyLevel(article.getDifficultyLevel());
+            articleVO.setWordCount(article.getWordCount());
+            
+            vo.setArticle(articleVO);
+            vo.setAiAnalysis(response);
+            vo.setHasAiAnalysis(true);
+            
+            return ApiResponse.success(vo);
+            
+        } catch (Exception e) {
+            log.error("AI分析失败，文章ID: {}", id, e);
+            return ApiResponse.error("AI分析失败");
+        }
     }
-    
+
     @Override
-    @CacheEvict(value = {"articlePage", "articleDetail"}, allEntries = true)
-    public boolean updateManualDifficulty(ManualDifficultyDTO dto) {
-        Article article = new Article();
-        article.setId(dto.getArticleId());
+    @Transactional
+    public ApiResponse<Boolean> updateManualDifficulty(ManualDifficultyDTO dto) {
+        Article article = articleMapper.selectById(dto.getArticleId());
+        if (article == null) {
+            return ApiResponse.error("文章不存在");
+        }
+        
+        // 修复：使用正确的setDifficultyLevel()而不是setDifficulty()
+        article.setDifficultyLevel(dto.getManualDifficulty());
         article.setManualDifficulty(dto.getManualDifficulty());
         
-        return articleMapper.updateById(article) > 0;
+        boolean updated = articleMapper.updateById(article) > 0;
+        return ApiResponse.success(updated);
     }
-    
+
     @Override
-    @CacheEvict(value = {"articlePage"}, allEntries = true)
-    public int refreshArticles(String category, Integer count) {
+    public List<ArticleVO> refreshArticles(String category, int limit) {
         try {
-            log.info("Starting refresh with category: {} and count: {}", category, count);
-            
-            // 从gnews.io获取文章
-            List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchArticlesByCategory(category, count);
-            
-            log.info("GNews API returned {} articles for category: {} with requested count: {}", 
-                    gnewsArticles.size(), category, count);
-            
-            return processAndSaveArticles(gnewsArticles);
-            
+            return gnewsService.fetchArticlesByCategory(category, limit).stream()
+                .map(article -> {
+                    ArticleVO vo = new ArticleVO();
+                    vo.setTitle(article.getTitle());
+                    vo.setDescription(article.getDescription());
+                    vo.setContentEn(article.getContent());
+                    vo.setContentCn("");
+                    vo.setUrl(article.getUrl());
+                    vo.setImage(article.getImage());
+                    vo.setPublishedAt(article.getPublishedAt());
+                    vo.setSource(article.getSource() != null ? article.getSource().getName() : "Unknown");
+                    vo.setCategory(category);
+                    return vo;
+                })
+                .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("Error refreshing articles from gnews.io", e);
-            return 0;
+            log.error("获取分类文章失败，分类: {}", category, e);
+            return List.of();
         }
     }
-    
+
     @Override
-    @CacheEvict(value = {"articlePage"}, allEntries = true)
-    public int refreshTopHeadlines(Integer count) {
+    public List<ArticleVO> refreshTopHeadlines(int limit) {
         try {
-            log.info("Starting refresh top headlines with count: {}", count);
-            
-            // 从gnews.io获取头条新闻
-            List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchTopHeadlines(count);
-            
-            log.info("GNews API returned {} top headlines", gnewsArticles.size());
-            
-            return processAndSaveArticles(gnewsArticles);
-            
+            return gnewsService.fetchTopHeadlines(limit).stream()
+                .map(article -> {
+                    ArticleVO vo = new ArticleVO();
+                    vo.setTitle(article.getTitle());
+                    vo.setDescription(article.getDescription());
+                    vo.setContentEn(article.getContent());
+                    vo.setContentCn("");
+                    vo.setUrl(article.getUrl());
+                    vo.setImage(article.getImage());
+                    vo.setPublishedAt(article.getPublishedAt());
+                    vo.setSource(article.getSource() != null ? article.getSource().getName() : "Unknown");
+                    vo.setCategory("general");
+                    return vo;
+                })
+                .collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("Error refreshing top headlines from gnews.io", e);
-            return 0;
+            log.error("获取热点文章失败", e);
+            return List.of();
         }
     }
-    
-    private int processAndSaveArticles(List<GnewsResponse.GnewsArticle> gnewsArticles) {
-        if (gnewsArticles.isEmpty()) {
-            log.warn("No articles fetched from gnews.io");
-            return 0;
-        }
-        
-        int savedCount = 0;
-        int duplicateCount = 0;
-        
-        for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
-            try {
-                // 检查文章是否已存在（根据URL去重）
-                LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
-                wrapper.eq(Article::getUrl, gnewsArticle.getUrl());
-                Article existingArticle = articleMapper.selectOne(wrapper);
-                if (existingArticle != null) {
-                    log.debug("Article already exists: {}", gnewsArticle.getUrl());
-                    duplicateCount++;
-                    continue;
-                }
-                
-                // 创建新文章实体
-                Article article = new Article();
-                article.setTitle(gnewsArticle.getTitle());
-                article.setDescription(gnewsArticle.getDescription());
-                article.setContentEn(gnewsArticle.getContent());
-                article.setContentCn(""); // 中文翻译可后续通过AI服务生成
-                article.setUrl(gnewsArticle.getUrl());
-                article.setImage(gnewsArticle.getImage());
-                article.setPublishedAt(gnewsArticle.getPublishedAt());
-                article.setSource(gnewsArticle.getSource().getName());
-                article.setCategory(mapToCategory(gnewsArticle.getTitle(), gnewsArticle.getDescription()));
-                article.setDifficultyLevel(difficultyEvaluator.evaluateDifficulty(gnewsArticle.getContent()));
-                article.setWordCount(gnewsArticle.getContent() != null ? 
-                                   gnewsArticle.getContent().split("\\s+").length : 0);
-                article.setReadCount(0);
-                article.setLikeCount(0);
-                article.setIsFeatured(false);
-                article.setCreateTime(LocalDateTime.now());
-                article.setUpdateTime(LocalDateTime.now());
-                
-                // 保存到数据库
-                articleMapper.insert(article);
-                savedCount++;
-                
-                log.info("Successfully saved article: {} (difficulty: {})", 
-                        article.getTitle(), article.getDifficultyLevel());
-                
-            } catch (Exception e) {
-                log.error("Error saving article: {}", gnewsArticle.getTitle(), e);
-            }
-        }
-        
-        log.info("Refresh completed: {} new articles saved, {} duplicates skipped from {} total articles", 
-                savedCount, duplicateCount, gnewsArticles.size());
-        return savedCount;
-    }
-    
+
     @Override
-    @CacheEvict(value = "articleDetail", key = "#articleId")
-    public void incrementReadCount(Long articleId) {
-        Article article = articleMapper.selectById(articleId);
+    public void incrementReadCount(Long id) {
+        Article article = articleMapper.selectById(id);
         if (article != null) {
             article.setReadCount(article.getReadCount() + 1);
             articleMapper.updateById(article);
         }
     }
-    
-    private ArticleVO convertToVO(Article article) {
-        ArticleVO vo = new ArticleVO();
-        BeanUtils.copyProperties(article, vo);
-        return vo;
-    }
-    
-    private com.xreadup.ai.articleservice.model.vo.ArticleListVO convertToListVO(Article article) {
-        com.xreadup.ai.articleservice.model.vo.ArticleListVO vo = new com.xreadup.ai.articleservice.model.vo.ArticleListVO();
-        BeanUtils.copyProperties(article, vo);
-        return vo;
-    }
-    
-    private String mapToCategory(String title, String description) {
-        String combinedText = (title + " " + description).toLowerCase();
+
+    @Override
+    public ApiResponse<PageResult<ArticleListVO>> exploreArticles(ArticleQueryDTO query) {
+        Page<Article> page = new Page<>(query.getPage(), query.getSize());
         
-        if (combinedText.contains("technology") || combinedText.contains("tech") || 
-            combinedText.contains("ai") || combinedText.contains("software")) {
-            return "technology";
-        }
-        if (combinedText.contains("business") || combinedText.contains("finance") || 
-            combinedText.contains("market") || combinedText.contains("economic")) {
-            return "business";
-        }
-        if (combinedText.contains("health") || combinedText.contains("medical") || 
-            combinedText.contains("doctor") || combinedText.contains("disease")) {
-            return "health";
-        }
-        if (combinedText.contains("science") || combinedText.contains("research") || 
-            combinedText.contains("study") || combinedText.contains("scientist")) {
-            return "science";
-        }
-        if (combinedText.contains("sports") || combinedText.contains("game") || 
-            combinedText.contains("player") || combinedText.contains("team")) {
-            return "sports";
-        }
-        if (combinedText.contains("education") || combinedText.contains("school") || 
-            combinedText.contains("university") || combinedText.contains("learning")) {
-            return "education";
-        }
-        if (combinedText.contains("environment") || combinedText.contains("climate") || 
-            combinedText.contains("pollution") || combinedText.contains("green")) {
-            return "environment";
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+        
+        if (query.getCategory() != null && !query.getCategory().isEmpty()) {
+            wrapper.eq(Article::getCategory, query.getCategory());
         }
         
-        return "general";
+        // 修复：使用正确的getDifficultyLevel()而不是getDifficulty()
+        if (query.getDifficultyLevel() != null && !query.getDifficultyLevel().isEmpty()) {
+            wrapper.eq(Article::getDifficultyLevel, query.getDifficultyLevel());
+        }
+        
+        if (query.getKeyword() != null && !query.getKeyword().isEmpty()) {
+            wrapper.like(Article::getTitle, query.getKeyword());
+        }
+        
+        wrapper.orderByDesc(Article::getPublishedAt);
+        
+        Page<Article> articlePage = articleMapper.selectPage(page, wrapper);
+        
+        List<ArticleListVO> voList = articlePage.getRecords().stream()
+                .map(article -> {
+                    ArticleListVO vo = new ArticleListVO();
+                    vo.setId(article.getId());
+                    vo.setTitle(article.getTitle());
+                    vo.setDescription(article.getDescription());
+                    vo.setUrl(article.getUrl());
+                    vo.setImage(article.getImage());
+                    vo.setCategory(article.getCategory());
+                    vo.setPublishedAt(article.getPublishedAt());
+                    vo.setSource(article.getSource());
+                    vo.setReadCount(article.getReadCount());
+                    vo.setDifficultyLevel(article.getDifficultyLevel());
+                    vo.setWordCount(article.getWordCount());
+                    return vo;
+                })
+                .collect(Collectors.toList());
+        
+        PageResult<ArticleListVO> result = new PageResult<>();
+        result.setList(voList);
+        result.setTotal(articlePage.getTotal());
+        result.setPages(articlePage.getPages());
+        result.setCurrent(articlePage.getCurrent());
+        result.setSize(articlePage.getSize());
+        
+        return ApiResponse.success(result);
     }
     
     @Override
-    @CacheEvict(value = {"articleDetail", "articlePage"}, allEntries = true)
-    public String translate(Long id) {
+    public ApiResponse<ArticleDetailVO> readArticle(Long id) {
         Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
-            return null;
+        if (article == null) {
+            return ApiResponse.error("文章不存在");
         }
         
-        try {
-            ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
-            String translation = response.getChineseTranslation();
-            
-            // 将翻译结果保存到数据库
-            if (translation != null && !"翻译服务暂时不可用".equals(translation)) {
-                article.setContentCn(translation);
-                article.setUpdateTime(LocalDateTime.now());
-                articleMapper.updateById(article);
-                log.info("文章翻译已保存到数据库，文章ID: {}", id);
-            }
-            
-            return translation;
-        } catch (Exception e) {
-            log.error("文章翻译失败，文章ID: {}", id, e);
-            return "翻译服务暂时不可用";
-        }
+        // 增加阅读次数
+        article.setReadCount(article.getReadCount() + 1);
+        articleMapper.updateById(article);
+        
+        ArticleDetailVO vo = new ArticleDetailVO();
+        
+        // 创建ArticleVO对象
+        ArticleVO articleVO = new ArticleVO();
+        articleVO.setId(article.getId());
+        articleVO.setTitle(article.getTitle());
+        articleVO.setContentEn(article.getContentEn());
+        articleVO.setContentCn(article.getContentCn());
+        articleVO.setDescription(article.getDescription());
+        articleVO.setUrl(article.getUrl());
+        articleVO.setImage(article.getImage());
+        articleVO.setCategory(article.getCategory());
+        articleVO.setPublishedAt(article.getPublishedAt());
+        articleVO.setSource(article.getSource());
+        articleVO.setReadCount(article.getReadCount());
+        articleVO.setDifficultyLevel(article.getDifficultyLevel());
+        articleVO.setWordCount(article.getWordCount());
+        
+        vo.setArticle(articleVO);
+        vo.setHasAiAnalysis(false);
+        
+        return ApiResponse.success(vo);
     }
     
-    @Override
-    public String quickRead(Long id) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
-            return null;
-        }
-        
-        try {
-            ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
-            return response.getSummary();
-        } catch (Exception e) {
-            log.error("文章摘要失败，文章ID: {}", id, e);
-            return "摘要服务暂时不可用";
-        }
-    }
-    
-    @Override
-    public List<String> keyPoints(Long id) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
-            return null;
-        }
-        
-        try {
-            ArticleAnalysisResponse response = aiIntegrationService.analyzeArticle(article);
-            return response.getKeywords();
-        } catch (Exception e) {
-            log.error("关键词提取失败，文章ID: {}", id, e);
-            return List.of("服务暂时不可用");
-        }
-    }
-    
-    @Override
-    public ArticleDetailVO microStudy(Long id) {
-        Article article = articleMapper.selectById(id);
-        if (article == null || article.getDeleted() == 1) {
-            return null;
-        }
-        
-        ArticleDetailVO detailVO = new ArticleDetailVO();
-        detailVO.setArticle(convertToVO(article));
-        
-        try {
-            ArticleAnalysisResponse aiAnalysis = aiIntegrationService.analyzeArticle(article);
-            detailVO.setAiAnalysis(aiAnalysis);
-            detailVO.setHasAiAnalysis(true);
-        } catch (Exception e) {
-            log.error("短文精学分析失败，文章ID: {}", id, e);
-            detailVO.setHasAiAnalysis(false);
-        }
-        
-        return detailVO;
-    }
+
 }

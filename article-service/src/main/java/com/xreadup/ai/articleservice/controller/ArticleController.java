@@ -1,125 +1,70 @@
 package com.xreadup.ai.articleservice.controller;
 
-import com.xreadup.ai.articleservice.common.ApiResponse;
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
 import com.xreadup.ai.articleservice.model.dto.ManualDifficultyDTO;
-import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
-import com.xreadup.ai.articleservice.model.vo.ArticleVO;
 import com.xreadup.ai.articleservice.service.ArticleService;
+import com.xreadup.ai.articleservice.model.common.ApiResponse;
+import com.xreadup.ai.articleservice.model.common.PageResult;
+import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
+import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import java.util.List;
-
+/**
+ * 文章控制器
+ * 提供文章相关的REST API
+ */
 @RestController
 @RequestMapping("/api/article")
 @RequiredArgsConstructor
-@Tag(name = "文章管理", description = "文章服务接口")
-@Validated
+@Tag(name = "文章管理", description = "文章相关的API接口")
 public class ArticleController {
-    
+
     private final ArticleService articleService;
-    
+
     @GetMapping("/explore")
-    @Operation(summary = "【发现文章】探索阅读世界", description = "发现你的下一篇精彩阅读，智能推荐每日更新")
-    public ApiResponse<Object> exploreArticles(@Valid ArticleQueryDTO query) {
-        return ApiResponse.success(articleService.getArticlePage(query));
+    @Operation(summary = "【文章发现】探索文章列表", 
+               description = "根据条件筛选和分页获取文章列表")
+    public ApiResponse<PageResult<ArticleListVO>> exploreArticles(ArticleQueryDTO query) {
+        return articleService.exploreArticles(query);
     }
-    
+
     @GetMapping("/read/{id}")
-    @Operation(summary = "【开始阅读】沉浸式阅读体验", description = "进入专注阅读模式，享受纯净的阅读时光")
-    public ApiResponse<Object> startReading(@PathVariable Long id) {
-        ArticleVO article = articleService.getArticleDetail(id);
-        if (article == null) {
-            return ApiResponse.error(404, "文章不存在");
-        }
-        
-        // 增加阅读量
-        articleService.incrementReadCount(id);
-        
-        return ApiResponse.success(article);
+    @Operation(summary = "【开始阅读】获取文章详情", 
+               description = "获取文章详细信息并增加阅读次数")
+    public ApiResponse<ArticleDetailVO> readArticle(@PathVariable Long id) {
+        return articleService.readArticle(id);
     }
 
     @GetMapping("/{id}/deep-dive")
-    @Operation(summary = "【精读分析】AI深度理解", description = "【智能Token策略】根据文章长度自动选择最优方案：≤1000字标准分析，1001-2000字省70%Token，>2000字省65%Token。适合深度学习和理解文章")
-    public ApiResponse<Object> deepDiveAnalysis(@PathVariable Long id, 
-                                              @RequestParam(defaultValue = "true") boolean incrementRead) {
-        ArticleDetailVO detail = articleService.deepDiveAnalysis(id);
-        if (detail == null) {
-            return ApiResponse.error(404, "文章不存在");
-        }
-        
-        if (incrementRead) {
-            articleService.incrementReadCount(id);
-        }
-        
-        return ApiResponse.success(detail);
+    @Operation(summary = "【深度精读】AI深度分析", 
+               description = "对文章进行AI深度分析，包括难度评估、关键词提取、摘要生成等")
+    public ApiResponse<ArticleDetailVO> deepDiveAnalysis(@PathVariable Long id) {
+        return articleService.deepDiveAnalysis(id);
     }
-    
+
     @PostMapping("/feedback/difficulty")
-    @Operation(summary = "【学习反馈】标记文章难度", description = "告诉AI你的真实感受，让它更懂你")
-    public ApiResponse<Object> giveDifficultyFeedback(@Valid @RequestBody ManualDifficultyDTO dto) {
-        boolean updated = articleService.updateManualDifficulty(dto);
-        if (updated) {
-            return ApiResponse.success("难度更新成功");
-        } else {
-            return ApiResponse.error(400, "更新失败");
-        }
+    @Operation(summary = "【难度反馈】手动标注文章难度", 
+               description = "允许用户手动标注文章难度等级")
+    public ApiResponse<Boolean> updateManualDifficulty(@RequestBody ManualDifficultyDTO dto) {
+        return articleService.updateManualDifficulty(dto);
     }
-    
+
     @PostMapping("/discover/category")
-    @Operation(summary = "【发现新文】按主题探索", description = "发现你感兴趣主题的最新文章")
-    public ApiResponse<Object> discoverByCategory(@RequestParam String category) {
-        return ApiResponse.success(articleService.refreshArticles(category, 20));
+    @Operation(summary = "【主题探索】按主题获取文章", 
+               description = "根据指定主题获取最新文章")
+    public ApiResponse<Object> discoverByCategory(@RequestParam String category,
+                                                  @RequestParam(defaultValue = "10") int limit) {
+        return ApiResponse.success(articleService.refreshArticles(category, limit));
     }
-    
+
     @PostMapping("/discover/trending")
-    @Operation(summary = "【热点追踪】今日必看", description = "掌握全球热点，不错过任何重要资讯")
-    public ApiResponse<Object> discoverTrending() {
-        return ApiResponse.success(articleService.refreshTopHeadlines(20));
-    }
-    
-    @GetMapping("/{id}/translate")
-    @Operation(summary = "【全文翻译】英文秒变中文", description = "【标准Token策略】逐句精译英文全文，地道中文翻译，适合精读英文原文")
-    public ApiResponse<Object> translate(@PathVariable Long id) {
-        String translation = articleService.translate(id);
-        if (translation == null) {
-            return ApiResponse.error(404, "文章不存在");
-        }
-        return ApiResponse.success(translation);
-    }
-    
-    @GetMapping("/{id}/quick-read")
-    @Operation(summary = "【智能速读】30秒掌握要点", description = "【省80%Token策略】30秒生成100字内中文精华摘要，快速判断文章价值")
-    public ApiResponse<Object> quickRead(@PathVariable Long id) {
-        String summary = articleService.quickRead(id);
-        if (summary == null) {
-            return ApiResponse.error(404, "文章不存在");
-        }
-        return ApiResponse.success(summary);
-    }
-    
-    @GetMapping("/{id}/key-points")
-    @Operation(summary = "【核心要点】5秒抓关键词", description = "【省90%Token策略】AI提取5-8个核心关键词，快速把握文章主题和重点")
-    public ApiResponse<Object> keyPoints(@PathVariable Long id) {
-        List<String> keywords = articleService.keyPoints(id);
-        if (keywords == null) {
-            return ApiResponse.error(404, "文章不存在");
-        }
-        return ApiResponse.success(keywords);
-    }
-    
-    @GetMapping("/{id}/micro-study")
-    @Operation(summary = "【短文精学】800字内深度学习", description = "【标准Token策略】专为800字内短文设计的全维度精学模式，逐句解析+词汇学习+语法分析")
-    public ApiResponse<Object> microStudy(@PathVariable Long id) {
-        ArticleDetailVO analysis = articleService.microStudy(id);
-        if (analysis == null) {
-            return ApiResponse.error(404, "文章不存在");
-        }
-        return ApiResponse.success(analysis);
+    @Operation(summary = "【热点追踪】获取热点文章", 
+               description = "获取当前热点新闻文章")
+    public ApiResponse<Object> discoverTrending(@RequestParam(defaultValue = "10") int limit) {
+        return ApiResponse.success(articleService.refreshTopHeadlines(limit));
     }
 }

@@ -10,6 +10,10 @@ import javax.validation.constraints.NotNull;
 @Schema(description = "文章分析请求DTO")
 public class ArticleAnalysisRequest {
     
+    @Schema(description = "文章ID", example = "123")
+    @NotNull(message = "文章ID不能为空")
+    private Long articleId;
+    
     @Schema(description = "文章标题", example = "AI Revolution in Healthcare")
     @NotBlank(message = "文章标题不能为空")
     private String title;

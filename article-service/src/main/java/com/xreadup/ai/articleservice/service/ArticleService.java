@@ -1,71 +1,63 @@
 package com.xreadup.ai.articleservice.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
 import com.xreadup.ai.articleservice.model.dto.ManualDifficultyDTO;
-import com.xreadup.ai.articleservice.model.entity.Article;
+import com.xreadup.ai.articleservice.model.common.PageResult;
 import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
-import com.xreadup.ai.articleservice.model.vo.ArticleVO;
 import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
+import com.xreadup.ai.articleservice.model.vo.ArticleVO;
+import com.xreadup.ai.articleservice.model.common.ApiResponse;
 
 import java.util.List;
 
+/**
+ * 文章服务接口
+ */
 public interface ArticleService {
     
     /**
-     * 分页查询文章列表（不包含内容，提升性能）
+     * 探索文章列表
      */
-    IPage<ArticleListVO> getArticlePage(ArticleQueryDTO query);
+    ApiResponse<PageResult<ArticleListVO>> exploreArticles(ArticleQueryDTO query);
     
     /**
-     * 获取文章详情（包含完整内容）
+     * 开始阅读文章
      */
-    ArticleVO getArticleDetail(Long id);
+    ApiResponse<ArticleDetailVO> readArticle(Long id);
     
     /**
-     * 精读分析：AI深度理解文章
-     * 智能Token策略：根据文章长度自动优化
+     * 深度分析文章
      */
-    ArticleDetailVO deepDiveAnalysis(Long id);
-    
-    /**
-     * 全文翻译：英文→中文逐句精译
-     */
-    String translate(Long id);
-    
-    /**
-     * 智能速读：30秒生成100字摘要
-     */
-    String quickRead(Long id);
-    
-    /**
-     * 核心要点：5秒提取关键词
-     */
-    List<String> keyPoints(Long id);
-    
-    /**
-     * 短文精学：800字内深度学习
-     */
-    ArticleDetailVO microStudy(Long id);
+    ApiResponse<ArticleDetailVO> deepDiveAnalysis(Long id);
     
     /**
      * 更新文章手动难度
      */
-    boolean updateManualDifficulty(ManualDifficultyDTO dto);
+    ApiResponse<Boolean> updateManualDifficulty(ManualDifficultyDTO dto);
     
     /**
-     * 从gnews.io刷新文章
+     * 获取文章分页列表（保留兼容方法）
      */
-    int refreshArticles(String category, Integer count);
+    IPage<ArticleVO> getArticlePage(ArticleQueryDTO query);
     
     /**
-     * 从gnews.io获取头条新闻
+     * 获取文章详情（保留兼容方法）
      */
-    int refreshTopHeadlines(Integer count);
+    ArticleVO getArticleDetail(Long id);
     
     /**
-     * 增加文章阅读量
+     * 刷新分类文章
      */
-    void incrementReadCount(Long articleId);
+    List<ArticleVO> refreshArticles(String category, int limit);
+    
+    /**
+     * 刷新热点文章
+     */
+    List<ArticleVO> refreshTopHeadlines(int limit);
+    
+    /**
+     * 增加阅读次数
+     */
+    void incrementReadCount(Long id);
 }

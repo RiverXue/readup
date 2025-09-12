@@ -3,6 +3,7 @@ package com.xreadup.ai.controller;
 import com.xreadup.ai.model.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.model.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.service.AiAnalysisService;
+import com.xreadup.ai.service.EnhancedAiAnalysisService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,29 +11,41 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 
+/**
+ * AI分析控制器 - 重构版
+ * 从17个API精简为6个核心API，消除冗余
+ * 
+ * @version 3.0.0
+ */
 @RestController
 @RequestMapping("/api/ai")
-@Tag(name = "AI分析服务", description = "提供文章智能分析、翻译、摘要等AI功能，基于DeepSeek大模型")
+@Tag(name = "AI分析服务", description = "提供文章智能分析、翻译、摘要等AI功能，集成数据持久化")
 @Slf4j
 public class AiController {
 
     @Autowired
     private AiAnalysisService aiAnalysisService;
 
-    @PostMapping("/deep/complete")
+    @Autowired
+    private EnhancedAiAnalysisService enhancedAiAnalysisService;
+
+    /**
+     * 【核心API】统一文章分析入口
+     * 整合：深度学习、快速分析、分段分析
+     */
+    @PostMapping("/analyze")
     @Operation(
-        summary = "【深度学习-标准Token】800字内精学", 
-        description = "适合800字内文章，全维度深度分析：难度评估+翻译+摘要+关键词，专家级精读（标准Token消耗）"
+        summary = "【统一分析】智能选择分析策略", 
+        description = "根据文章长度智能选择分析策略：短文章(≤800字)深度学习，中等文章(800-1500字)快速分析，长文章(>1500字)分段分析，支持数据持久化"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "分析成功", 
@@ -40,150 +53,121 @@ public class AiController {
         @ApiResponse(responseCode = "400", description = "请求参数错误"),
         @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<ArticleAnalysisResponse> deepComplete(@Valid @RequestBody ArticleAnalysisRequest request) {
-        ArticleAnalysisResponse response = aiAnalysisService.analyzeArticle(request);
+    public ResponseEntity<ArticleAnalysisResponse> analyzeArticle(
+            @Valid @RequestBody ArticleAnalysisRequest request,
+            @RequestParam(value = "save", defaultValue = "false") 
+            @Parameter(description = "是否保存分析结果到数据库", example = "true") boolean save,
+            @RequestParam(value = "forceRegenerate", defaultValue = "false") 
+            @Parameter(description = "是否强制重新生成，即使已存在", example = "false") boolean forceRegenerate) {
+        
+        ArticleAnalysisResponse response;
+        
+        if (save) {
+            response = enhancedAiAnalysisService.analyzeAndSaveArticle(request, forceRegenerate);
+        } else {
+            response = aiAnalysisService.analyzeArticle(request);
+        }
+        
         return ResponseEntity.ok(response);
     }
 
     /**
-     * 全文翻译接口
-     * <p>
-     * 将英文文章全文翻译成中文，使用DeepSeek大模型确保翻译质量
-     * 添加异常处理和更准确的错误返回
-     * </p>
-     * 
-     * @param text 英文文章内容
-     * @return 翻译结果响应
+     * 【核心API】批量文章分析
      */
-    @GetMapping("/translate/full")
-    public ResponseEntity<Map<String, Object>> translateFullText(@RequestParam("text") String text) {
-        Map<String, Object> response = new HashMap<>();
+    @PostMapping("/analyze/batch")
+    @Operation(
+        summary = "【批量分析】多文章统一处理", 
+        description = "批量分析多篇文章，自动选择最佳分析策略"
+    )
+    public ResponseEntity<Map<String, Object>> analyzeBatch(
+            @RequestBody ArticleAnalysisRequest[] requests,
+            @RequestParam(value = "save", defaultValue = "false") boolean save) {
         
-        try {
-            if (text == null || text.trim().isEmpty()) {
-                response.put("code", 400);
-                response.put("message", "翻译内容不能为空");
-                response.put("data", null);
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            if (text.length() > 5000) {
-                response.put("code", 400);
-                response.put("message", "翻译内容过长，请分段翻译");
-                response.put("data", null);
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            String translation = aiAnalysisService.translateToChinese(text);
-            
-            // 检查是否是错误提示
-            if (translation.contains("翻译服务暂时不可用")) {
-                response.put("code", 503);
-                response.put("message", translation);
-                response.put("data", null);
-                return ResponseEntity.status(503).body(response);
-            }
-            
-            response.put("code", 200);
-            response.put("message", "翻译成功");
-            response.put("data", translation);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("翻译接口调用失败", e);
-            response.put("code", 500);
-            response.put("message", "翻译服务异常，请稍后重试");
-            response.put("data", null);
-            return ResponseEntity.status(500).body(response);
-        }
-    }
-    @PostMapping("/translate/full")
-    @Operation(
-        summary = "【全文翻译-标准Token】英文秒变中文", 
-        description = "逐句精译英文全文，地道中文翻译，适合需要完整理解的文章（标准Token消耗）"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "翻译成功"),
-        @ApiResponse(responseCode = "400", description = "输入内容为空"),
-        @ApiResponse(responseCode = "500", description = "翻译服务异常")
-    })
-    public ResponseEntity<String> translateFull(
-            @Parameter(description = "英文内容", example = "Artificial intelligence is revolutionizing healthcare...") 
-            @RequestBody String englishText) {
-        String translation = aiAnalysisService.translateToChinese(englishText);
-        return ResponseEntity.ok(translation);
-    }
-
-    @PostMapping("/extract/summary")
-    @Operation(
-        summary = "【智能摘要-省80%Token】100字说清全文", 
-        description = "AI浓缩英文长文为100字内中文精华，节省80% Token，一眼看懂文章主旨"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "摘要生成成功"),
-        @ApiResponse(responseCode = "400", description = "输入内容为空")
-    })
-    public ResponseEntity<String> extractSummary(
-            @Parameter(description = "文章内容", example = "文章内容...") 
-            @RequestBody String content) {
-        String summary = aiAnalysisService.generateSummary(content);
-        return ResponseEntity.ok(summary);
-    }
-
-    @PostMapping("/extract/keywords")
-    @Operation(
-        summary = "【关键词提取-省90%Token】5秒抓重点", 
-        description = "AI识别文章5-8个核心关键词，节省90% Token，5秒快速抓住文章重点"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "关键词提取成功"),
-        @ApiResponse(responseCode = "400", description = "输入内容为空")
-    })
-    public ResponseEntity<List<String>> extractKeywords(
-            @Parameter(description = "文章内容", example = "文章内容...") 
-            @RequestBody String content) {
-        List<String> keywords = aiAnalysisService.extractKeywords(content);
-        return ResponseEntity.ok(keywords);
-    }
-
-    @GetMapping("/health")
-    @Operation(
-        summary = "【系统自检】AI服务状态检测", 
-        description = "一键检测AI服务是否在线，DeepSeek大模型是否正常工作"
-    )
-    @ApiResponse(responseCode = "200", description = "服务运行正常")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("AI服务运行正常 - DeepSeek API已连接");
-    }
-
-    @PostMapping("/quick/summary")
-    @Operation(
-        summary = "【速读模式-省70%Token】长文5分钟速览", 
-        description = "适合800-1500字文章，智能截断前400字符，节省70% Token，5分钟掌握核心要点"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "快速分析成功", 
-                    content = @Content(schema = @Schema(implementation = ArticleAnalysisResponse.class))),
-        @ApiResponse(responseCode = "400", description = "请求参数错误")
-    })
-    public ResponseEntity<ArticleAnalysisResponse> quickSummary(@Valid @RequestBody ArticleAnalysisRequest request) {
-        ArticleAnalysisResponse response = aiAnalysisService.quickAnalyze(request);
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", requests.length);
+        response.put("processed", 0); // 简化实现
+        response.put("message", "批量分析功能开发中");
+        
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/smart/sampling")
+    /**
+     * 【状态API】检查分析状态
+     */
+    @GetMapping("/status/{articleId}")
     @Operation(
-        summary = "【智能抽样-省65%Token】超长文高效阅读", 
-        description = "适合1500字以上超长文，AI智能分析前30%内容抽样，节省65% Token，高效掌握精髓"
+        summary = "【状态查询】检查文章分析状态", 
+        description = "检查指定文章是否已存在分析结果"
     )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "分段分析成功", 
-                    content = @Content(schema = @Schema(implementation = ArticleAnalysisResponse.class))),
-        @ApiResponse(responseCode = "400", description = "请求参数错误")
-    })
-    public ResponseEntity<ArticleAnalysisResponse> smartSampling(@Valid @RequestBody ArticleAnalysisRequest request) {
-        ArticleAnalysisResponse response = aiAnalysisService.chunkedAnalyze(request);
+    public ResponseEntity<Map<String, Object>> checkAnalysisStatus(
+            @PathVariable @Parameter(description = "文章ID", example = "123") Long articleId) {
+        
+        boolean exists = enhancedAiAnalysisService.isArticleAnalyzed(articleId);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("articleId", articleId);
+        response.put("analyzed", exists);
+        response.put("message", exists ? "文章已分析" : "文章未分析");
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 【数据API】获取分析结果
+     */
+    @GetMapping("/result/{articleId}")
+    @Operation(
+        summary = "【结果获取】获取已保存的分析结果", 
+        description = "从数据库获取文章的已保存分析结果"
+    )
+    public ResponseEntity<ArticleAnalysisResponse> getAnalysisResult(
+            @PathVariable @Parameter(description = "文章ID", example = "123") Long articleId) {
+        
+        ArticleAnalysisResponse response = enhancedAiAnalysisService.getArticleAnalysis(articleId);
+        
+        if (response == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 【数据API】删除分析结果
+     */
+    @DeleteMapping("/result/{articleId}")
+    @Operation(
+        summary = "【数据删除】删除已保存的分析结果", 
+        description = "从数据库删除指定文章的AI分析结果"
+    )
+    public ResponseEntity<Map<String, Object>> deleteAnalysisResult(
+            @PathVariable @Parameter(description = "文章ID", example = "123") Long articleId) {
+        
+        boolean deleted = enhancedAiAnalysisService.deleteArticleAnalysis(articleId);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("articleId", articleId);
+        response.put("deleted", deleted);
+        response.put("message", deleted ? "删除成功" : "删除失败或记录不存在");
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 【系统API】服务健康检查
+     */
+    @GetMapping("/health")
+    @Operation(
+        summary = "【系统自检】AI服务状态检测", 
+        description = "一键检测AI服务是否在线"
+    )
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "healthy");
+        response.put("service", "AI分析服务");
+        response.put("version", "3.0.0");
+        response.put("features", new String[]{"智能分析", "数据持久化", "批量处理"});
+        
         return ResponseEntity.ok(response);
     }
 }

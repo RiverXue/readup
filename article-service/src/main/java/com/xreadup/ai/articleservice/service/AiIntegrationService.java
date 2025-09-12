@@ -4,76 +4,105 @@ import com.xreadup.ai.articleservice.client.AiServiceClient;
 import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.articleservice.model.entity.Article;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * AI集成服务
- * 负责文章服务与AI服务的集成调用
+ * AI集成服务 - 重构版
+ * 适配新的统一API接口，移除冗余调用
+ * 
+ * @version 3.0.0
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class AiIntegrationService {
 
-    private final AiServiceClient aiServiceClient;
+    @Autowired
+    private AiServiceClient aiServiceClient;
 
     /**
-     * 分析文章内容并获取AI分析结果
-     * @param article 文章实体
-     * @return AI分析结果
+     * 【统一分析】智能选择分析策略
+     * 自动根据文章长度选择最佳分析方式
+     */
+    public ArticleAnalysisResponse analyzeArticle(Article article, boolean save, boolean forceRegenerate) {
+        log.info("开始分析文章: {}, 保存: {}, 强制重新生成: {}", 
+                article.getId(), save, forceRegenerate);
+        
+        ArticleAnalysisRequest request = buildAnalysisRequest(article);
+        
+        return aiServiceClient.analyzeArticle(request, save, forceRegenerate);
+    }
+
+    /**
+     * 【传统模式】仅分析不保存
      */
     public ArticleAnalysisResponse analyzeArticle(Article article) {
+        return analyzeArticle(article, false, false);
+    }
+
+    /**
+     * 【增强模式】分析并保存
+     */
+    public ArticleAnalysisResponse analyzeAndSaveArticle(Article article) {
+        return analyzeArticle(article, true, false);
+    }
+
+    /**
+     * 【强制模式】强制重新分析并保存
+     */
+    public ArticleAnalysisResponse forceRegenerateAnalysis(Article article) {
+        return analyzeArticle(article, true, true);
+    }
+
+    /**
+     * 检查文章分析状态
+     */
+    public boolean isArticleAnalyzed(Long articleId) {
         try {
-            ArticleAnalysisRequest request = buildAnalysisRequest(article);
-            log.info("开始分析文章: {} (ID: {})", article.getTitle(), article.getId());
-            
-            // 根据文章长度选择合适的分析策略
-            if (article.getWordCount() > 2000) {
-                // 长文章使用分段分析
-                log.info("文章较长({}字)，使用分段分析", article.getWordCount());
-                return aiServiceClient.chunkedAnalyze(request);
-            } else if (article.getWordCount() > 1000) {
-                // 中等长度文章使用快速分析
-                log.info("文章中等长度({}字)，使用快速分析", article.getWordCount());
-                return aiServiceClient.quickAnalyze(request);
-            } else {
-                // 短文章使用完整分析
-                log.info("文章较短({}字)，使用完整分析", article.getWordCount());
-                return aiServiceClient.analyzeArticle(request);
-            }
+            var status = aiServiceClient.checkAnalysisStatus(articleId);
+            return Boolean.TRUE.equals(status.get("analyzed"));
         } catch (Exception e) {
-            log.error("AI分析文章失败: {} (ID: {})", article.getTitle(), article.getId(), e);
-            return createFallbackResponse();
+            log.error("检查文章分析状态失败: {}", articleId, e);
+            return false;
         }
     }
 
     /**
-     * 构建文章分析请求
-     * @param article 文章实体
-     * @return 分析请求对象
+     * 获取已保存的分析结果
      */
-    private ArticleAnalysisRequest buildAnalysisRequest(Article article) {
-        return new ArticleAnalysisRequest(
-            article.getTitle(),
-            article.getContentEn(),
-            article.getCategory(),
-            article.getWordCount()
-        );
+    public ArticleAnalysisResponse getAnalysisResult(Long articleId) {
+        try {
+            return aiServiceClient.getAnalysisResult(articleId);
+        } catch (Exception e) {
+            log.error("获取分析结果失败: {}", articleId, e);
+            return null;
+        }
     }
 
     /**
-     * 创建降级响应，当AI服务不可用时使用
-     * @return 默认分析结果
+     * 删除已保存的分析结果
      */
-    private ArticleAnalysisResponse createFallbackResponse() {
-        ArticleAnalysisResponse response = new ArticleAnalysisResponse();
-        response.setDifficultyLevel("B2");
-        response.setSummary("AI分析暂时不可用，请稍后重试");
-        response.setChineseTranslation("翻译服务暂时不可用");
-        response.setSimplifiedContent("Analysis temporarily unavailable");
-        response.setReadabilityScore(70.0);
-        return response;
+    public boolean deleteAnalysisResult(Long articleId) {
+        try {
+            var result = aiServiceClient.deleteAnalysisResult(articleId);
+            return Boolean.TRUE.equals(result.get("deleted"));
+        } catch (Exception e) {
+            log.error("删除分析结果失败: {}", articleId, e);
+            return false;
+        }
+    }
+
+    /**
+     * 构建分析请求
+     */
+    private ArticleAnalysisRequest buildAnalysisRequest(Article article) {
+        return new ArticleAnalysisRequest(
+            article.getId(),
+            article.getTitle(),
+            article.getContentEn(),
+            article.getCategory(),
+            article.getContentEn() != null ? article.getContentEn().length() : 0
+        );
     }
 }

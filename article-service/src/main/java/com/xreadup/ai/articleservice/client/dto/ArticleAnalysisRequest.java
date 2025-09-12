@@ -13,6 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ArticleAnalysisRequest {
     /**
+     * 文章ID
+     */
+    private Long articleId;
+    
+    /**
      * 文章标题
      */
     private String title;
