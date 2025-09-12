@@ -1,7 +1,9 @@
-# 用户服务Nacos配置 - 仅用于服务发现
+# 用户服务Nacos配置 - 服务发现 + 配置中心
 spring:
   application:
     name: user-service
+  profiles:
+    active: dev
   cloud:
     nacos:
       server-addr: localhost:8848
@@ -10,5 +12,22 @@ spring:
       discovery:
         namespace: public
         group: DEFAULT_GROUP
-        metadata:
-          management.context-path: /actuator
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        namespace: public
+        group: DEFAULT_GROUP
+        username: nacos
+        password: nacos
+        refresh-enabled: true
+        shared-configs:
+          - data-id: shared-mysql-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true
+          - data-id: shared-redis-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true
+        extension-configs:
+          - data-id: user-service-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true
