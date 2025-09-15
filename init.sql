@@ -42,6 +42,25 @@ CREATE TABLE `article`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
+-- AI分析表（新增）
+CREATE TABLE `ai_analysis`
+(
+    `id`                 BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `article_id`         BIGINT       NOT NULL COMMENT '文章ID',
+    `title`              VARCHAR(200) COMMENT '文章标题',
+    `difficulty_level`   VARCHAR(10) COMMENT '难度等级：A1/A2/B1/B2/C1/C2',
+    `keywords`           JSON COMMENT '关键词列表（JSON格式）',
+    `summary`            TEXT COMMENT '文章摘要',
+    `chinese_translation` LONGTEXT COMMENT '中文翻译',
+    `simplified_content` LONGTEXT COMMENT '简化内容',
+    `key_phrases`        JSON COMMENT '关键短语（JSON格式）',
+    `readability_score`  DECIMAL(5,2) COMMENT '可读性评分',
+    `word_translations`  LONGTEXT COMMENT '选词翻译结果（JSON格式存储多个翻译结果）',
+    `created_at`         DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`         DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY `uk_article_id` (`article_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='AI文章分析结果表';
 
 CREATE TABLE `word`
 (
@@ -49,12 +68,15 @@ CREATE TABLE `word`
     `user_id`           BIGINT       NOT NULL,
     `word`              VARCHAR(100) NOT NULL COMMENT '单词',
     `meaning`           VARCHAR(500) COMMENT '释义',
+    `example`           TEXT COMMENT '例句',
+    `context`           VARCHAR(100) COMMENT '上下文（如：金融/科技/地理）',
+    `source`            VARCHAR(50) COMMENT '来源：local/ai',
     `source_article_id` BIGINT COMMENT '来源文章ID',
     `review_status`     VARCHAR(20) DEFAULT 'new' COMMENT '复习状态：new/learning/mastered',
     `last_reviewed_at`  DATETIME     NULL COMMENT '上次复习时间',
     `next_review_at`    DATETIME     NULL COMMENT '下次复习时间',
     `added_at`          DATETIME    DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY `uk_user_word` (`user_id`, `word`)
+    UNIQUE KEY `uk_user_word_context` (`user_id`, `word`, `context`) -- 同一单词不同上下文可存多条
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 

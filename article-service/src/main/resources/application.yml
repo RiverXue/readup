@@ -47,35 +47,6 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
-# Knife4j配置
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    tags-sorter: alpha
-    operations-sorter: alpha
-  group-configs:
-    - group: 'default'
-      paths-to-match: '/**'
-      packages-to-scan: com.xreadup.ai.articleservice.controller
-
-# Knife4j增强配置
-knife4j:
-  enable: true
-  openapi:
-    title: 文章服务API文档
-    description: 文章服务RESTful API接口文档
-    version: 1.0.0
-    group:
-      default:
-        group-name: 文章管理
-        api-rule: package
-        api-rule-resources:
-          - com.xreadup.ai.articleservice.controller
-
-# Nacos配置
-
 # 日志配置
 logging:
   level:
@@ -95,4 +66,60 @@ article:
   cache:
     article-ttl: 3600  # 文章缓存1小时
     list-ttl: 1800     # 列表缓存30分钟
+
+
+# 腾讯云配置 - 已迁移到AI服务
+# 文章服务不再直接处理翻译，统一通过AI服务进行
+
+# AI翻译配置
+ai:
+  translation:
+    enabled: true
+    service-url: ${AI_SERVICE_URL:http://localhost:8084}
+    timeout: 10000
+    max-retries: 2
+    cache:
+      enabled: true
+      ttl: 7200  # AI翻译结果缓存2小时
+      max-size: 5000
+
+# 阅读体验配置
+reading:
+  experience:
+    enabled: true
+    learning-mode: true
+    collaborative-mode: true
+    quality-assessment: true
+    cache:
+      enabled: true
+      ttl: 1800  # 阅读体验缓存30分钟
+      max-size: 2000
+
+# 翻译服务配置
+translation:
+  services:
+    primary: tencent  # 主翻译服务：腾讯云
+    fallback: ai     # 备用翻译服务：AI
+    timeout: 8000
+    retry-policy:
+      max-attempts: 3
+      backoff-delay: 1000
+    cache:
+      enabled: true
+      ttl: 3600
+      max-size: 10000
+  
+  # 新翻译系统配置
+  new:
+    enabled: true
+    cache:
+      enabled: true
+      ttl: 7200  # 新翻译系统缓存2小时
+      max-size: 10000
+    logging:
+      enabled: true
+      level: INFO
+    metrics:
+      enabled: true
+      collect-interval: 300000  # 5分钟收集一次
 

@@ -4,21 +4,11 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.License;
-import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class Knife4jConfig {
-
-    @Bean
-    public GroupedOpenApi publicApi() {
-        return GroupedOpenApi.builder()
-                .group("ai-service")
-                .packagesToScan("com.xreadup.ai.controller")
-                .pathsToMatch("/**")
-                .build();
-    }
 
     @Bean
     public OpenAPI customOpenAPI() {

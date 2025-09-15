@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8080  # 统一网关端口 - 所有服务唯一入口
 
 spring:
   application:

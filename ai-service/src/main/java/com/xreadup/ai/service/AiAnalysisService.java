@@ -3,6 +3,10 @@ package com.xreadup.ai.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xreadup.ai.model.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.model.dto.ArticleAnalysisResponse;
+import com.xreadup.ai.model.dto.WordTranslationRequest;
+import com.xreadup.ai.model.dto.WordTranslationResponse;
+import com.xreadup.ai.model.dto.SentenceParseResponse;
+import com.xreadup.ai.model.dto.QuizQuestion;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -143,37 +148,164 @@ public class AiAnalysisService {
     }
 
     /**
-     * 英文翻译中文
+     * 全文翻译 - 将英文内容完整翻译成中文
      * <p>
-     * 使用DeepSeek大模型将英文内容翻译成地道、准确的中文
-     * 添加异常处理和降级策略
+     * 使用DeepSeek大模型将完整的英文文章内容翻译成地道、准确的中文
+     * 保持原文格式和段落结构
      * </p>
      * 
      * @param englishText 英文内容
-     * @return 中文翻译结果，如果API失败则返回友好的错误提示
+     * @return 中文全文翻译结果，如果API失败则返回友好的错误提示
      */
-    public String translateToChinese(String englishText) {
+    public String translateFullText(String englishText) {
         try {
             if (englishText == null || englishText.trim().isEmpty()) {
                 return "翻译内容不能为空";
             }
             
-            if (englishText.length() > 5000) {
-                return "翻译内容过长，请分段翻译";
+            if (englishText.length() > 10000) {
+                return handleLargeTextTranslation(englishText);
             }
             
             String translation = chatClient.prompt()
-                .system("你是一个专业的中英翻译专家，请将英文翻译成准确、流畅的中文。")
-                .user("请将以下英文内容翻译成地道的中文：\n\n" + englishText)
+                .system("你是一个专业的中英翻译专家，请将英文文章完整翻译成准确、流畅的中文。" +
+                       "保持原文的段落结构和格式，确保翻译准确且自然。")
+                .user("请将以下英文内容完整翻译成中文：\n\n" + englishText)
                 .call()
                 .content();
             
             return translation != null ? translation : "翻译服务暂时不可用，请稍后重试";
             
         } catch (Exception e) {
-            log.error("翻译服务调用失败", e);
+            log.error("全文翻译服务调用失败", e);
             return "翻译服务暂时不可用，请稍后重试";
         }
+    }
+
+    /**
+     * 选词翻译 - 提供单词的详细翻译和解释
+     * <p>
+     * 根据上下文提供单词的准确翻译、音标、词性、释义、例句等完整信息
+     * </p>
+     * 
+     * @param request 选词翻译请求
+     * @return 单词的详细翻译信息
+     */
+    public WordTranslationResponse translateWord(WordTranslationRequest request) {
+        try {
+            String prompt = String.format(
+                "请为以下英文单词提供详细的翻译和解释：\n\n" +
+                "单词：%s\n" +
+                "上下文：%s\n\n" +
+                "请提供以下信息：\n" +
+                "1. 准确的中文翻译\n" +
+                "2. 音标（英式发音）\n" +
+                "3. 词性\n" +
+                "4. 英文释义\n" +
+                "5. 中文释义\n" +
+                "6. 例句（英文）\n" +
+                "7. 例句中文翻译\n" +
+                "8. 常见同义词（3-5个）\n" +
+                "9. CEFR难度等级（A1-C2）\n\n" +
+                "请以JSON格式返回，包含字段：chinese, phonetic, partOfSpeech, definition, chineseDefinition, example, exampleChinese, synonyms, difficultyLevel",
+                request.getWord(),
+                request.getContext()
+            );
+            
+            String response = chatClient.prompt()
+                .system("你是一个专业的英语词典专家，请提供准确、详细的单词解释。")
+                .user(prompt)
+                .call()
+                .content();
+            
+            return parseWordTranslationResponse(response, request.getWord());
+            
+        } catch (Exception e) {
+            log.error("选词翻译服务调用失败", e);
+            return createFallbackWordResponse(request.getWord());
+        }
+    }
+
+    /**
+     * 处理大文本翻译（分段处理）
+     */
+    private String handleLargeTextTranslation(String englishText) {
+        try {
+            int chunkSize = 3000;
+            StringBuilder fullTranslation = new StringBuilder();
+            
+            for (int i = 0; i < englishText.length(); i += chunkSize) {
+                int end = Math.min(i + chunkSize, englishText.length());
+                String chunk = englishText.substring(i, end);
+                
+                String chunkTranslation = chatClient.prompt()
+                    .system("你是一个专业的中英翻译专家，请将英文段落翻译成中文。" +
+                           "确保翻译准确流畅，保持上下文的连贯性。")
+                    .user("翻译：\n" + chunk)
+                    .call()
+                    .content();
+                
+                if (chunkTranslation != null) {
+                    fullTranslation.append(chunkTranslation).append("\n\n");
+                }
+            }
+            
+            return fullTranslation.toString();
+            
+        } catch (Exception e) {
+            log.error("大文本翻译失败", e);
+            return "文本过长，翻译失败，请稍后重试";
+        }
+    }
+
+    /**
+     * 解析选词翻译响应
+     */
+    private WordTranslationResponse parseWordTranslationResponse(String response, String word) {
+        try {
+            // 清理响应
+            String cleanResponse = response.trim();
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            }
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+            cleanResponse = cleanResponse.trim();
+            
+            // 使用ObjectMapper解析JSON
+            return objectMapper.readValue(cleanResponse, WordTranslationResponse.class);
+            
+        } catch (Exception e) {
+            log.error("解析选词翻译响应失败: {}", response, e);
+            return createFallbackWordResponse(word);
+        }
+    }
+
+    /**
+     * 创建降级响应
+     */
+    private WordTranslationResponse createFallbackWordResponse(String word) {
+        WordTranslationResponse response = new WordTranslationResponse();
+        response.setWord(word);
+        response.setChinese("翻译暂时不可用");
+        response.setPhonetic("/" + word + "/");
+        response.setPartOfSpeech("未知");
+        response.setDefinition("Translation temporarily unavailable");
+        response.setChineseDefinition("翻译暂时不可用");
+        response.setExample("Translation service is temporarily unavailable.");
+        response.setExampleChinese("翻译服务暂时不可用");
+        response.setSynonyms(Arrays.asList("-"));
+        response.setDifficultyLevel("未知");
+        return response;
+    }
+
+    /**
+     * 英文翻译中文 - 已废弃，使用translateFullText替代
+     */
+    @Deprecated
+    public String translateToChinese(String englishText) {
+        return translateFullText(englishText);
     }
 
     /**
@@ -210,6 +342,200 @@ public class AiAnalysisService {
             .content();
         
         return Arrays.asList(keywordsText.split(","));
+    }
+
+    /**
+     * 句子解析（DeepSeek）
+     * <p>
+     * 使用AI对英文长句进行深度解析，包括语法结构、核心含义、关键词汇等
+     * </p>
+     * 
+     * @param sentence 需要解析的英文句子
+     * @return 句子解析结果，包含语法结构、核心含义、关键词汇等
+     */
+    public SentenceParseResponse parseSentence(String sentence) {
+        try {
+            String prompt = String.format(
+                "请对以下英文句子进行深度解析：\n\n" +
+                "句子：%s\n\n" +
+                "请提供以下信息：\n" +
+                "1. 句子结构分析（主谓宾、从句结构等）\n" +
+                "2. 语法要点解析（时态、语态、虚拟语气等）\n" +
+                "3. 核心含义的中文解释\n" +
+                "4. 关键词汇解析（生词、短语、习语）\n" +
+                "5. 学习建议（如何理解这类句子）\n\n" +
+                "请以JSON格式返回，包含字段：originalSentence, sentenceStructure, grammar, meaning, keyVocabulary, grammarPoints, learningTip",
+                sentence
+            );
+
+            String response = chatClient.prompt()
+                .system("你是一个专业的英语语法专家，请提供准确、详细的句子解析。")
+                .user(prompt)
+                .call()
+                .content();
+
+            return parseSentenceResponse(response, sentence);
+
+        } catch (Exception e) {
+            log.error("句子解析服务调用失败", e);
+            return createFallbackSentenceResponse(sentence);
+        }
+    }
+
+    /**
+     * 生成测验题（DeepSeek）
+     * <p>
+     * 使用AI根据文章内容生成阅读理解测验题
+     * </p>
+     * 
+     * @param text 文章内容
+     * @param questionCount 题目数量
+     * @return 测验题列表
+     */
+    public List<QuizQuestion> generateQuiz(String text, Integer questionCount) {
+        try {
+            String prompt = String.format(
+                "请根据以下文章内容生成%d道阅读理解测验题：\n\n" +
+                "文章内容：%s\n\n" +
+                "要求：\n" +
+                "1. 题目类型：阅读理解题\n" +
+                "2. 每题包含：问题、4个选项、正确答案、答案解析\n" +
+                "3. 难度适中，考察对文章的理解\n" +
+                "4. 题目要有针对性，避免过于简单\n\n" +
+                "请以JSON数组格式返回，每个对象包含字段：id, question, options, correctAnswer, correctAnswerText, explanation, questionType, difficulty",
+                questionCount, text
+            );
+
+            String response = chatClient.prompt()
+                .system("你是一个专业的英语阅读理解出题专家，请生成高质量的测验题。")
+                .user(prompt)
+                .call()
+                .content();
+
+            return parseQuizResponse(response);
+
+        } catch (Exception e) {
+            log.error("生成测验题服务调用失败", e);
+            return createFallbackQuizQuestions(questionCount);
+        }
+    }
+
+    /**
+     * 生成学习建议（DeepSeek）
+     * <p>
+     * 使用AI根据用户学习数据生成个性化学习建议
+     * </p>
+     * 
+     * @param articleCount 已读文章数量
+     * @param wordCount 已学词汇数量
+     * @param learningDays 连续学习天数
+     * @return 个性化学习建议
+     */
+    public String generateLearningTip(Integer articleCount, Integer wordCount, Integer learningDays) {
+        try {
+            String prompt = String.format(
+                "请根据以下用户学习数据生成个性化学习建议：\n\n" +
+                "已读文章数量：%d篇\n" +
+                "已学词汇数量：%d个\n" +
+                "连续学习天数：%d天\n\n" +
+                "要求：\n" +
+                "1. 分析用户当前学习状态\n" +
+                "2. 指出学习中的优点和不足\n" +
+                "3. 提供具体的学习建议\n" +
+                "4. 建议要实用、具体、可操作\n" +
+                "5. 用中文回答，100字左右\n\n" +
+                "请直接返回学习建议文本。",
+                articleCount, wordCount, learningDays
+            );
+
+            return chatClient.prompt()
+                .system("你是一个专业的英语学习指导专家，请提供实用、具体的学习建议。")
+                .user(prompt)
+                .call()
+                .content();
+
+        } catch (Exception e) {
+            log.error("生成学习建议服务调用失败", e);
+            return "根据您的学习情况，建议保持每日阅读习惯，重点关注长难句的理解和词汇积累。";
+        }
+    }
+
+    /**
+     * 解析句子解析响应
+     */
+    private SentenceParseResponse parseSentenceResponse(String response, String sentence) {
+        try {
+            String cleanResponse = response.trim();
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            }
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+            cleanResponse = cleanResponse.trim();
+            
+            return objectMapper.readValue(cleanResponse, SentenceParseResponse.class);
+        } catch (Exception e) {
+            log.error("解析句子解析响应失败: {}", response, e);
+            return createFallbackSentenceResponse(sentence);
+        }
+    }
+
+    /**
+     * 解析测验题响应
+     */
+    private List<QuizQuestion> parseQuizResponse(String response) {
+        try {
+            String cleanResponse = response.trim();
+            if (cleanResponse.startsWith("```json")) {
+                cleanResponse = cleanResponse.substring(7);
+            }
+            if (cleanResponse.endsWith("```")) {
+                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
+            }
+            cleanResponse = cleanResponse.trim();
+            
+            QuizQuestion[] questions = objectMapper.readValue(cleanResponse, QuizQuestion[].class);
+            return Arrays.asList(questions);
+        } catch (Exception e) {
+            log.error("解析测验题响应失败: {}", response, e);
+            return createFallbackQuizQuestions(5);
+        }
+    }
+
+    /**
+     * 创建句子解析降级响应
+     */
+    private SentenceParseResponse createFallbackSentenceResponse(String sentence) {
+        SentenceParseResponse response = new SentenceParseResponse();
+        response.setOriginalSentence(sentence);
+        response.setSentenceStructure("句子结构分析暂时不可用");
+        response.setGrammar("语法分析暂时不可用");
+        response.setMeaning("核心含义暂时无法解析");
+        response.setKeyVocabulary(List.of("词汇解析暂时不可用"));
+        response.setGrammarPoints(List.of("语法要点暂时无法提供"));
+        response.setLearningTip("建议稍后重试句子解析功能");
+        return response;
+    }
+
+    /**
+     * 创建测验题降级响应
+     */
+    private List<QuizQuestion> createFallbackQuizQuestions(int count) {
+        List<QuizQuestion> questions = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            QuizQuestion question = new QuizQuestion();
+            question.setId(String.valueOf(i + 1));
+            question.setQuestion("测验题生成暂时不可用，请稍后重试");
+            question.setOptions(Arrays.asList("选项A", "选项B", "选项C", "选项D"));
+            question.setCorrectAnswer(0);
+            question.setCorrectAnswerText("暂无正确答案");
+            question.setExplanation("测验题生成服务暂时不可用");
+            question.setQuestionType("comprehension");
+            question.setDifficulty("medium");
+            questions.add(question);
+        }
+        return questions;
     }
 
     // ===== 新增Token优化方法 =====

@@ -9,6 +9,7 @@ import com.xreadup.ai.userservice.mapper.ReadingStreakMapper;
 import com.xreadup.ai.userservice.mapper.UserMapper;
 import com.xreadup.ai.userservice.mapper.WordMapper;
 import com.xreadup.ai.userservice.service.UserService;
+import com.xreadup.ai.userservice.service.VocabularyService;
 import com.xreadup.ai.userservice.util.JwtUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class UserServiceImpl implements UserService {
     private WordMapper wordMapper;
     
     @Autowired
+    private VocabularyService vocabularyService;
+    
+    @Autowired
     private ReadingStreakMapper readingStreakMapper;
     
     @Autowired
@@ -42,6 +46,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User register(UserRegisterRequest request) {
+        // 邮箱格式验证（毕设简化版）
+        if (!request.getEmail().matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
+            throw new RuntimeException("邮箱格式错误");
+        }
+        
+        // 检查邮箱是否已存在
+        if (existsByEmail(request.getEmail())) {
+            throw new RuntimeException("该邮箱已被注册");
+        }
+        
         // 检查用户名是否已存在
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername, request.getUsername());
@@ -54,10 +68,37 @@ public class UserServiceImpl implements UserService {
         
         // 密码加密
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setEmailVerified(true);  // 毕设简化：直接验证通过
         user.setCreatedAt(LocalDateTime.now());
         
         userMapper.insert(user);
         return user;
+    }
+    
+    @Override
+    public void activateUser(String email) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getEmail, email);
+        
+        User user = userMapper.selectOne(wrapper);
+        if (user != null) {
+            user.setEmailVerified(true);
+            userMapper.updateById(user);
+        }
+    }
+    
+    @Override
+    public boolean existsByEmail(String email) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getEmail, email);
+        return userMapper.selectCount(wrapper) > 0;
+    }
+    
+    @Override
+    public User findByEmail(String email) {
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getEmail, email);
+        return userMapper.selectOne(wrapper);
     }
 
     @Override
@@ -82,23 +123,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Word addWord(AddWordRequest request) {
-        // 检查是否已存在
-        LambdaQueryWrapper<Word> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Word::getUserId, request.getUserId())
-               .eq(Word::getWord, request.getWord());
-        
-        Word existing = wordMapper.selectOne(wrapper);
-        if (existing != null) {
-            return existing;
-        }
-        
-        Word word = new Word();
-        BeanUtils.copyProperties(request, word);
-        word.setReviewStatus("new");
-        word.setAddedAt(LocalDateTime.now());
-        
-        wordMapper.insert(word);
-        return word;
+        // 使用二级词库策略
+        return vocabularyService.lookupWord(
+            request.getWord(), 
+            request.getContext(), 
+            request.getUserId(), 
+            request.getSourceArticleId()
+        );
     }
 
     @Override

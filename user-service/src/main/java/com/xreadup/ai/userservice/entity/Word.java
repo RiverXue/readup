@@ -22,6 +22,12 @@ public class Word {
     
     private String meaning;
     
+    private String example; // 例句
+    
+    private String context; // 上下文（如：金融/科技/地理）
+    
+    private String source; // 来源：local/ai
+    
     private Long sourceArticleId;
     
     private String reviewStatus;

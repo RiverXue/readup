@@ -15,13 +15,13 @@ public class Knife4jConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("文章服务API")
-                        .version("1.0")
+                        .version("1.0.0")
                         .description("文章服务RESTful API文档")
                         .contact(new Contact()
                                 .name("XReadUp Team")
                                 .email("support@xreadup.com"))
                         .license(new License()
                                 .name("Apache 2.0")
-                                .url("http://springdoc.org")));
+                                .url("https://www.apache.org/licenses/LICENSE-2.0")));
     }
 }

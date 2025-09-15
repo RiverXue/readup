@@ -1,7 +1,9 @@
 package com.xreadup.ai.userservice.controller;
 
 import com.xreadup.ai.userservice.dto.*;
+import com.xreadup.ai.userservice.entity.User;
 import com.xreadup.ai.userservice.entity.Word;
+import com.xreadup.ai.userservice.service.EmailService;
 import com.xreadup.ai.userservice.service.UserService;
 import com.xreadup.ai.userservice.util.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户控制器
@@ -27,17 +30,36 @@ public class UserController {
     
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private EmailService emailService;
 
     /**
      * 用户注册
      */
     @PostMapping("/register")
-    @Operation(summary = "用户注册", description = "新用户注册接口")
+    @Operation(summary = "用户注册", description = "新用户注册接口，注册后需验证邮箱")
     public ResponseEntity<?> register(@RequestBody UserRegisterRequest request) {
         try {
-            return ResponseEntity.ok(new ApiResponse(200, "注册成功", userService.register(request)));
+            User user = userService.register(request);
+            
+            // 发送验证邮件
+            emailService.sendVerificationEmail(user.getEmail(), user.getUsername());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "注册成功，请查收验证邮件",
+                "data", Map.of(
+                    "userId", user.getId(),
+                    "username", user.getUsername(),
+                    "email", user.getEmail()
+                )
+            ));
         } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
         }
     }
 

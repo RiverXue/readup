@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS ai_analysis (
     simplified_content LONGTEXT,
     key_phrases TEXT,
     readability_score DOUBLE,
+    word_translations TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_article_id (article_id),

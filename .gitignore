@@ -74,3 +74,4 @@ override/
 
 /mysql/data/
 /nacos/data/
+/article-service/libs/

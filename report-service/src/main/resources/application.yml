@@ -35,23 +35,22 @@ spring:
           min-idle: 0
           max-wait: -1ms
 
-  # MyBatis Plus配置
-  mybatis-plus:
-    configuration:
-      map-underscore-to-camel-case: true
-      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    global-config:
-      db-config:
-        id-type: auto
-        logic-delete-field: deleted
-        logic-delete-value: 1
-        logic-not-delete-value: 0
-        table-prefix: t_
-    mapper-locations: classpath*:mapper/**/*.xml
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      table-prefix: t_
 
 # 日志配置
 logging:
   level:
-    com.xreadup.reportservice: debug
+    com.xreadup.ai.report: debug
     com.baomidou.mybatisplus: info
     org.springframework.cloud: info

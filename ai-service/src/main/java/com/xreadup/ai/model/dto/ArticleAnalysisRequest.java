@@ -1,31 +1,46 @@
 package com.xreadup.ai.model.dto;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-
 import jakarta.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
+/**
+ * 文章分析请求DTO
+ * 
+ * @author XReadUp Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
 @Data
-@Schema(description = "文章分析请求DTO")
 public class ArticleAnalysisRequest {
     
-    @Schema(description = "文章ID", example = "123")
+    /**
+     * 文章ID
+     */
     @NotNull(message = "文章ID不能为空")
     private Long articleId;
     
-    @Schema(description = "文章标题", example = "AI Revolution in Healthcare")
+    /**
+     * 文章标题
+     */
     @NotBlank(message = "文章标题不能为空")
     private String title;
     
-    @Schema(description = "文章内容", example = "Artificial intelligence is transforming healthcare...")
+    /**
+     * 文章内容
+     */
     @NotBlank(message = "文章内容不能为空")
     private String content;
     
-    @Schema(description = "文章分类", example = "科技")
+    /**
+     * 文章分类
+     */
+    @NotBlank(message = "文章分类不能为空")
     private String category;
     
-    @Schema(description = "文章字数", example = "500")
+    /**
+     * 文章字数
+     */
     @NotNull(message = "文章字数不能为空")
     private Integer wordCount;
 }

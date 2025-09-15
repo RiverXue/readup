@@ -10,5 +10,6 @@ public class AddWordRequest {
     private Long userId;
     private String word;
     private String meaning;
+    private String context; // 上下文（如：金融/科技/地理）
     private Long sourceArticleId;
 }
