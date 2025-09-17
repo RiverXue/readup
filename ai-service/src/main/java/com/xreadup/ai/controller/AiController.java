@@ -77,6 +77,21 @@ public class AiController {
     @PostMapping("/translate/fulltext")
     public ApiResponse<TranslationResponse> translateFullText(@RequestBody TranslationRequest request) {
         try {
+            if (request == null) {
+                log.error("翻译请求为空");
+                return ApiResponse.error("翻译请求不能为空");
+            }
+            
+            if (request.getContent() == null || request.getContent().trim().isEmpty()) {
+                log.error("翻译内容为空");
+                return ApiResponse.error("翻译内容不能为空");
+            }
+            
+            if (request.getArticleId() == null) {
+                log.error("文章ID为空");
+                return ApiResponse.error("文章ID不能为空");
+            }
+            
             log.info("开始全文翻译: {} 字符", request.getContent().length());
             String translation = aiAnalysisService.translateFullText(request.getContent());
             

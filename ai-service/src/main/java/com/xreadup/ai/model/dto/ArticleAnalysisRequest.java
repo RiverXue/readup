@@ -9,7 +9,6 @@ import jakarta.validation.constraints.NotNull;
  * 
  * @author XReadUp Team
  * @version 1.0.0
- * @since 2024-01-01
  */
 @Data
 public class ArticleAnalysisRequest {

@@ -2,7 +2,7 @@
 
 ## 🎯 项目概览
 
-XReadUp是一个基于Spring Cloud 2024微服务架构的AI智能英语学习平台，集成了最新的**二级词库策略**和**Function Calling**功能，为用户提供个性化、智能化的英语学习体验。
+XReadUp是一个基于Spring Cloud 微服务架构的AI智能英语学习平台，集成了最新的**二级词库策略**和**Function Calling**功能，为用户提供个性化、智能化的英语学习体验。
 
 ## 🏗️ 系统架构
 

@@ -21,7 +21,7 @@ spring:
           predicates:
             - Path=/api/user/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -34,7 +34,7 @@ spring:
           predicates:
             - Path=/api/article/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -47,7 +47,7 @@ spring:
           predicates:
             - Path=/api/ai/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 5
@@ -60,7 +60,7 @@ spring:
           predicates:
             - Path=/api/report/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10

@@ -38,7 +38,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  * 
  * @author XReadUp Team
  * @version 2.0.0
- * @since 2024-01-01
  */
 @Service
 @Slf4j
@@ -346,8 +345,19 @@ public class EnhancedAiAnalysisService {
      */
     public String generateSummary(String text) {
         try {
+            if (text == null || text.trim().isEmpty()) {
+                log.error("生成文章摘要失败: 文本内容为空");
+                throw new IllegalArgumentException("生成文章摘要失败: 文本内容不能为空");
+            }
+            
             log.info("开始生成文章摘要: 文本长度={}字符", text.length());
             String summary = aiAnalysisService.generateSummary(text);
+            
+            if (summary == null || summary.trim().isEmpty()) {
+                log.error("生成文章摘要失败: 摘要内容为空");
+                throw new RuntimeException("生成文章摘要失败: 摘要内容为空");
+            }
+            
             log.info("文章摘要生成完成: 摘要长度={}字符", summary.length());
             return summary;
         } catch (Exception e) {

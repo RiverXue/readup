@@ -3,6 +3,7 @@ package com.xreadup.ai.articleservice.controller;
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
 import com.xreadup.ai.articleservice.model.dto.ManualDifficultyDTO;
 import com.xreadup.ai.articleservice.service.ArticleService;
+import com.xreadup.ai.articleservice.service.ScraperService;
 import com.xreadup.ai.articleservice.model.common.ApiResponse;
 import com.xreadup.ai.articleservice.model.common.PageResult;
 import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
@@ -12,6 +13,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 /**
  * 文章控制器
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class ArticleController {
 
     private final ArticleService articleService;
+    private final ScraperService scraperService;
 
     @GetMapping("/explore")
     @Operation(summary = "【文章发现】探索文章列表", 
@@ -66,5 +70,17 @@ public class ArticleController {
                description = "获取当前热点新闻文章")
     public ApiResponse<Object> discoverTrending(@RequestParam(defaultValue = "10") int limit) {
         return ApiResponse.success(articleService.refreshTopHeadlines(limit));
+    }
+    
+    @GetMapping("/extract-content")
+    @Operation(summary = "【内容提取】从URL提取可读内容", 
+               description = "使用Readability4J从指定URL提取文章的可读内容")
+    public ApiResponse<String> extractArticleContent(@RequestParam String url) {
+        Optional<String> content = scraperService.scrapeArticleContent(url);
+        if (content.isPresent()) {
+            return ApiResponse.success(content.get());
+        } else {
+            return ApiResponse.error("提取内容失败，请检查URL是否有效");
+        }
     }
 }

@@ -7,28 +7,13 @@ import com.xreadup.ai.userservice.entity.Word;
 import java.util.List;
 
 /**
- * 用户服务接口 - 新增邮箱验证功能
+ * 用户服务接口
  */
 public interface UserService {
     /**
-     * 用户注册（待验证状态）
+     * 用户注册
      */
     User register(UserRegisterRequest request);
-    
-    /**
-     * 激活用户邮箱
-     */
-    void activateUser(String email);
-    
-    /**
-     * 检查邮箱是否已存在
-     */
-    boolean existsByEmail(String email);
-    
-    /**
-     * 根据邮箱查找用户
-     */
-    User findByEmail(String email);
     
     /**
      * 用户登录

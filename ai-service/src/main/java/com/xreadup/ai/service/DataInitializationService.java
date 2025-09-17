@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
  * 
  * @author XReadUp Team
  * @version 1.0.0
- * @since 2024-01-01
  */
 @Service
 @Slf4j

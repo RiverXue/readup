@@ -40,6 +40,21 @@ public class DeepSeekController {
     @Operation(summary = "AI文章摘要", description = "使用DeepSeek对文章进行智能摘要并持久化存储")
     public ApiResponse<String> generateSummary(@RequestBody AiSummaryRequest request) {
         try {
+            if (request == null) {
+                log.error("摘要请求为空");
+                return ApiResponse.error("摘要请求不能为空");
+            }
+            
+            if (request.getArticleId() == null) {
+                log.error("文章ID为空");
+                return ApiResponse.error("文章ID不能为空");
+            }
+            
+            if (request.getText() == null || request.getText().trim().isEmpty()) {
+                log.error("摘要文本内容为空");
+                return ApiResponse.error("摘要文本内容不能为空");
+            }
+            
             log.info("开始生成文章摘要: 文章ID={}", request.getArticleId());
             String summary = enhancedAiAnalysisService.generateSummary(request.getText());
             
@@ -49,7 +64,8 @@ public class DeepSeekController {
             log.info("文章摘要完成并保存: 摘要长度={}字符", summary.length());
             return ApiResponse.success(summary);
         } catch (Exception e) {
-            log.error("生成文章摘要失败: {}", request.getArticleId(), e);
+            String articleId = (request != null && request.getArticleId() != null) ? request.getArticleId().toString() : "null";
+            log.error("生成文章摘要失败: {}", articleId, e);
             return ApiResponse.error("生成摘要失败: " + e.getMessage());
         }
     }

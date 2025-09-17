@@ -60,4 +60,18 @@ public interface ArticleService {
      * 增加阅读次数
      */
     void incrementReadCount(Long id);
+    
+    /**
+     * 测试API连接是否正常
+     * @return 是否连接成功
+     */
+    boolean testApiConnection();
+    
+    /**
+     * 从GNews获取文章并保存到数据库，使用Readability4J提取全文
+     * @param category 文章分类
+     * @param limit 获取数量
+     * @return 保存的文章数量
+     */
+    int fetchAndSaveArticles(String category, int limit);
 }

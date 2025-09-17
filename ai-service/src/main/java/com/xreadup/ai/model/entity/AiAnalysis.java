@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
  * 
  * @author XReadUp Team
  * @version 2.0.0
- * @since 2024-01-01
  */
 @Data
 @EqualsAndHashCode(callSuper = false)

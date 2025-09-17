@@ -18,8 +18,7 @@ public class Knife4jConfig {
                         .version("1.0.0")
                         .description("提供文章分析、翻译、摘要等AI功能的RESTful API接口文档")
                         .contact(new Contact()
-                                .name("XReadUp Team")
-                                .email("support@xreadup.com"))
+                                .name("XReadUp Team"))
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0")));

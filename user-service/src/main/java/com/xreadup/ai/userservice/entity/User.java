@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 用户实体类 - 新增邮箱验证功能
+ * 用户实体类
  */
 @Data
 @TableName("user")
@@ -19,9 +19,7 @@ public class User {
     private String username;
     
     private String password;
-    
-    private String email;  // 新增邮箱字段
-    
+
     private String phone;
     
     private String interestTag;
@@ -31,8 +29,6 @@ public class User {
     private Integer learningGoalWords;
     
     private Integer targetReadingTime;
-    
-    private Boolean emailVerified = false;  // 邮箱验证状态
-    
+
     private LocalDateTime createdAt;
 }

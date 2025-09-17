@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
  * 
  * @author XReadUp Team
  * @version 1.0.0
- * @since 2024-01-01
  */
 @Service
 @Slf4j

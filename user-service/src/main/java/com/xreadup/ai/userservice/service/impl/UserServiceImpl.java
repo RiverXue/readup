@@ -46,15 +46,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User register(UserRegisterRequest request) {
-        // 邮箱格式验证（毕设简化版）
-        if (!request.getEmail().matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
-            throw new RuntimeException("邮箱格式错误");
-        }
-        
-        // 检查邮箱是否已存在
-        if (existsByEmail(request.getEmail())) {
-            throw new RuntimeException("该邮箱已被注册");
-        }
         
         // 检查用户名是否已存在
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -68,37 +59,10 @@ public class UserServiceImpl implements UserService {
         
         // 密码加密
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEmailVerified(true);  // 毕设简化：直接验证通过
         user.setCreatedAt(LocalDateTime.now());
         
         userMapper.insert(user);
         return user;
-    }
-    
-    @Override
-    public void activateUser(String email) {
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getEmail, email);
-        
-        User user = userMapper.selectOne(wrapper);
-        if (user != null) {
-            user.setEmailVerified(true);
-            userMapper.updateById(user);
-        }
-    }
-    
-    @Override
-    public boolean existsByEmail(String email) {
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getEmail, email);
-        return userMapper.selectCount(wrapper) > 0;
-    }
-    
-    @Override
-    public User findByEmail(String email) {
-        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(User::getEmail, email);
-        return userMapper.selectOne(wrapper);
     }
 
     @Override

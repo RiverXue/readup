@@ -19,7 +19,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/vocabulary")
-@CrossOrigin(origins = "*")
 @Tag(name = "二级词库服务", description = "智能词汇查询和管理接口")
 public class VocabularyController {
 
