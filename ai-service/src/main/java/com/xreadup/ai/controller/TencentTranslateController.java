@@ -1,5 +1,6 @@
 package com.xreadup.ai.controller;
 
+import com.xreadup.ai.client.ArticleServiceClient;
 import com.xreadup.ai.model.dto.TencentTranslateRequestDTO;
 import com.xreadup.ai.model.dto.TencentTranslateResponseDTO;
 import com.xreadup.ai.model.dto.ApiResponse;
@@ -33,6 +34,7 @@ import java.time.Instant;
 public class TencentTranslateController {
 
     private final TencentTranslateService tencentTranslateService;
+    private final ArticleServiceClient articleServiceClient;
 
     /**
      * 通用文本翻译
@@ -79,24 +81,62 @@ public class TencentTranslateController {
      * 英文到中文翻译
      * 专门优化英文文章翻译到中文
      */
-    @GetMapping("/en-to-zh")
+    @PostMapping("/en-to-zh")
     @Operation(summary = "英文到中文", description = "将英文内容翻译成中文")
-    public ApiResponse<TencentTranslateResponseDTO> translateEnToZh(@RequestParam String text) {
+    public ApiResponse<TencentTranslateResponseDTO> translateEnToZh(@RequestBody TranslationRequest request) {
         long startTime = Instant.now().toEpochMilli();
         
         try {
-            log.info("腾讯云英译中请求: 文本长度: {}", text.length());
+            log.info("腾讯云英译中请求: 文本长度: {}", request.text.length());
             
-            String translatedText = tencentTranslateService.translateEnglishToChinese(text);
+            String translatedText = tencentTranslateService.translateEnglishToChinese(request.text);
             
             TencentTranslateResponseDTO response = new TencentTranslateResponseDTO();
             response.setTranslatedText(translatedText);
             response.setSourceLang("en");
             response.setTargetLang("zh");
-            response.setOriginalText(text);
+            response.setOriginalText(request.text);
             response.setTranslateTime(Instant.now().toEpochMilli() - startTime);
             response.setProvider("Tencent Cloud");
             response.setStatus("success");
+            
+            // 尝试将翻译结果保存到数据库
+            try {
+                if (translatedText != null && !translatedText.isEmpty()) {
+                    // 创建内部类实例
+                    class UpdateContentCnRequestImpl implements ArticleServiceClient.UpdateContentCnRequest {
+                        private final String contentEn;
+                        private final String contentCn;
+                        
+                        public UpdateContentCnRequestImpl(String contentEn, String contentCn) {
+                            this.contentEn = contentEn;
+                            this.contentCn = contentCn;
+                        }
+                        
+                        @Override
+                        public String getContentEn() {
+                            return contentEn;
+                        }
+                        
+                        @Override
+                        public String getContentCn() {
+                            return contentCn;
+                        }
+                    }
+                    
+                    ArticleServiceClient.UpdateContentCnRequest updateRequest = new UpdateContentCnRequestImpl(request.text, translatedText);
+                    ArticleServiceClient.ApiResponse<Boolean> updateResponse = articleServiceClient.updateContentCn(updateRequest);
+                    
+                    if (updateResponse != null && updateResponse.isSuccess()) {
+                        log.info("成功将翻译结果保存到数据库");
+                    } else {
+                        log.warn("保存翻译结果到数据库失败: {}", updateResponse != null ? updateResponse.getMessage() : "未知错误");
+                    }
+                }
+            } catch (Exception e) {
+                // 记录异常但不影响翻译功能
+                log.error("保存翻译结果到数据库时发生异常", e);
+            }
             
             log.info("腾讯云英译中完成: 耗时 {}ms", response.getTranslateTime());
             return ApiResponse.success(response);
@@ -111,21 +151,21 @@ public class TencentTranslateController {
      * 中文到英文翻译
      * 专门优化中文内容翻译到英文
      */
-    @GetMapping("/zh-to-en")
+    @PostMapping("/zh-to-en")
     @Operation(summary = "中文到英文", description = "将中文内容翻译成英文")
-    public ApiResponse<TencentTranslateResponseDTO> translateZhToEn(@RequestParam String text) {
+    public ApiResponse<TencentTranslateResponseDTO> translateZhToEn(@RequestBody TranslationRequest request) {
         long startTime = Instant.now().toEpochMilli();
         
         try {
-            log.info("腾讯云中译英请求: 文本长度: {}", text.length());
+            log.info("腾讯云中译英请求: 文本长度: {}", request.text.length());
             
-            String translatedText = tencentTranslateService.translateChineseToEnglish(text);
+            String translatedText = tencentTranslateService.translateChineseToEnglish(request.text);
             
             TencentTranslateResponseDTO response = new TencentTranslateResponseDTO();
             response.setTranslatedText(translatedText);
             response.setSourceLang("zh");
             response.setTargetLang("en");
-            response.setOriginalText(text);
+            response.setOriginalText(request.text);
             response.setTranslateTime(Instant.now().toEpochMilli() - startTime);
             response.setProvider("Tencent Cloud");
             response.setStatus("success");
@@ -137,6 +177,10 @@ public class TencentTranslateController {
             log.error("腾讯云中译英失败", e);
             return ApiResponse.error("翻译失败: " + e.getMessage());
         }
+    }
+    // 简单的翻译请求类
+    public static class TranslationRequest {
+        public String text;
     }
 
     // 删除获取支持语言API - 产品经理决策：技术导向，用户无感知，建议前端硬编码

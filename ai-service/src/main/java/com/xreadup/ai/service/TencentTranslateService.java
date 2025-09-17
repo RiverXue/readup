@@ -23,9 +23,11 @@ public class TencentTranslateService {
     @Autowired
     private TmtClient tmtClient;
 
+    private static final int MAX_TEXT_LENGTH = 5000; // 腾讯云API限制6000字符，留出一些余量
+    
     /**
      * 文本翻译 - 通用翻译
-     * 支持自动语言检测
+     * 支持自动语言检测和长文本分块翻译
      * 
      * @param text 待翻译文本
      * @param sourceLang 源语言，如"en"、"zh"，auto表示自动检测
@@ -33,6 +35,16 @@ public class TencentTranslateService {
      * @return 翻译结果
      */
     public String translateText(String text, String sourceLang, String targetLang) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        
+        // 如果文本长度超过限制，使用分块翻译
+        if (text.length() > MAX_TEXT_LENGTH) {
+            log.info("文本长度 {} 超过单条翻译限制，使用分块翻译", text.length());
+            return translateLongText(text, sourceLang, targetLang);
+        }
+        
         try {
             TextTranslateRequest request = new TextTranslateRequest();
             request.setSourceText(text);
@@ -56,6 +68,112 @@ public class TencentTranslateService {
             log.error("腾讯云翻译API调用失败: {}", e.getMessage(), e);
             throw new RuntimeException("翻译服务异常: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * 长文本分块翻译
+     * 当文本长度超过API限制时，将文本分块翻译后合并结果
+     * 
+     * @param text 待翻译的长文本
+     * @param sourceLang 源语言
+     * @param targetLang 目标语言
+     * @return 完整的翻译结果
+     */
+    private String translateLongText(String text, String sourceLang, String targetLang) {
+        StringBuilder resultBuilder = new StringBuilder();
+        int totalLength = text.length();
+        int startIndex = 0;
+        int chunkCount = 0;
+        
+        try {
+            // 循环分块翻译
+            while (startIndex < totalLength) {
+                // 计算当前块的结束位置
+                int endIndex = Math.min(startIndex + MAX_TEXT_LENGTH, totalLength);
+                
+                // 尽量在句子结束处分割，避免截断句子影响翻译质量
+                if (endIndex < totalLength) {
+                    // 查找最近的句子结束符
+                    int lastPunctuationIndex = findLastPunctuation(text, startIndex, endIndex);
+                    if (lastPunctuationIndex > startIndex + MAX_TEXT_LENGTH / 2) { // 确保至少翻译一半内容
+                        endIndex = lastPunctuationIndex + 1;
+                    }
+                }
+                
+                // 提取当前块
+                String chunk = text.substring(startIndex, endIndex);
+                chunkCount++;
+                
+                log.info("分块翻译第 {} 块: 开始位置={}, 结束位置={}, 块长度={}", 
+                        chunkCount, startIndex, endIndex, chunk.length());
+                
+                // 翻译当前块
+                String translatedChunk = translateTextInternal(chunk, sourceLang, targetLang);
+                
+                // 添加到结果中
+                resultBuilder.append(translatedChunk);
+                
+                // 更新起始位置
+                startIndex = endIndex;
+            }
+            
+            log.info("长文本翻译完成: 总共 {} 块, 原文长度={}, 译文长度={}", 
+                    chunkCount, totalLength, resultBuilder.length());
+            
+            return resultBuilder.toString();
+            
+        } catch (Exception e) {
+            log.error("长文本分块翻译失败: {}", e.getMessage(), e);
+            throw new RuntimeException("长文本翻译服务异常: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 内部翻译方法，直接调用API
+     * 供分块翻译内部使用，避免递归调用
+     */
+    private String translateTextInternal(String text, String sourceLang, String targetLang) {
+        try {
+            TextTranslateRequest request = new TextTranslateRequest();
+            request.setSourceText(text);
+            request.setSource(sourceLang);
+            request.setTarget(targetLang);
+            request.setProjectId(0L);
+            
+            TextTranslateResponse response = tmtClient.TextTranslate(request);
+            
+            if (response != null && response.getTargetText() != null) {
+                return response.getTargetText();
+            }
+            
+            log.warn("分块翻译返回空结果");
+            return text;
+            
+        } catch (TencentCloudSDKException e) {
+            log.error("分块翻译API调用失败: {}", e.getMessage(), e);
+            throw new RuntimeException("分块翻译服务异常: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 查找文本中最后一个标点符号的位置
+     * 用于在分块时尽量保持句子完整性
+     */
+    private int findLastPunctuation(String text, int start, int end) {
+        // 常见的英文标点符号
+        String[] punctuations = {".", "?", "!", ";", "\"", "'", ","};
+        
+        int lastIndex = -1;
+        
+        for (String punctuation : punctuations) {
+            int index = text.lastIndexOf(punctuation, end - 1);
+            if (index > lastIndex && index >= start) {
+                lastIndex = index;
+            }
+        }
+        
+        // 如果没有找到标点符号，返回原始结束位置
+        return lastIndex > 0 ? lastIndex : end;
     }
 
     /**

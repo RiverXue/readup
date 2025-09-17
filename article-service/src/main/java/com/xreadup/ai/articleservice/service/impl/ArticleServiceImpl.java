@@ -466,6 +466,51 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
+    public ApiResponse<Boolean> updateContentCn(String contentEn, String contentCn) {
+        try {
+            log.info("更新文章中文内容，英文内容长度: {}", contentEn.length());
+            
+            // 优化查找方式，使用内容片段而不是完整内容来查找文章
+            // 当内容很长时，完整内容匹配会导致性能问题和匹配失败
+            LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();
+            
+            // 提取内容前200个字符和后200个字符作为识别依据
+            String contentStart = contentEn.length() > 200 ? contentEn.substring(0, 200) : contentEn;
+            String contentEnd = contentEn.length() > 200 ? 
+                contentEn.substring(contentEn.length() - 200) : 
+                contentEn.substring(0, Math.min(50, contentEn.length()));
+            
+            queryWrapper.likeRight(Article::getContentEn, contentStart)
+                        .likeLeft(Article::getContentEn, contentEnd)
+                        .last("LIMIT 1");
+            
+            Article article = articleMapper.selectOne(queryWrapper);
+            
+            if (article == null) {
+                // 如果基于内容片段的搜索失败，记录错误并尝试通过文章标题查找（如果能从内容中提取）
+                log.warn("未找到匹配的文章，尝试其他方式查找");
+                return ApiResponse.success(false); // 返回成功但更新状态为false，避免影响主流程
+            }
+            
+            // 更新中文内容
+            article.setContentCn(contentCn);
+            int updateResult = articleMapper.updateById(article);
+            
+            if (updateResult > 0) {
+                log.info("成功更新文章中文内容，文章ID: {}", article.getId());
+                return ApiResponse.success(true);
+            } else {
+                log.warn("更新文章中文内容失败，文章ID: {}", article.getId());
+                return ApiResponse.success(false); // 返回成功但更新状态为false
+            }
+        } catch (Exception e) {
+            log.error("更新文章中文内容时发生异常", e);
+            // 返回成功但更新状态为false，避免影响翻译功能主流程
+            return ApiResponse.success(false);
+        }
+    }
+    
+    @Override
     @Transactional
     public int fetchAndSaveArticles(String category, int limit) {
         int savedCount = 0;

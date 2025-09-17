@@ -2,6 +2,7 @@ package com.xreadup.ai.articleservice.controller;
 
 import com.xreadup.ai.articleservice.model.dto.ArticleQueryDTO;
 import com.xreadup.ai.articleservice.model.dto.ManualDifficultyDTO;
+import com.xreadup.ai.articleservice.model.dto.UpdateContentCnRequest;
 import com.xreadup.ai.articleservice.service.ArticleService;
 import com.xreadup.ai.articleservice.service.ScraperService;
 import com.xreadup.ai.articleservice.model.common.ApiResponse;
@@ -70,6 +71,16 @@ public class ArticleController {
                description = "获取当前热点新闻文章")
     public ApiResponse<Object> discoverTrending(@RequestParam(defaultValue = "10") int limit) {
         return ApiResponse.success(articleService.refreshTopHeadlines(limit));
+    }
+    
+    /**
+     * 更新文章的中文翻译内容
+     */
+    @PostMapping("/update-content-cn")
+    @Operation(summary = "【更新中文内容】更新文章的中文翻译内容", 
+               description = "根据英文内容查找文章并更新其中文翻译内容")
+    public ApiResponse<Boolean> updateContentCn(@RequestBody UpdateContentCnRequest request) {
+        return articleService.updateContentCn(request.getContentEn(), request.getContentCn());
     }
     
     @GetMapping("/extract-content")

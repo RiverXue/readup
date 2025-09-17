@@ -1,3 +1,5 @@
+package com.xreadup.ai.articleservice.service;
+
 import java.util.Optional;
 
 /**

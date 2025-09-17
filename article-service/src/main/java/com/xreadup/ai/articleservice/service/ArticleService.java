@@ -74,4 +74,12 @@ public interface ArticleService {
      * @return 保存的文章数量
      */
     int fetchAndSaveArticles(String category, int limit);
+    
+    /**
+     * 根据英文内容更新文章的中文翻译内容
+     * @param contentEn 文章的英文内容
+     * @param contentCn 文章的中文翻译内容
+     * @return 更新是否成功
+     */
+    ApiResponse<Boolean> updateContentCn(String contentEn, String contentCn);
 }
