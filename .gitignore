@@ -75,3 +75,5 @@ override/
 /mysql/data/
 /nacos/data/
 /article-service/libs/
+/redis/data/dump.rdb
+/user-service/src/main/resources/db/migration/V3__remove_email_columns.sql
