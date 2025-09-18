@@ -42,16 +42,11 @@ public class VocabularyServiceImpl implements VocabularyService {
     public Word lookupWord(String word, String context, Long userId, Long articleId) {
         log.info("开始查询单词: {}, 上下文: {}, 用户: {}", word, context, userId);
         
-        // 1. 优先查本地词库（带上下文）
+        // 1. 优先查本地词库（不匹配上下文，只按单词和用户ID查询）
         QueryWrapper<Word> wrapper = new QueryWrapper<Word>()
                 .eq("user_id", userId)
                 .eq("word", word.toLowerCase())
-                .orderByDesc("context") // 优先匹配精确上下文
                 .last("LIMIT 1");
-        
-        if (context != null && !context.trim().isEmpty()) {
-            wrapper.eq("context", context);
-        }
         
         Word localWord = wordMapper.selectOne(wrapper);
         if (localWord != null) {
