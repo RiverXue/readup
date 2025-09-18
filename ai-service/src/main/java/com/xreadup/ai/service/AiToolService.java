@@ -1,12 +1,14 @@
 package com.xreadup.ai.service;
 
 import com.xreadup.ai.model.dto.WordInfo;
+import com.xreadup.ai.model.dto.Example;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Function;
 
 /**
@@ -64,11 +66,20 @@ public class AiToolService {
             );
         }
 
-        private List<String> getExamples(String word) {
-            return List.of(
-                "We need to find a sustainable solution to climate change.",
-                "Sustainable development is key to our future."
-            );
+        private List<Example> getExamples(String word) {
+            List<Example> examples = new ArrayList<>();
+            
+            Example example1 = new Example();
+            example1.setEnglish("We need to find a sustainable solution to climate change.");
+            example1.setChinese("我们需要找到应对气候变化的可持续解决方案。");
+            examples.add(example1);
+            
+            Example example2 = new Example();
+            example2.setEnglish("Sustainable development is key to our future.");
+            example2.setChinese("可持续发展是我们未来的关键。");
+            examples.add(example2);
+            
+            return examples;
         }
 
         private List<String> getSynonyms(String word) {

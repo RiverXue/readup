@@ -76,6 +76,8 @@ CREATE TABLE `word`
     `last_reviewed_at`  DATETIME     NULL COMMENT '上次复习时间',
     `next_review_at`    DATETIME     NULL COMMENT '下次复习时间',
     `added_at`          DATETIME    DEFAULT CURRENT_TIMESTAMP,
+    `phonetic`          VARCHAR(50) COMMENT '音标',
+    `difficulty`        VARCHAR(10) COMMENT '难度等级：A1/A2/B1/B2/C1/C2',
     UNIQUE KEY `uk_user_word_context` (`user_id`, `word`, `context`) -- 同一单词不同上下文可存多条
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;

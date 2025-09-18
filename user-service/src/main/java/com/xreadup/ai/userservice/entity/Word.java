@@ -37,4 +37,8 @@ public class Word {
     private LocalDateTime nextReviewAt;
     
     private LocalDateTime addedAt;
+    
+    private String phonetic; // 音标
+    
+    private String difficulty; // 难度等级 (A1, A2, B1, B2, C1, C2)
 }
