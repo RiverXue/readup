@@ -113,6 +113,51 @@ public class VocabularyController {
             return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
         }
     }
+    
+    /**
+     * 复习单词
+     */
+    @PostMapping("/review")
+    @Operation(summary = "复习单词", description = "更新单词的复习状态")
+    public ResponseEntity<?> reviewWord(@RequestBody ReviewWordRequest request) {
+        try {
+            boolean success = vocabularyService.reviewWord(
+                request.getWordId(),
+                request.getUserId(),
+                request.getReviewStatus()
+            );
+            if (success) {
+                return ResponseEntity.ok(new ApiResponse(200, "复习成功", null));
+            } else {
+                return ResponseEntity.ok(new ApiResponse(404, "单词不存在或不属于当前用户", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
+    
+    /**
+     * 删除单词
+     */
+    @DeleteMapping("/{wordId}")
+    @Operation(summary = "删除单词", description = "从用户词库中删除单词")
+    public ResponseEntity<?> deleteWord(
+            @Parameter(description = "单词ID", required = true)
+            @PathVariable Long wordId,
+            
+            @Parameter(description = "用户ID", required = true)
+            @RequestParam Long userId) {
+        try {
+            boolean success = vocabularyService.deleteWord(wordId, userId);
+            if (success) {
+                return ResponseEntity.ok(new ApiResponse(200, "删除成功", null));
+            } else {
+                return ResponseEntity.ok(new ApiResponse(404, "单词不存在或不属于当前用户", null));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
+        }
+    }
 
     /**
      * 查询请求DTO
@@ -132,6 +177,23 @@ public class VocabularyController {
         public void setUserId(Long userId) { this.userId = userId; }
         public Long getArticleId() { return articleId; }
         public void setArticleId(Long articleId) { this.articleId = articleId; }
+    }
+    
+    /**
+     * 复习单词请求DTO
+     */
+    public static class ReviewWordRequest {
+        private Long wordId;
+        private Long userId;
+        private String reviewStatus; // new, learning, mastered
+
+        // Getters and Setters
+        public Long getWordId() { return wordId; }
+        public void setWordId(Long wordId) { this.wordId = wordId; }
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        public String getReviewStatus() { return reviewStatus; }
+        public void setReviewStatus(String reviewStatus) { this.reviewStatus = reviewStatus; }
     }
 
     /**

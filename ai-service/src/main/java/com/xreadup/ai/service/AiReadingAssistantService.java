@@ -197,11 +197,12 @@ public class AiReadingAssistantService {
                 Object exampleObj = responseMap.get("example");
                 if (exampleObj instanceof Map) {
                     Map<?, ?> exampleMap = (Map<?, ?>) exampleObj;
-                    // 同时支持en/english和zh/chinese两种键名
+                    // 同时支持en/english和zh/chinese/cn三种键名
                     String enExample = exampleMap.containsKey("english") ? exampleMap.get("english").toString() : 
                                       (exampleMap.containsKey("en") ? exampleMap.get("en").toString() : "");
                     String zhExample = exampleMap.containsKey("chinese") ? exampleMap.get("chinese").toString() : 
-                                      (exampleMap.containsKey("zh") ? exampleMap.get("zh").toString() : "");
+                                      (exampleMap.containsKey("zh") ? exampleMap.get("zh").toString() : 
+                                      (exampleMap.containsKey("cn") ? exampleMap.get("cn").toString() : ""));
                     
                     if (!enExample.isEmpty() || !zhExample.isEmpty()) {
                         Example example = new Example();

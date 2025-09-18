@@ -15,10 +15,10 @@ XReadUp AI采用Spring Cloud微服务架构，包含以下核心服务：
 所有API通过网关服务统一访问，实际部署时可通过`http://网关地址/api/[服务模块]/[接口路径]`进行调用。
 
 ## 📊 API 概览
-目前系统共包含 **53个** REST API接口，分布如下：
+目前系统共包含 **55个** REST API接口，分布如下：
 - **AI服务**：22个接口（智能分析、翻译、AI助手）
 - **文章服务**：7个接口（文章管理、阅读、内容提取）
-- **用户服务**：16个接口（用户管理、订阅、词汇学习）
+- **用户服务**：18个接口（用户管理、订阅、词汇学习）
 - **报告服务**：8个接口（学习统计、报表、健康检查）
 
 ---
@@ -278,7 +278,7 @@ GET /api/article/extract-content
 
 ---
 
-## 👤 用户服务 (user-service) - 16个接口
+## 👤 用户服务 (user-service) - 18个接口
 提供用户管理、认证和词汇学习功能。
 
 ### 1. 用户管理
@@ -415,6 +415,23 @@ POST /api/vocabulary/add
 - **描述**：智能添加单词到生词本，支持上下文
 - **请求体**：`AddWordRequest` (包含word、context、userId和sourceArticleId字段)
 - **响应**：添加的单词信息
+
+#### 复习单词
+```http
+POST /api/vocabulary/review
+```
+- **描述**：更新单词的复习状态
+- **请求体**：`ReviewWordRequest` (包含wordId、userId和reviewStatus字段)
+- **响应**：复习操作结果
+
+#### 删除单词
+```http
+DELETE /api/vocabulary/{wordId}
+```
+- **描述**：从用户词库中删除单词
+- **路径参数**：wordId (单词ID)
+- **请求参数**：userId (用户ID)
+- **响应**：删除操作结果
 
 ---
 

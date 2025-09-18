@@ -45,4 +45,16 @@ public interface VocabularyService {
      * 清理重复词汇（按上下文去重）
      */
     int cleanupDuplicateWords(Long userId);
+    
+    /**
+     * 复习单词
+     * 更新单词的复习状态
+     */
+    boolean reviewWord(Long wordId, Long userId, String reviewStatus);
+    
+    /**
+     * 删除单词
+     * 从用户词库中删除单词
+     */
+    boolean deleteWord(Long wordId, Long userId);
 }

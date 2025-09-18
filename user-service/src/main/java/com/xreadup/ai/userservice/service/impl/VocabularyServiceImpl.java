@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * 二级词库服务实现
@@ -34,28 +35,42 @@ public class VocabularyServiceImpl implements VocabularyService {
 
     /**
      * 二级词库查询策略
-     * 1. 优先查询本地词库（带上下文）
-     * 2. AI生成兜底（异步缓存到本地）
+     * 1. 优先查询当前用户的词库
+     * 2. 查询其他用户共享的词库
+     * 3. AI生成兜底（异步缓存到本地）
      */
     @Override
     @Transactional
     public Word lookupWord(String word, String context, Long userId, Long articleId) {
         log.info("开始查询单词: {}, 上下文: {}, 用户: {}", word, context, userId);
         
-        // 1. 优先查本地词库（不匹配上下文，只按单词和用户ID查询）
-        QueryWrapper<Word> wrapper = new QueryWrapper<Word>()
-                .eq("user_id", userId)
-                .eq("word", word.toLowerCase())
-                .last("LIMIT 1");
-        
-        Word localWord = wordMapper.selectOne(wrapper);
-        if (localWord != null) {
-            log.info("从本地词库找到单词: {} (上下文: {})", word, localWord.getContext());
-            return localWord;
+        // 1. 优先查当前用户的词库
+        Word userWord = wordMapper.findByWordAndUserId(word.toLowerCase(), userId);
+        if (userWord != null) {
+            log.info("从当前用户词库找到单词: {} (上下文: {})", word, userWord.getContext());
+            return userWord;
         }
 
-        // 2. AI生成兜底
-        log.info("本地词库未找到，开始AI生成释义: {}", word);
+        // 2. 查询其他用户共享的词库
+        Word sharedWord = wordMapper.findByWord(word.toLowerCase());
+        if (sharedWord != null) {
+            log.info("从其他用户词库找到单词: {} (上下文: {})", word, sharedWord.getContext());
+            
+            // 将当前用户ID添加到该单词的用户列表中
+            sharedWord.addUserId(userId);
+            wordMapper.updateUserIds(sharedWord.getId(), sharedWord.getUserIds());
+            
+            // 设置当前用户的复习状态为新单词
+            sharedWord.setReviewStatus("new");
+            sharedWord.setLastReviewedAt(null);
+            sharedWord.setNextReviewAt(null);
+            sharedWord.setAddedAt(LocalDateTime.now());
+            
+            return sharedWord;
+        }
+
+        // 3. AI生成兜底
+        log.info("所有词库未找到，开始AI生成释义: {}", word);
         
         // 只调用一次AI服务，获取完整的单词信息
         WordInfo wordInfo = null;
@@ -108,7 +123,7 @@ public class VocabularyServiceImpl implements VocabularyService {
         newWord.setContext(aiContext);
         newWord.setSource("ai");
         newWord.setSourceArticleId(articleId);
-        newWord.setUserId(userId);
+        newWord.addUserId(userId);
         newWord.setReviewStatus("new");
         newWord.setAddedAt(LocalDateTime.now());
         newWord.setPhonetic(phonetic);
@@ -134,7 +149,7 @@ public class VocabularyServiceImpl implements VocabularyService {
                 Word fallbackWord = new Word();
                 fallbackWord.setWord(word.toLowerCase());
                 fallbackWord.setMeaning("查询失败");
-                fallbackWord.setUserId(userId);
+                fallbackWord.addUserId(userId); // 使用addUserId方法添加用户ID
                 results.add(fallbackWord);
             }
         }
@@ -155,24 +170,28 @@ public class VocabularyServiceImpl implements VocabularyService {
      * 异步缓存单词到本地词库（包含音标和难度等级）
      */
     public CompletableFuture<Void> cacheWordAsync(String word, String meaning, String example, 
-                                                String context, Long userId, Long articleId, String source, 
+                                                String context, Long addUserId, Long articleId, String source, 
                                                 String phonetic, String difficulty) {
         return CompletableFuture.runAsync(() -> {
             try {
                 // 限制上下文长度，防止数据库字段超长
                 String limitedContext = limitContextLength(context);
                 
-                // 检查是否已存在
-                QueryWrapper<Word> checkWrapper = new QueryWrapper<Word>()
-                        .eq("user_id", userId)
-                        .eq("word", word.toLowerCase())
-                        .eq("context", limitedContext);
+                // 检查该单词是否已存在于系统中
+                Word existingWord = wordMapper.findByWord(word.toLowerCase());
                 
-                if (wordMapper.selectCount(checkWrapper) > 0) {
-                    log.debug("单词已存在，跳过缓存: {} (上下文: {})", word, limitedContext);
+                if (existingWord != null) {
+                    // 如果单词已存在，检查当前用户是否已添加该单词
+                    if (!existingWord.containsUserId(addUserId)) {
+                        // 如果当前用户未添加，将用户ID添加到现有单词
+                        existingWord.addUserId(addUserId);
+                        wordMapper.updateUserIds(existingWord.getId(), existingWord.getUserIds());
+                        log.info("单词已存在，已将当前用户添加到单词共享列表: {} (上下文: {})", word, limitedContext);
+                    }
                     return;
                 }
 
+                // 如果单词不存在，创建新单词并添加当前用户ID
                 Word wordEntity = new Word();
                 wordEntity.setWord(word.toLowerCase());
                 wordEntity.setMeaning(meaning);
@@ -180,14 +199,14 @@ public class VocabularyServiceImpl implements VocabularyService {
                 wordEntity.setContext(limitedContext);
                 wordEntity.setSource(source);
                 wordEntity.setSourceArticleId(articleId);
-                wordEntity.setUserId(userId);
+                wordEntity.addUserId(addUserId); // 使用addUserId方法添加用户ID
                 wordEntity.setReviewStatus("new");
                 wordEntity.setAddedAt(LocalDateTime.now());
                 wordEntity.setPhonetic(phonetic);
                 wordEntity.setDifficulty(difficulty);
                 
                 wordMapper.insert(wordEntity);
-                log.info("成功缓存单词到本地词库: {} (上下文: {})", word, limitedContext);
+                log.info("成功创建并缓存单词到词库: {} (上下文: {})", word, limitedContext);
                 
             } catch (Exception e) {
                 log.error("缓存单词失败: {}", word, e);
@@ -220,28 +239,19 @@ public class VocabularyServiceImpl implements VocabularyService {
         Map<String, Object> stats = new HashMap<>();
         
         // 总词汇量
-        int totalWords = wordMapper.selectCount(
-            new QueryWrapper<Word>().eq("user_id", userId)
-        ).intValue();
+        // 使用自定义方法查询用户的单词列表，然后统计数量
+        List<Word> userWords = wordMapper.findByUserId(userId);
+        int totalWords = userWords.size();
         
         // 按状态统计
-        int newWords = wordMapper.selectCount(
-            new QueryWrapper<Word>().eq("user_id", userId).eq("review_status", "new")
-        ).intValue();
-        int learningWords = wordMapper.selectCount(
-            new QueryWrapper<Word>().eq("user_id", userId).eq("review_status", "learning")
-        ).intValue();
-        int masteredWords = wordMapper.selectCount(
-            new QueryWrapper<Word>().eq("user_id", userId).eq("review_status", "mastered")
-        ).intValue();
+        // 过滤用户单词列表来统计不同状态的单词数量
+        int newWords = (int) userWords.stream().filter(w -> "new".equals(w.getReviewStatus())).count();
+        int learningWords = (int) userWords.stream().filter(w -> "learning".equals(w.getReviewStatus())).count();
+        int masteredWords = (int) userWords.stream().filter(w -> "mastered".equals(w.getReviewStatus())).count();
         
         // 按来源统计
-        int localWords = wordMapper.selectCount(
-            new QueryWrapper<Word>().eq("user_id", userId).eq("source", "local")
-        ).intValue();
-        int aiWords = wordMapper.selectCount(
-            new QueryWrapper<Word>().eq("user_id", userId).eq("source", "ai")
-        ).intValue();
+        int localWords = (int) userWords.stream().filter(w -> "local".equals(w.getSource())).count();
+        int aiWords = (int) userWords.stream().filter(w -> "ai".equals(w.getSource())).count();
         
         stats.put("totalWords", totalWords);
         stats.put("newWords", newWords);
@@ -255,32 +265,43 @@ public class VocabularyServiceImpl implements VocabularyService {
 
     /**
      * 清理重复词汇（按上下文去重）
+     * 在多用户共享模式下，清理当前用户视角下的重复词汇
      */
     @Override
     @Transactional
     public int cleanupDuplicateWords(Long userId) {
-        // 查找重复词汇
-        List<Word> duplicates = wordMapper.selectList(
-            new QueryWrapper<Word>()
-                .eq("user_id", userId)
-                .groupBy("word, context")
-                .having("count(*) > 1")
-        );
+        // 获取用户的所有单词
+        List<Word> userWords = wordMapper.findByUserId(userId);
         
+        // 用于记录已经处理过的单词和上下文组合
+        Map<String, Word> processedWords = new HashMap<>();
         int cleaned = 0;
-        for (Word duplicate : duplicates) {
-            // 保留最新的记录，删除旧的
-            QueryWrapper<Word> deleteWrapper = new QueryWrapper<Word>()
-                    .eq("user_id", userId)
-                    .eq("word", duplicate.getWord())
-                    .eq("context", duplicate.getContext())
-                    .orderByAsc("added_at")
-                    .last("LIMIT 1");
+        
+        // 按照添加时间排序，保留最新的记录
+        userWords.sort(Comparator.comparing(Word::getAddedAt).reversed());
+        
+        for (Word word : userWords) {
+            String key = word.getWord() + ":" + word.getContext();
             
-            cleaned += wordMapper.delete(deleteWrapper);
+            if (processedWords.containsKey(key)) {
+                // 找到重复的单词，从用户列表中移除
+                if (word.removeUserId(userId)) {
+                    if (word.getUserIdSet().isEmpty()) {
+                        // 如果没有其他用户使用，删除整个单词
+                        wordMapper.deleteById(word.getId());
+                    } else {
+                        // 否则更新用户列表
+                        wordMapper.updateUserIds(word.getId(), word.getUserIds());
+                    }
+                    cleaned++;
+                }
+            } else {
+                // 第一次遇到该单词和上下文组合，记录下来
+                processedWords.put(key, word);
+            }
         }
         
-        log.info("清理重复词汇完成，删除 {} 条记录", cleaned);
+        log.info("清理重复词汇完成，清理 {} 条记录", cleaned);
         return cleaned;
     }
 
@@ -359,5 +380,104 @@ public class VocabularyServiceImpl implements VocabularyService {
             }
             return String.format("This is an example sentence using '%s'.", word);
         }
+    }
+
+    /**
+     * 复习单词
+     * 更新单词的复习状态
+     */
+    @Override
+    @Transactional
+    public boolean reviewWord(Long wordId, Long userId, String reviewStatus) {
+        log.info("开始复习单词: {}, 用户: {}, 新状态: {}", wordId, userId, reviewStatus);
+        
+        // 检查单词是否存在且用户是否在共享列表中
+        Word word = wordMapper.selectById(wordId);
+        if (word == null || !word.containsUserId(userId)) {
+            log.warn("单词不存在或用户没有访问权限: {}, 用户: {}", wordId, userId);
+            return false;
+        }
+        
+        // 更新复习状态和时间
+        Word updateWord = new Word();
+        updateWord.setId(wordId);
+        updateWord.setReviewStatus(reviewStatus);
+        updateWord.setLastReviewedAt(LocalDateTime.now());
+        
+        // 根据复习状态设置下次复习时间
+        if ("mastered".equals(reviewStatus)) {
+            // 掌握的单词，下次复习时间设置为一周后
+            updateWord.setNextReviewAt(LocalDateTime.now().plusDays(7));
+        } else if ("learning".equals(reviewStatus)) {
+            // 学习中的单词，下次复习时间设置为明天
+            updateWord.setNextReviewAt(LocalDateTime.now().plusDays(1));
+        } else if ("new".equals(reviewStatus)) {
+            // 新单词，下次复习时间设置为今天
+            updateWord.setNextReviewAt(LocalDateTime.now());
+        }
+        
+        int result = wordMapper.updateById(updateWord);
+        boolean success = result > 0;
+        
+        if (success) {
+            log.info("复习单词成功: {}, 用户: {}, 新状态: {}", wordId, userId, reviewStatus);
+        } else {
+            log.error("复习单词失败: {}, 用户: {}, 新状态: {}", wordId, userId, reviewStatus);
+        }
+        
+        return success;
+    }
+    
+    /**
+     * 删除单词
+     * 从用户的词库列表中移除单词，但保留单词本身供其他用户使用
+     */
+    @Override
+    @Transactional
+    public boolean deleteWord(Long wordId, Long userId) {
+        log.info("开始删除单词: {}, 用户: {}", wordId, userId);
+        
+        // 检查单词是否存在
+        Word word = wordMapper.selectById(wordId);
+        if (word == null) {
+            log.warn("单词不存在: {}", wordId);
+            return false;
+        }
+        
+        // 检查当前用户是否使用该单词
+        if (!word.containsUserId(userId)) {
+            log.warn("单词不属于当前用户: {}, 用户: {}", wordId, userId);
+            return false;
+        }
+        
+        // 从用户列表中移除当前用户
+        boolean removed = word.removeUserId(userId);
+        
+        if (removed) {
+            // 如果还有其他用户使用该单词，只更新用户列表
+            if (!word.getUserIdSet().isEmpty()) {
+                int updateResult = wordMapper.updateUserIds(word.getId(), word.getUserIds());
+                if (updateResult > 0) {
+                    log.info("成功从单词用户列表中移除用户: {}, 单词: {}", userId, wordId);
+                    return true;
+                } else {
+                    log.error("更新单词用户列表失败: {}, 用户: {}", wordId, userId);
+                    return false;
+                }
+            } else {
+                // 如果没有其他用户使用该单词，删除整个单词记录
+                int deleteResult = wordMapper.deleteById(wordId);
+                if (deleteResult > 0) {
+                    log.info("成功删除单词(无其他用户使用): {}, 用户: {}", wordId, userId);
+                    return true;
+                } else {
+                    log.error("删除单词失败: {}, 用户: {}", wordId, userId);
+                    return false;
+                }
+            }
+        }
+        
+        log.error("从单词用户列表中移除用户失败: {}, 用户: {}", wordId, userId);
+        return false;
     }
 }
