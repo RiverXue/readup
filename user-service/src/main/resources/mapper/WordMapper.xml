@@ -3,8 +3,7 @@
 
 <mapper namespace="com.xreadup.ai.userservice.mapper.WordMapper">
 
-    <select id="findByUserId" resultType="com.xreadup.ai.userservice.entity.Word">
-        SELECT * FROM word WHERE user_id = #{userId} ORDER BY added_at DESC
-    </select>
+    <!-- 注意：此XML配置文件已被WordMapper.java中的注解方法覆盖 -->
+    <!-- 保留此文件仅为兼容旧代码，实际查询逻辑请查看WordMapper.java中的注解 -->
 
 </mapper>

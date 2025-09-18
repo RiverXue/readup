@@ -380,7 +380,7 @@ GET /api/subscription/quota/{userId}
 ```http
 POST /api/vocabulary/lookup
 ```
-- **描述**：二级词库策略：本地缓存优先，AI兜底生成
+- **描述**：二级词库策略：本地缓存优先，AI兜底生成，支持多用户共享
 - **请求体**：`LookupRequest` (包含word、context、userId和articleId字段)
 - **响应**：单词详细信息
 
@@ -388,7 +388,7 @@ POST /api/vocabulary/lookup
 ```http
 POST /api/vocabulary/batch-lookup
 ```
-- **描述**：批量智能查询多个单词
+- **描述**：批量智能查询多个单词，支持多用户共享词汇
 - **请求体**：`BatchLookupRequest` (包含words列表、context、userId和articleId字段)
 - **响应**：单词列表信息
 
@@ -396,7 +396,7 @@ POST /api/vocabulary/batch-lookup
 ```http
 GET /api/vocabulary/stats/{userId}
 ```
-- **描述**：获取用户的词汇学习统计信息
+- **描述**：获取用户的词汇学习统计信息，支持多用户共享单词的智能统计
 - **路径参数**：userId (用户ID)
 - **响应**：统计数据
 
@@ -404,7 +404,7 @@ GET /api/vocabulary/stats/{userId}
 ```http
 POST /api/vocabulary/cleanup/{userId}
 ```
-- **描述**：清理用户词库中的重复词汇
+- **描述**：清理用户词库中的重复词汇，支持多用户共享单词的智能清理
 - **路径参数**：userId (用户ID)
 - **响应**：清理结果
 
@@ -420,7 +420,7 @@ POST /api/vocabulary/add
 ```http
 POST /api/vocabulary/review
 ```
-- **描述**：更新单词的复习状态
+- **描述**：更新单词的复习状态，支持多用户共享单词的权限验证
 - **请求体**：`ReviewWordRequest` (包含wordId、userId和reviewStatus字段)
 - **响应**：复习操作结果
 
@@ -428,7 +428,7 @@ POST /api/vocabulary/review
 ```http
 DELETE /api/vocabulary/{wordId}
 ```
-- **描述**：从用户词库中删除单词
+- **描述**：从用户词库中删除单词（逻辑删除，从共享列表移除）
 - **路径参数**：wordId (单词ID)
 - **请求参数**：userId (用户ID)
 - **响应**：删除操作结果
