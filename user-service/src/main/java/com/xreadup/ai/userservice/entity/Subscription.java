@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 订阅实体类 - 商业化功能
  */
 @Data
-@TableName("t_subscription")
+@TableName("subscription")
 public class Subscription {
     
     @TableId(type = IdType.AUTO)

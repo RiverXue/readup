@@ -2,8 +2,8 @@ package com.xreadup.ai.controller;
 
 import com.xreadup.ai.model.dto.AiChatRequest;
 import com.xreadup.ai.model.dto.AiChatResponse;
+import com.xreadup.ai.model.dto.QuizQuestionDTO;
 import com.xreadup.ai.service.AiReadingAssistantService;
-import com.xreadup.ai.service.AiToolService.QuizQuestion;
 import com.xreadup.ai.common.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -80,10 +80,10 @@ public class AiReadingAssistantController {
      */
     @PostMapping("/quiz")
     @Operation(summary = "生成测验", description = "根据文章内容生成学习测验题")
-    public ApiResponse<List<QuizQuestion>> generateQuiz(@RequestBody QuizRequest request) {
+    public ApiResponse<List<QuizQuestionDTO>> generateQuiz(@RequestBody QuizRequest request) {
         try {
             log.info("生成测验请求 - 文章ID: {}", request.getArticleId());
-            List<QuizQuestion> questions = aiReadingAssistantService.generateQuiz(request.getArticleContent());
+            List<QuizQuestionDTO> questions = aiReadingAssistantService.generateQuizEnhanced(request.getArticleContent());
             return ApiResponse.success(questions);
         } catch (Exception e) {
             log.error("生成测验失败", e);

@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public class SubscriptionController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", e.getMessage()
+                "message", e.getMessage() != null ? e.getMessage() : "未知错误"
             ));
         }
     }
@@ -53,15 +54,34 @@ public class SubscriptionController {
     @Operation(summary = "获取当前订阅", description = "获取用户当前激活的订阅信息")
     public ResponseEntity<?> getCurrentSubscription(@PathVariable Long userId) {
         try {
+            // 添加参数验证
+            if (userId == null) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                    "success", false,
+                    "message", "用户ID不能为空"
+                ));
+            }
+            
             Subscription subscription = subscriptionService.getCurrentSubscription(userId);
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", subscription
-            ));
+            // 处理subscription为null的情况，避免NullPointerException
+            if (subscription != null) {
+                return ResponseEntity.ok(java.util.Map.of(
+                    "success", true,
+                    "data", subscription
+                ));
+            } else {
+                // 用户没有订阅记录时返回空数据而不是错误
+                return ResponseEntity.ok(java.util.Map.of(
+                    "success", true,
+                    "data", new java.util.HashMap<>()  // 使用HashMap而不是null
+                ));
+            }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
+            // 记录详细错误信息
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(java.util.Map.of(
                 "success", false,
-                "message", e.getMessage()
+                "message", e.getMessage() != null ? e.getMessage() : "未知错误"
             ));
         }
     }
@@ -81,7 +101,7 @@ public class SubscriptionController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", e.getMessage()
+                "message", e.getMessage() != null ? e.getMessage() : "未知错误"
             ));
         }
     }
@@ -101,7 +121,7 @@ public class SubscriptionController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", e.getMessage()
+                "message", e.getMessage() != null ? e.getMessage() : "未知错误"
             ));
         }
     }
@@ -124,7 +144,7 @@ public class SubscriptionController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", e.getMessage()
+                "message", e.getMessage() != null ? e.getMessage() : "未知错误"
             ));
         }
     }
@@ -137,14 +157,22 @@ public class SubscriptionController {
     public ResponseEntity<?> getRemainingQuota(@PathVariable Long userId) {
         try {
             Map<String, Object> quota = subscriptionService.getRemainingQuota(userId);
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "data", quota
-            ));
+            // 确保quota不为null
+            if (quota != null) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", quota
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "data", new HashMap<>()
+                ));
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "success", false,
-                "message", e.getMessage()
+                "message", e.getMessage() != null ? e.getMessage() : "未知错误"
             ));
         }
     }

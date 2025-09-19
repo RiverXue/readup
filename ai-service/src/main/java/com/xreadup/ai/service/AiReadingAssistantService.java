@@ -65,16 +65,130 @@ public class AiReadingAssistantService {
     }
 
     /**
-     * 生成学习测验
+     * 生成学习测验（增强版）
+     * 不使用Function Calling，避免不必要的工具调用
      */
-    public List<QuizQuestion> generateQuiz(String articleContent) {
+    public List<QuizQuestionDTO> generateQuizEnhanced(String articleContent) {
         try {
-            log.info("生成学习测验 - 文章长度: {}", articleContent.length());
-            return aiToolService.generateQuiz(articleContent);
+            log.info("生成学习测验（增强版） - 文章长度: {}", articleContent.length());
+            
+            // 直接使用ChatClient生成测验题，不调用Function Calling
+            String prompt = String.format("""
+                作为英语阅读理解专家，请基于以下文章内容生成高质量的阅读理解选择题。
+                
+                文章内容：
+                %s
+                
+                要求：
+                1. 生成完整的3道选择题
+                2. 每道题包含：问题、四个选项（A、B、C、D）、正确答案、解析
+                3. 题目难度适中，考查对文章的理解
+                4. 选项要有迷惑性，避免过于明显
+                5. 必须以纯正JSON格式返回，不要添加任何其他说明文字
+                
+                JSON格式示例：
+                [
+                  {
+                    "question": "问题内容",
+                    "options": ["A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"],
+                    "answer": "A",
+                    "explanation": "正确答案的解析说明"
+                  }
+                ]
+                
+                请直接返回JSON数组，不要包装在```json```代码块中。
+                """, articleContent);
+            
+            String jsonResponse = chatClient.prompt()
+                .system("你是一个专业的英语阅读理解出题专家，请生成高质量的测验题。返回结果必须是正确JSON格式。")
+                .user(prompt)
+                .call()
+                .content();
+            
+            log.info("测验题AI返回结果: {}", jsonResponse);
+            
+            // 解析JSON响应
+            List<QuizQuestionDTO> questions = parseJsonToQuizQuestions(jsonResponse);
+            
+            if (questions.isEmpty()) {
+                log.warn("解析的测验题为空，返回错误时的备用测验题");
+                return createFallbackQuizQuestions();
+            }
+            
+            return questions;
+            
         } catch (Exception e) {
-            log.error("生成测验失败", e);
-            return List.of();
+            log.error("生成测验失败（增强版）", e);
+            return createFallbackQuizQuestions();
         }
+    }
+    
+    /**
+     * 解析JSON响应为QuizQuestionDTO列表
+     */
+    private List<QuizQuestionDTO> parseJsonToQuizQuestions(String jsonResponse) {
+        try {
+            // 清理JSON响应
+            String cleanJson = jsonResponse.trim();
+            if (cleanJson.startsWith("```json")) {
+                cleanJson = cleanJson.substring(7);
+            }
+            if (cleanJson.endsWith("```")) {
+                cleanJson = cleanJson.substring(0, cleanJson.length() - 3);
+            }
+            cleanJson = cleanJson.trim();
+            
+            // 使用ObjectMapper解析JSON
+            List<Map<String, Object>> questionMaps = objectMapper.readValue(cleanJson, List.class);
+            
+            List<QuizQuestionDTO> questions = new ArrayList<>();
+            for (int i = 0; i < questionMaps.size(); i++) {
+                Map<String, Object> questionMap = questionMaps.get(i);
+                QuizQuestionDTO question = new QuizQuestionDTO();
+                
+                question.setId(String.valueOf(i + 1));
+                question.setQuestion((String) questionMap.get("question"));
+                
+                // 处理选项
+                Object optionsObj = questionMap.get("options");
+                if (optionsObj instanceof List) {
+                    question.setOptions((List<String>) optionsObj);
+                }
+                
+                question.setAnswer((String) questionMap.get("answer"));
+                question.setCorrectAnswer((String) questionMap.get("answer"));
+                question.setCorrectAnswerText((String) questionMap.get("answer"));
+                question.setExplanation((String) questionMap.get("explanation"));
+                question.setQuestionType("comprehension");
+                question.setDifficulty("medium");
+                
+                questions.add(question);
+            }
+            
+            return questions;
+            
+        } catch (Exception e) {
+            log.error("解析测验题JSON失败: {}", jsonResponse, e);
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * 创建错误时的备用测验题
+     */
+    private List<QuizQuestionDTO> createFallbackQuizQuestions() {
+        QuizQuestionDTO fallback = new QuizQuestionDTO(
+            "基于文章内容，请选择正确答案：",
+            List.of("A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"),
+            "A",
+            "测验题生成服务暂时不可用，请稍后再试"
+        );
+        
+        fallback.setId("1");
+        fallback.setCorrectAnswer("A");
+        fallback.setCorrectAnswerText("A");
+        
+        return List.of(fallback);
     }
 
     /**

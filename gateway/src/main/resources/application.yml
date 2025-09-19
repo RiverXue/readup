@@ -28,6 +28,32 @@ spring:
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@remoteAddrKeyResolver}"
         
+        # 订阅服务路由 - 指向user-service
+        - id: subscription-service-api
+          uri: lb://user-service
+          predicates:
+            - Path=/api/subscription/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@remoteAddrKeyResolver}"
+        
+        # 进度服务路由 - 指向user-service
+        - id: progress-service-api
+          uri: lb://user-service
+          predicates:
+            - Path=/api/progress/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
         # 词汇服务路由 - 指向user-service
         - id: vocabulary-service-api
           uri: lb://user-service

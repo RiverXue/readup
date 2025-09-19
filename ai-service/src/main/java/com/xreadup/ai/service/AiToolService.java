@@ -1,5 +1,6 @@
 package com.xreadup.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xreadup.ai.model.dto.WordInfo;
 import com.xreadup.ai.model.dto.Example;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -101,13 +103,57 @@ public class AiToolService {
      */
     public static class TranslationTool implements Function<TranslationRequest, String> {
         
-        @Autowired
         private TencentTranslateService translateService;
+        
+        public TranslationTool() {
+            // Spring容器会自动注入依赖
+        }
+        
+        public void setTranslateService(TencentTranslateService translateService) {
+            this.translateService = translateService;
+        }
 
         @Override
         public String apply(TranslationRequest request) {
             log.info("AI调用翻译工具: {} -> {}", request.getText(), request.getTargetLang());
-            return translateService.translateText(request.getText(), "en", request.getTargetLang());
+            if (translateService != null) {
+                // 标准化语言代码
+                String normalizedTargetLang = normalizeLanguageCode(request.getTargetLang());
+                log.info("标准化语言代码: {} -> {}", request.getTargetLang(), normalizedTargetLang);
+                
+                return translateService.translateText(request.getText(), "en", normalizedTargetLang);
+            } else {
+                return "翻译服务暂时不可用";
+            }
+        }
+        
+        /**
+         * 标准化语言代码，将复杂的语言代码转换为腾讯云API支持的格式
+         */
+        private String normalizeLanguageCode(String languageCode) {
+            if (languageCode == null) {
+                return "zh";
+            }
+            
+            // 转换为小写并处理常见的语言代码格式
+            String normalized = languageCode.toLowerCase().trim();
+            
+            // 处理中文相关的语言代码
+            if (normalized.startsWith("zh")) {
+                return "zh"; // zh、zh-CN、zh-Hans、zh-Hant 都转换为 zh
+            }
+            
+            // 处理英文相关的语言代码
+            if (normalized.startsWith("en")) {
+                return "en"; // en、en-US、en-GB 都转换为 en
+            }
+            
+            // 处理其他语言代码，提取主要部分
+            if (normalized.contains("-")) {
+                return normalized.split("-")[0];
+            }
+            
+            return normalized;
         }
     }
 
@@ -144,21 +190,22 @@ public class AiToolService {
         String prompt = String.format("""
             你是一个专业的英语学习助手。请根据以下文章内容回答用户问题。
             你可以使用以下工具：
-            - lookupWord: 查询单词详细信息（包括释义、例句、同义词）
-            - translate: 翻译文本内容
+            - wordLookupTool: 查询单词详细信息（包括释义、例句、同义词）
+            - translationTool: 翻译文本内容
             
             文章内容：%s
             用户问题：%s
             
             回答要求：
             1. 简洁明了，适合英语学习者
-            2. 如果涉及生词，请调用lookupWord工具获取详细信息
-            3. 如果需要翻译，请调用translate工具
+            2. 如果涉及生词，请调用wordLookupTool工具获取详细信息
+            3. 如果需要翻译，请调用translationTool工具
             4. 给出实用学习建议
             """, articleContext, question);
 
         try {
             return chatClient.prompt()
+                .functions("wordLookupTool", "translationTool") // 显式指定可用的Function Calling工具
                 .user(prompt)
                 .call()
                 .content();
@@ -173,36 +220,104 @@ public class AiToolService {
      */
     public List<QuizQuestion> generateQuiz(String articleContent) {
         String prompt = String.format("""
-            根据以下文章内容生成3道英语阅读理解选择题，按JSON格式返回：
+            作为英语阅读理解专家，请基于以下文章内容生成高质量的阅读理解选择题。
+            
+            文章内容：
+            %s
+            
+            要求：
+            1. 生成完整的3道选择题
+            2. 每道题包含：问题、四个选项（A、B、C、D）、正确答案、解析
+            3. 题目难度适中，考查对文章的理解
+            4. 选项要有迷惑性，避免过于明显
+            5. 必须以纯正JSON格式返回，不要添加任何其他说明文字
+            6. 不要使用任何外部工具，直接生成答案
+            
+            JSON格式示例：
             [
               {
                 "question": "问题内容",
                 "options": ["A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"],
-                "answer": "正确答案",
-                "explanation": "解析说明"
+                "answer": "A",
+                "explanation": "正确答案的解析说明"
               }
             ]
             
-            文章：%s
+            请直接返回JSON数组，不要包装在```json```代码块中。
             """, articleContent);
 
         try {
             String json = chatClient.prompt()
+                .system("你是一个专业的英语阅读理解出题专家，请生成高质量的测验题。返回结果必须是正确JSON格式。不要使用任何工具功能。")
                 .user(prompt)
                 .call()
                 .content();
+            
+            log.info("测验题AI返回结果: {}", json);
             
             // 解析JSON到对象列表
             return parseQuizQuestions(json);
         } catch (Exception e) {
             log.error("生成测验失败", e);
-            return List.of();
+            return createFallbackQuiz();
         }
+    }
+    
+    /**
+     * 创建错误时的项伺测验题
+     */
+    private List<QuizQuestion> createFallbackQuiz() {
+        QuizQuestion fallback = new QuizQuestion();
+        fallback.setQuestion("基于文章内容，请选择正确答案：");
+        fallback.setOptions(List.of("A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"));
+        fallback.setAnswer("A");
+        fallback.setExplanation("测验题生成服务暂时不可用，请稍后再试");
+        return List.of(fallback);
     }
 
     private List<QuizQuestion> parseQuizQuestions(String json) {
-        // 实际项目中使用Jackson解析
-        return List.of(new QuizQuestion());
+        try {
+            // 清理JSON响应
+            String cleanJson = json.trim();
+            if (cleanJson.startsWith("```json")) {
+                cleanJson = cleanJson.substring(7);
+            }
+            if (cleanJson.endsWith("```")) {
+                cleanJson = cleanJson.substring(0, cleanJson.length() - 3);
+            }
+            cleanJson = cleanJson.trim();
+            
+            // 使用ObjectMapper解析JSON
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String, Object>> questionMaps = mapper.readValue(cleanJson, List.class);
+            
+            List<QuizQuestion> questions = new ArrayList<>();
+            for (Map<String, Object> questionMap : questionMaps) {
+                QuizQuestion question = new QuizQuestion();
+                question.setQuestion((String) questionMap.get("question"));
+                
+                // 处理选项
+                Object optionsObj = questionMap.get("options");
+                if (optionsObj instanceof List) {
+                    question.setOptions((List<String>) optionsObj);
+                }
+                
+                question.setAnswer((String) questionMap.get("answer"));
+                question.setExplanation((String) questionMap.get("explanation"));
+                questions.add(question);
+            }
+            
+            return questions;
+        } catch (Exception e) {
+            log.error("解析测验题JSON失败: {}", json, e);
+            // 返回一个示例问题
+            QuizQuestion fallback = new QuizQuestion();
+            fallback.setQuestion("基于文章内容，请选择正确答案");
+            fallback.setOptions(List.of("A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"));
+            fallback.setAnswer("A");
+            fallback.setExplanation("JSON解析失败，这是示例问题");
+            return List.of(fallback);
+        }
     }
 
     /**
