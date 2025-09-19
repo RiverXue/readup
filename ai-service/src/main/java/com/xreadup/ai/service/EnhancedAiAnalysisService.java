@@ -25,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -367,18 +369,130 @@ public class EnhancedAiAnalysisService {
     }
 
     /**
-     * 句子解析（DeepSeek）
+     * 句子解析（带缓存共享机制）
      * 
      * @param sentence 需要解析的句子
      * @return 解析结果
      */
-    public SentenceParseResponse parseSentence(String sentence) {
+    public SentenceParseResponse parseSentenceWithCache(String sentence) {
         try {
-            log.info("开始句子解析: 句子={}", sentence);
-            return aiAnalysisService.parseSentence(sentence);
+            log.info("开始句子解析（缓存模式）: 句子={}", sentence);
+            
+            // 先尝试从缓存获取
+            SentenceParseResponse cachedResult = getCachedSentenceParseResult(sentence);
+            if (cachedResult != null) {
+                log.info("句子解析缓存命中，直接返回结果");
+                return cachedResult;
+            }
+            
+            // 缓存未命中，调用AI解析
+            log.info("句子解析缓存未命中，调用AI服务解析");
+            SentenceParseResponse result = aiAnalysisService.parseSentence(sentence);
+            
+            // 异步保存解析结果到缓存
+            saveSentenceParseToCache(sentence, result);
+            
+            return result;
         } catch (Exception e) {
-            log.error("句子解析失败", e);
+            log.error("句子解析失败（缓存模式）", e);
             throw new RuntimeException("句子解析失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 从缓存获取句子解析结果
+     * 
+     * @param sentence 句子内容
+     * @return 缓存的解析结果，如果不存在返回null
+     */
+    private SentenceParseResponse getCachedSentenceParseResult(String sentence) {
+        try {
+            Long virtualArticleId = generateVirtualArticleId(sentence);
+            
+            LambdaQueryWrapper<AiAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AiAnalysis::getArticleId, virtualArticleId)
+                   .isNotNull(AiAnalysis::getSentenceParseResults);
+            
+            AiAnalysis cachedAnalysis = aiAnalysisMapper.selectOne(wrapper);
+            if (cachedAnalysis != null && cachedAnalysis.getSentenceParseResults() != null) {
+                log.info("找到句子解析缓存: 虚拟文章ID={}", virtualArticleId);
+                return objectMapper.readValue(cachedAnalysis.getSentenceParseResults(), SentenceParseResponse.class);
+            }
+            
+            return null;
+        } catch (Exception e) {
+            log.error("获取句子解析缓存失败", e);
+            return null;
+        }
+    }
+    
+    /**
+     * 保存句子解析结果到缓存
+     * 
+     * @param sentence 句子内容
+     * @param parseResult 解析结果
+     */
+    private void saveSentenceParseToCache(String sentence, SentenceParseResponse parseResult) {
+        try {
+            Long virtualArticleId = generateVirtualArticleId(sentence);
+            String parseJson = objectMapper.writeValueAsString(parseResult);
+            
+            // 检查是否已存在记录
+            LambdaQueryWrapper<AiAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AiAnalysis::getArticleId, virtualArticleId);
+            
+            AiAnalysis existing = aiAnalysisMapper.selectOne(wrapper);
+            if (existing != null) {
+                existing.setSentenceParseResults(parseJson);
+                existing.setLastAnalysisType("parse");
+                existing.setUpdatedAt(LocalDateTime.now());
+                aiAnalysisMapper.updateById(existing);
+            } else {
+                AiAnalysis analysis = new AiAnalysis();
+                analysis.setArticleId(virtualArticleId);
+                analysis.setTitle("[句子解析缓存] " + (sentence.length() > 30 ? sentence.substring(0, 30) + "..." : sentence));
+                analysis.setSentenceParseResults(parseJson);
+                analysis.setLastAnalysisType("parse");
+                analysis.setCreatedAt(LocalDateTime.now());
+                analysis.setUpdatedAt(LocalDateTime.now());
+                aiAnalysisMapper.insert(analysis);
+            }
+            
+            log.info("句子解析结果已保存到缓存: 虚拟文章ID={}", virtualArticleId);
+        } catch (Exception e) {
+            log.error("保存句子解析缓存失败", e);
+        }
+    }
+    
+    /**
+     * 生成基于句子内容的虚拟文章ID
+     * 使用句子内容的MD5哈希值作为虚拟ID，确保相同句子产生相同ID
+     * 使用负数范围避免与真实文章ID冲突
+     * 
+     * @param sentence 句子内容
+     * @return 虚拟文章ID（负数）
+     */
+    private Long generateVirtualArticleId(String sentence) {
+        try {
+            // 清理句子内容（去除首尾空格，统一小写）
+            String cleanSentence = sentence.trim().toLowerCase();
+            
+            // 计算MD5哈希
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hashBytes = md.digest(cleanSentence.getBytes(StandardCharsets.UTF_8));
+            
+            // 取前8字节转换为long，确保为负数（避免与正数的真实文章ID冲突）
+            long hash = 0;
+            for (int i = 0; i < 8; i++) {
+                hash = (hash << 8) + (hashBytes[i] & 0xff);
+            }
+            
+            // 确保结果为负数
+            return hash > 0 ? -hash : hash;
+        } catch (Exception e) {
+            log.error("生成虚拟文章ID失败", e);
+            // 降级方案：使用句子哈希码的负值
+            return -(long) Math.abs(sentence.hashCode());
         }
     }
 

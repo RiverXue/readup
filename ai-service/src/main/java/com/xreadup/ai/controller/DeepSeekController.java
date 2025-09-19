@@ -73,18 +73,23 @@ public class DeepSeekController {
     /**
      * 长句解析（DeepSeek）
      * 对复杂句子进行语法和语义分析并保存到数据库
+     * 支持共享缓存机制：相同句子的解析结果在不同用户间共享
      */
     @PostMapping("/parse")
-    @Operation(summary = "长句解析", description = "使用DeepSeek对复杂句子进行语法和语义分析并持久化存储")
+    @Operation(summary = "长句解析", description = "使用DeepSeek对复杂句子进行语法和语义分析，支持缓存共享")
     public ApiResponse<SentenceParseResponse> parseSentence(@RequestBody SentenceParseRequest request) {
         try {
             log.info("开始句子解析: 句子长度={}字符", request.getSentence().length());
-            SentenceParseResponse response = enhancedAiAnalysisService.parseSentence(request.getSentence());
             
-            // 保存解析结果到数据库
-            enhancedAiAnalysisService.saveSentenceParseResults(request.getArticleId(), response);
+            // 使用带缓存的句子解析方法
+            SentenceParseResponse response = enhancedAiAnalysisService.parseSentenceWithCache(request.getSentence());
             
-            log.info("句子解析完成并保存: 语法分析完成");
+            // 如果请求中包含articleId，也保存一份到该文章的记录中（向后兼容）
+            if (request.getArticleId() != null) {
+                enhancedAiAnalysisService.saveSentenceParseResults(request.getArticleId(), response);
+            }
+            
+            log.info("句子解析完成: 语法分析使用了缓存共享机制");
             return ApiResponse.success(response);
         } catch (Exception e) {
             log.error("句子解析失败", e);
