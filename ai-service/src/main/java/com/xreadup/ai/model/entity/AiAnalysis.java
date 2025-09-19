@@ -94,7 +94,7 @@ public class AiAnalysis {
     /**
      * DeepSeek生成的文章摘要
      */
-    @TableField("deepseek_summary")
+    @TableField(exist = false)
     private String deepseekSummary;
 
     /**

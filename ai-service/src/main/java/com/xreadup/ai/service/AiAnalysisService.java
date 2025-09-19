@@ -1,5 +1,7 @@
 package com.xreadup.ai.service;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xreadup.ai.model.dto.ArticleAnalysisRequest;
 import com.xreadup.ai.model.dto.ArticleAnalysisResponse;
@@ -15,9 +17,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -461,43 +462,108 @@ public class AiAnalysisService {
 
     /**
      * 解析句子解析响应
+     * 增强JSON解析的健壮性，处理多种可能的格式问题
      */
     private SentenceParseResponse parseSentenceResponse(String response, String sentence) {
         try {
-            String cleanResponse = response.trim();
-            if (cleanResponse.startsWith("```json")) {
-                cleanResponse = cleanResponse.substring(7);
-            }
-            if (cleanResponse.endsWith("```")) {
-                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
-            }
-            cleanResponse = cleanResponse.trim();
+            // 1. 首先记录原始响应以便调试
+            log.info("原始句子解析响应长度: {} 字符", response.length());
+            log.debug("原始句子解析响应: {}", response);
             
-            return objectMapper.readValue(cleanResponse, SentenceParseResponse.class);
+            // 2. 清理响应，处理多种可能的格式
+            String cleanResponse = response.trim();
+            
+            // 2.1 处理Markdown代码块格式
+            if (cleanResponse.startsWith("```json")) {
+                log.debug("检测到```json格式代码块");
+                cleanResponse = cleanResponse.substring(7);
+                int endCodeBlockIndex = cleanResponse.lastIndexOf("```");
+                if (endCodeBlockIndex > 0) {
+                    cleanResponse = cleanResponse.substring(0, endCodeBlockIndex);
+                }
+            } else if (cleanResponse.startsWith("```")) {
+                log.debug("检测到普通```格式代码块");
+                cleanResponse = cleanResponse.substring(3);
+                int endCodeBlockIndex = cleanResponse.lastIndexOf("```");
+                if (endCodeBlockIndex > 0) {
+                    cleanResponse = cleanResponse.substring(0, endCodeBlockIndex);
+                }
+            }
+            
+            // 2.2 处理可能的前缀和后缀文本
+            int startJsonIndex = cleanResponse.indexOf('{');
+            int endJsonIndex = cleanResponse.lastIndexOf('}') + 1;
+            if (startJsonIndex >= 0 && endJsonIndex > startJsonIndex) {
+                log.debug("提取JSON边界: {}-{}", startJsonIndex, endJsonIndex);
+                cleanResponse = cleanResponse.substring(startJsonIndex, endJsonIndex);
+            }
+            
+            // 2.3 处理可能的转义字符和特殊字符
+            cleanResponse = cleanResponse.trim();
+            log.debug("清理后响应长度: {} 字符", cleanResponse.length());
+            log.debug("清理后的句子解析响应: {}", cleanResponse);
+            
+            // 3. 尝试解析JSON，添加更健壮的解析选项
+            try {
+                return objectMapper.readValue(cleanResponse, SentenceParseResponse.class);
+            } catch (Exception e) {
+                // 第一次解析失败，尝试使用更宽松的配置
+                log.warn("首次JSON解析失败，尝试更宽松的解析配置: {}", e.getMessage());
+                // 设置更宽松的配置
+                ObjectMapper lenientMapper = new ObjectMapper();
+                lenientMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                lenientMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+                lenientMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+                return lenientMapper.readValue(cleanResponse, SentenceParseResponse.class);
+            }
         } catch (Exception e) {
-            log.error("解析句子解析响应失败: {}", response, e);
+            log.error("解析句子解析响应失败: {}, 错误: {}", response, e.getMessage(), e);
             return createFallbackSentenceResponse(sentence);
         }
     }
 
     /**
      * 解析测验题响应
+     * 增强JSON解析的健壮性，处理多种可能的格式问题
      */
     private List<QuizQuestion> parseQuizResponse(String response) {
         try {
+            // 1. 首先记录原始响应以便调试
+            log.debug("原始测验题响应: {}", response);
+            
+            // 2. 清理响应，处理多种可能的格式
             String cleanResponse = response.trim();
+            
+            // 2.1 处理Markdown代码块格式
             if (cleanResponse.startsWith("```json")) {
                 cleanResponse = cleanResponse.substring(7);
+                int endCodeBlockIndex = cleanResponse.lastIndexOf("```");
+                if (endCodeBlockIndex > 0) {
+                    cleanResponse = cleanResponse.substring(0, endCodeBlockIndex);
+                }
+            } else if (cleanResponse.startsWith("```")) {
+                cleanResponse = cleanResponse.substring(3);
+                int endCodeBlockIndex = cleanResponse.lastIndexOf("```");
+                if (endCodeBlockIndex > 0) {
+                    cleanResponse = cleanResponse.substring(0, endCodeBlockIndex);
+                }
             }
-            if (cleanResponse.endsWith("```")) {
-                cleanResponse = cleanResponse.substring(0, cleanResponse.length() - 3);
-            }
-            cleanResponse = cleanResponse.trim();
             
+            // 2.2 处理可能的前缀和后缀文本
+            int startJsonIndex = cleanResponse.indexOf('[');
+            int endJsonIndex = cleanResponse.lastIndexOf(']') + 1;
+            if (startJsonIndex >= 0 && endJsonIndex > startJsonIndex) {
+                cleanResponse = cleanResponse.substring(startJsonIndex, endJsonIndex);
+            }
+            
+            cleanResponse = cleanResponse.trim();
+            log.debug("清理后的测验题响应: {}", cleanResponse);
+            
+            // 3. 尝试解析JSON
             QuizQuestion[] questions = objectMapper.readValue(cleanResponse, QuizQuestion[].class);
             return Arrays.asList(questions);
         } catch (Exception e) {
-            log.error("解析测验题响应失败: {}", response, e);
+            log.error("解析测验题响应失败: {}, 错误: {}", response, e.getMessage(), e);
             return createFallbackQuizQuestions(5);
         }
     }
@@ -508,10 +574,27 @@ public class AiAnalysisService {
     private SentenceParseResponse createFallbackSentenceResponse(String sentence) {
         SentenceParseResponse response = new SentenceParseResponse();
         response.setOriginalSentence(sentence);
-        response.setSentenceStructure("句子结构分析暂时不可用");
-        response.setGrammar("语法分析暂时不可用");
+        
+        // 创建降级的句子结构Map
+        Map<String, Object> sentenceStructureMap = new HashMap<>();
+        sentenceStructureMap.put("message", "句子结构分析暂时不可用");
+        response.setSentenceStructure(sentenceStructureMap);
+        
+        // 创建降级的语法分析Map
+        Map<String, Object> grammarMap = new HashMap<>();
+        grammarMap.put("message", "语法分析暂时不可用");
+        response.setGrammar(grammarMap);
+        
         response.setMeaning("核心含义暂时无法解析");
-        response.setKeyVocabulary(List.of("词汇解析暂时不可用"));
+        
+        // 创建降级的关键词汇列表
+        List<Map<String, Object>> keyVocabularyList = new ArrayList<>();
+        Map<String, Object> vocabMap = new HashMap<>();
+        vocabMap.put("word", "词汇解析暂时不可用");
+        vocabMap.put("meaning", "服务暂时无法使用");
+        keyVocabularyList.add(vocabMap);
+        response.setKeyVocabulary(keyVocabularyList);
+        
         response.setGrammarPoints(List.of("语法要点暂时无法提供"));
         response.setLearningTip("建议稍后重试句子解析功能");
         return response;

@@ -130,3 +130,21 @@ CREATE TABLE `reading_streak`
     UNIQUE KEY `uk_user_id` (`user_id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户阅读打卡记录';
+
+-- 添加句子解析结果字段
+ALTER TABLE ai_analysis ADD COLUMN sentence_parse_results LONGTEXT COMMENT '句子解析结果（JSON格式存储）';
+
+-- 添加测验题字段
+ALTER TABLE ai_analysis ADD COLUMN quiz_questions LONGTEXT COMMENT '测验题列表（JSON格式存储）';
+
+-- 添加学习建议字段
+ALTER TABLE ai_analysis ADD COLUMN learning_tips TEXT COMMENT '个性化学习建议';
+
+-- 添加分析元数据字段
+ALTER TABLE ai_analysis ADD COLUMN analysis_metadata TEXT COMMENT '分析元数据（JSON格式存储）';
+
+-- 添加最后分析类型字段
+ALTER TABLE ai_analysis ADD COLUMN last_analysis_type VARCHAR(50) COMMENT '最后一次分析类型';
+
+-- 验证表结构
+DESCRIBE ai_analysis;
