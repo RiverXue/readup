@@ -85,14 +85,22 @@ public class AiReadingAssistantService {
             log.info("查询单词详细信息: {}", word);
             
             // 使用AI模型查询单词信息
-            String prompt = String.format("请提供单词'%s'的详细信息，包括：\n" +
-                    "1. 音标 (phonetic)\n" +
-                    "2. 释义列表 (meanings) - 请使用中文，并包含词性\n" +
-                    "3. 例句 (example) - 请使用英文，并包含中文翻译（只需一条例句）\n" +
-                    "4. 语境 (context) - 提供该单词在句子中的语境类型，使用简短类别描述（如：日常对话/学术/科技/金融/文学等）\n" +
-                    "5. 难度等级 (difficulty) - 请使用CEFR标准 (A1, A2, B1, B2, C1, C2)\n" +
-                    "6. 用法说明 (usage) - 提供该单词的常见用法说明\n" +
-                    "请严格按照JSON格式返回，不要添加任何额外的解释或说明。", word);
+            String prompt = String.format("请提供单词'%s'的详细信息，严格按照以下JSON格式返回，不要添加任何额外的解释或说明：\n{\n" +
+                    "  \"phonetic\": \"音标\",\n" +
+                    "  \"meanings\": [\n" +
+                    "    {\n" +
+                    "      \"partOfSpeech\": \"中文词性（请使用中文，如：名词、动词、形容词等，不要使用英文缩写）\",\n" +
+                    "      \"definition\": \"中文释义\"\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"example\": {\n" +
+                    "    \"english\": \"英文例句\",\n" +
+                    "    \"chinese\": \"中文翻译\"\n" +
+                    "  },\n" +
+                    "  \"context\": [\"语境类型1\", \"语境类型2\"],\n" +
+                    "  \"difficulty\": \"CEFR难度等级（A1, A2, B1, B2, C1, C2）\",\n" +
+                    "  \"usage\": \"用法说明\"\n" +
+                    "}", word);
             
             log.info("发送AI请求: {}", prompt);
             
