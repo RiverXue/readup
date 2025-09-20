@@ -176,4 +176,26 @@ public class SubscriptionController {
             ));
         }
     }
+    
+    /**
+     * 获取所有套餐价格配置
+     */
+    @GetMapping("/plan-prices")
+    @Operation(summary = "获取套餐价格配置", description = "获取所有订阅套餐的价格和功能配置")
+    public ResponseEntity<?> getPlanPrices() {
+        try {
+            Map<String, Map<String, Object>> planPrices = subscriptionService.getPlanPrices();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", planPrices
+            ));
+        } catch (Exception e) {
+            // 记录详细错误信息
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : "获取套餐价格配置失败"
+            ));
+        }
+    }
 }

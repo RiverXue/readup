@@ -45,4 +45,9 @@ public interface SubscriptionService {
      * 获取用户剩余额度
      */
     Map<String, Object> getRemainingQuota(Long userId);
+    
+    /**
+     * 获取所有套餐价格配置
+     */
+    Map<String, Map<String, Object>> getPlanPrices();
 }
