@@ -61,13 +61,13 @@ spring:
           max-tokens: 2000
 
 # 腾讯云翻译配置 - 双引擎基础翻译引擎
-tencent:
-  cloud:
-    translate:
-      secret-id: ${TENCENT_CLOUD_SECRET_ID:AKIDZ9XheOvEJFj170iFZjgQwFLDuRpsohT4}
-      secret-key: ${TENCENT_CLOUD_SECRET_KEY:UlrkRxJTSDnAcs7C4pPp45tZ5PYVFH9n}
-      region: ${TENCENT_CLOUD_REGION:ap-beijing}
-      endpoint: ${TENCENT_CLOUD_ENDPOINT:tmt.tencentcloudapi.com}
+#tencent:
+#  cloud:
+#    translate:
+#      secret-id: ${TENCENT_CLOUD_SECRET_ID:AKIDZ9XheOvEJFj170iFZjgQwFLDuRpsohT4}
+#      secret-key: ${TENCENT_CLOUD_SECRET_KEY:UlrkRxJTSDnAcs7C4pPp45tZ5PYVFH9n}
+#      region: ${TENCENT_CLOUD_REGION:ap-beijing}
+#      endpoint: ${TENCENT_CLOUD_ENDPOINT:tmt.tencentcloudapi.com}
 
 # 日志配置
 logging:
