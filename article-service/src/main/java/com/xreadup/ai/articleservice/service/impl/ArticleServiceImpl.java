@@ -19,6 +19,8 @@ import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
 import com.xreadup.ai.articleservice.model.common.ApiResponse;
 import com.xreadup.ai.articleservice.model.dto.GnewsResponse;
+import com.xreadup.ai.articleservice.service.ScraperService;
+import com.xreadup.ai.articleservice.util.DifficultyEvaluator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,8 +32,6 @@ import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.xreadup.ai.articleservice.service.ScraperService;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,6 +41,7 @@ public class ArticleServiceImpl implements ArticleService {
     private final AiIntegrationService aiIntegrationService;
     private final GnewsService gnewsService;
     private final ScraperService scraperService;
+    private final DifficultyEvaluator difficultyEvaluator;
     
     @Override
     public ApiResponse<ArticleDetailVO> readArticle(Long id) {
@@ -285,6 +286,7 @@ public class ArticleServiceImpl implements ArticleService {
                 vo.setPublishedAt(article.getPublishedAt());
                 vo.setCategory(category);
                 vo.setContentEn(article.getContentEn()); // 返回完整内容
+                vo.setDifficultyLevel(article.getDifficultyLevel()); // 设置难度等级
                 log.debug("文章ID: {}, 标题: {}, 内容长度: {}", article.getId(), article.getTitle(), 
                           article.getContentEn() != null ? article.getContentEn().length() : 0);
                 return vo;
@@ -311,6 +313,7 @@ public class ArticleServiceImpl implements ArticleService {
                     vo.setPublishedAt(article.getPublishedAt());
                     vo.setCategory(category);
                     vo.setContentEn(article.getContentEn());
+                    vo.setDifficultyLevel(article.getDifficultyLevel()); // 设置难度等级
                     return vo;
                 }).collect(Collectors.toList());
             } catch (Exception innerE) {
@@ -369,7 +372,10 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setContentEn(fullContent);
                     article.setContentCn("");
                     article.setWordCount(countWords(fullContent));
-                    article.setDifficultyLevel("B1");
+                    // 使用DifficultyEvaluator评估文章难度
+                    String difficultyLevel = difficultyEvaluator.evaluateDifficulty(fullContent);
+                    article.setDifficultyLevel(difficultyLevel);
+                    log.info("热点文章ID: {}, 标题: {}, 评估难度等级: {}", article.getId(), article.getTitle(), difficultyLevel);
                     
                     // 插入数据库
                     int insertResult = articleMapper.insert(article);
@@ -408,6 +414,7 @@ public class ArticleServiceImpl implements ArticleService {
                 vo.setPublishedAt(article.getPublishedAt());
                 vo.setCategory("general");
                 vo.setContentEn(article.getContentEn()); // 返回完整内容
+                vo.setDifficultyLevel(article.getDifficultyLevel()); // 设置难度等级
                 log.debug("热点文章ID: {}, 标题: {}, 内容长度: {}", article.getId(), article.getTitle(), 
                           article.getContentEn() != null ? article.getContentEn().length() : 0);
                 return vo;
@@ -434,6 +441,7 @@ public class ArticleServiceImpl implements ArticleService {
                     vo.setPublishedAt(article.getPublishedAt());
                     vo.setCategory("general");
                     vo.setContentEn(article.getContentEn());
+                    vo.setDifficultyLevel(article.getDifficultyLevel()); // 设置难度等级
                     return vo;
                 }).collect(Collectors.toList());
             } catch (Exception innerE) {
@@ -568,7 +576,10 @@ public class ArticleServiceImpl implements ArticleService {
                 article.setContentEn(fullContent); // 存储完整内容
                 article.setContentCn(""); // 初始为空
                 article.setWordCount(countWords(fullContent)); // 计算单词数
-                article.setDifficultyLevel("B1"); // 默认难度级别，可后续通过AI分析更新
+                // 使用DifficultyEvaluator评估文章难度
+                String difficultyLevel = difficultyEvaluator.evaluateDifficulty(fullContent);
+                article.setDifficultyLevel(difficultyLevel);
+                log.info("文章ID: {}, 标题: {}, 评估难度等级: {}", article.getId(), article.getTitle(), difficultyLevel);
                 article.setReadCount(0);
                 article.setLikeCount(0);
                 

@@ -1,5 +1,6 @@
 package com.xreadup.ai.client;
 
+import lombok.Data;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,13 +26,13 @@ public interface ArticleServiceClient {
     ApiResponse<Boolean> updateContentCn(@RequestBody UpdateContentCnRequest request);
     
     /**
-     * API响应通用格式
+     * API响应通用格式 - 与article-service中的实现保持一致
      */
-    interface ApiResponse<T> {
-        int getCode();
-        String getMessage();
-        T getData();
-        boolean isSuccess();
+    @Data
+    class ApiResponse<T> {
+        private boolean success;
+        private String message;
+        private T data;
     }
     
     /**
