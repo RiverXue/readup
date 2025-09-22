@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -19,9 +18,6 @@ public class ReadingRecord {
     
     private Long userId;
     private Long articleId;
-    private Integer readTimeSec;
-    private Integer minutesRead;
-    private LocalDate readDate;
-    private LocalDateTime finishedAt;
-    private LocalDateTime createdAt;
+    private Integer readTimeSec; // 阅读时长（秒）
+    private LocalDateTime finishedAt; // 阅读完成时间
 }

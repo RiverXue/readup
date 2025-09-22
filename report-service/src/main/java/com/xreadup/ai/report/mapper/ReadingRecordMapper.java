@@ -31,9 +31,9 @@ public interface ReadingRecordMapper extends BaseMapper<ReadingRecord> {
     @Select("SELECT DATE(finished_at) as date, COALESCE(SUM(read_time_sec)/60, 0) as minutes, COALESCE(COUNT(*), 0) as articles FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) GROUP BY DATE(finished_at) ORDER BY DATE(finished_at)")
     List<ReadingTimeData.DailyReading> getDailyReadings(@Param("userId") Long userId, @Param("days") int days);
 
-    @Select("SELECT COALESCE(COUNT(*), 0) as count, COALESCE(SUM(read_time_sec)/60, 0) as totalMinutes FROM reading_log WHERE user_id = #{userId}")
+    @Select("SELECT a.difficulty_level as difficulty, COALESCE(COUNT(*), 0) as count, COALESCE(SUM(r.read_time_sec)/60, 0) as totalMinutes FROM reading_log r LEFT JOIN article a ON r.article_id = a.id WHERE r.user_id = #{userId} GROUP BY a.difficulty_level")
     List<ReadingTimeData.DifficultyStats> getDifficultyStats(@Param("userId") Long userId);
 
-    @Select("SELECT id, user_id, article_id, read_time_sec, finished_at FROM reading_log WHERE user_id = #{userId} AND read_date BETWEEN #{startDate} AND #{endDate} ORDER BY read_date")
+    @Select("SELECT id, user_id, article_id, read_time_sec, finished_at FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) BETWEEN #{startDate} AND #{endDate} ORDER BY finished_at")
     List<ReadingRecord> getReadingRecordsByDateRange(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

@@ -5,6 +5,7 @@ import com.xreadup.ai.report.dto.DashboardData;
 import com.xreadup.ai.report.dto.ReadingTimeData;
 import com.xreadup.ai.report.dto.ReviewWordDto;
 import com.xreadup.ai.report.dto.VocabularyGrowthData;
+import com.xreadup.ai.report.feign.UserServiceClient;
 import com.xreadup.ai.report.service.EbbinghausService;
 import com.xreadup.ai.report.service.ReadingTimeService;
 import com.xreadup.ai.report.service.VocabularyGrowthService;
@@ -19,6 +20,39 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 阅读记录请求参数
+ */
+class ReadingRecordRequest {
+    private Long userId;
+    private Long articleId;
+    private Integer readTimeSec;
+    
+    public Long getUserId() {
+        return userId;
+    }
+    
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+    
+    public Long getArticleId() {
+        return articleId;
+    }
+    
+    public void setArticleId(Long articleId) {
+        this.articleId = articleId;
+    }
+    
+    public Integer getReadTimeSec() {
+        return readTimeSec;
+    }
+    
+    public void setReadTimeSec(Integer readTimeSec) {
+        this.readTimeSec = readTimeSec;
+    }
+}
+
 @RestController
 @RequestMapping("/api/report")
 @Tag(name = "报表服务", description = "提供学习统计和报表生成功能")
@@ -32,6 +66,9 @@ public class ReportController {
 
     @Autowired
     private EbbinghausService ebbinghausService;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
 
     @GetMapping("/growth-curve")
     @Operation(summary = "【词汇增长】学习曲线", description = "追踪你的词汇量成长轨迹")
@@ -48,6 +85,17 @@ public class ReportController {
             @Parameter(description = "用户ID", required = true) @RequestParam @NotNull(message = "用户ID不能为空") Long userId) {
         ReadingTimeData data = readingTimeService.getReadingStats(userId);
         return ApiResponse.success(data);
+    }
+    
+    @PostMapping("/reading-record")
+    @Operation(summary = "【记录阅读】保存阅读时长", description = "记录用户的文章阅读时长")
+    public ApiResponse<String> recordReading(
+            @RequestBody @NotNull(message = "请求参数不能为空") ReadingRecordRequest request) {
+        readingTimeService.recordReading(
+            request.getUserId(), 
+            request.getArticleId(), 
+            request.getReadTimeSec());
+        return ApiResponse.success("阅读记录保存成功");
     }
 
     @GetMapping("/review-today")
@@ -115,13 +163,25 @@ public class ReportController {
     }
 
     /**
-     * 计算当前连续学习天数（简化实现）
+     * 计算当前连续学习天数
      * @param userId 用户ID
      * @return 连续学习天数
      */
     private int calculateCurrentStreak(Long userId) {
-        // 这里可以实现实际的连续学习天数计算逻辑
-        // 暂时返回模拟数据，后续可以从用户服务获取
+        try {
+            // 调用用户服务的打卡API获取真实的连续打卡天数
+            ApiResponse<Integer> response = userServiceClient.getCheckInStreak(userId);
+            
+            // 检查响应是否成功且包含有效的数据
+            if (response != null && response.getCode() == 200 && response.getData() != null) {
+                return response.getData();
+            }
+        } catch (Exception e) {
+            // 发生异常时记录日志，返回默认值
+            System.err.println("获取连续打卡天数失败: " + e.getMessage());
+        }
+        
+        // 失败时返回默认值
         return 7;
     }
 

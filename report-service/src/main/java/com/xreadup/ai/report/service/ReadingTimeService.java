@@ -112,16 +112,16 @@ public class ReadingTimeService {
      * 记录用户阅读行为
      * @param userId 用户ID
      * @param articleId 文章ID
-     * @param minutesRead 阅读时长（分钟）
+     * @param readTimeSec 阅读时长（秒）
      */
-    public void recordReading(Long userId, Long articleId, int minutesRead) {
+    public void recordReading(Long userId, Long articleId, int readTimeSec) {
         if (userId == null || userId <= 0) {
             throw new IllegalArgumentException("用户ID必须为正数");
         }
         if (articleId == null || articleId <= 0) {
             throw new IllegalArgumentException("文章ID必须为正数");
         }
-        if (minutesRead < 0) {
+        if (readTimeSec < 0) {
             throw new IllegalArgumentException("阅读时长不能为负数");
         }
         
@@ -129,12 +129,11 @@ public class ReadingTimeService {
             ReadingRecord record = new ReadingRecord();
             record.setUserId(userId);
             record.setArticleId(articleId);
-            record.setMinutesRead(minutesRead);
-            record.setReadDate(LocalDate.now());
-            record.setCreatedAt(LocalDateTime.now());
+            record.setReadTimeSec(readTimeSec);
+            record.setFinishedAt(LocalDateTime.now());
             
             readingRecordMapper.insert(record);
-            logger.info("记录阅读行为成功 - 用户ID: " + userId + ", 文章ID: " + articleId + ", 时长: " + minutesRead + "分钟");
+            logger.info("记录阅读行为成功 - 用户ID: " + userId + ", 文章ID: " + articleId + ", 时长: " + readTimeSec + "秒");
         } catch (Exception e) {
             logger.log(Level.SEVERE, "记录阅读行为失败 - 用户ID: " + userId + ", 文章ID: " + articleId, e);
             throw new RuntimeException("记录阅读行为失败，请稍后重试", e);

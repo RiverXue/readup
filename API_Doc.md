@@ -27,12 +27,12 @@ XReadUp AI采用Spring Cloud微服务架构，包含以下核心服务：
 
 ## 📊 API 概览
 
-目前系统共包含 **55个** REST API接口，分布如下：
+目前系统共包含 **56个** REST API接口，分布如下：
 
 - **AI服务**：22个接口（DeepSeek智能分析、腾讯云翻译、AI助手）
 - **文章服务**：7个接口（文章发现、阅读管理、内容提取）
 - **用户服务**：18个接口（用户认证、三级词库、订阅管理）
-- **报告服务**：8个接口（学习统计、艾宾浩斯复习、数据仪表盘）
+- **报告服务**：9个接口（学习统计、艾宾浩斯复习、数据仪表盘）
 
 ## 🔐 认证说明
 
@@ -1515,7 +1515,7 @@ DELETE /api/vocabulary/{wordId}
 
 ---
 
-## 📊 报告服务 (report-service) - 8个接口
+## 📊 报告服务 (report-service) - 9个接口
 
 提供学习统计、报表生成和学习建议功能。采用艾宾浩斯复习算法，提供科学的学习进度跟踪。
 
@@ -1542,6 +1542,34 @@ GET /api/report/reading-time?userId={userId}
 - **业务逻辑**：统计阅读时长、分析习惯模式、计算阅读效率
 - **请求参数**：`userId` (用户ID)
 - **响应**：`ApiResponse<ReadingTimeData>` (阅读时长数据)
+
+#### 记录阅读时长
+
+```http
+POST /api/report/reading-record
+```
+
+- **使用场景**：记录用户阅读文章的时长数据
+- **业务逻辑**：保存用户阅读记录、计算阅读统计数据
+- **请求体**：`ReadingRecordRequest`
+  
+  ```json
+  {
+    "userId": 123,
+    "articleId": 456,
+    "readTimeSec": 300
+  }
+  ```
+- **响应**：`ApiResponse<String>`
+  
+  ```json
+  {
+    "code": 200,
+    "message": "success",
+    "success": true,
+    "data": "阅读记录保存成功"
+  }
+  ```
 
 #### 艾宾浩斯智能复习提醒
 
