@@ -18,7 +18,6 @@ public class UserVocabulary {
     private String meaning;
     private Long sourceArticleId;
     private String reviewStatus;
-    private Integer reviewCount;
     private LocalDate lastReviewedAt;
     private LocalDate nextReviewAt;
     private LocalDateTime addedAt;

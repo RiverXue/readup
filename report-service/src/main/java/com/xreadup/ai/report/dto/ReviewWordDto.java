@@ -9,18 +9,16 @@ public class ReviewWordDto {
     private String meaning;
     private String example;
     private String difficulty;
-    private Integer reviewCount;
     private String dueDate;
 
     public ReviewWordDto() {}
 
-    public ReviewWordDto(Long wordId, String word, String meaning, String example, String difficulty, Integer reviewCount, String dueDate) {
+    public ReviewWordDto(Long wordId, String word, String meaning, String example, String difficulty, String dueDate) {
         this.wordId = wordId;
         this.word = word;
         this.meaning = meaning;
         this.example = example;
         this.difficulty = difficulty;
-        this.reviewCount = reviewCount;
         this.dueDate = dueDate;
     }
 
@@ -65,14 +63,6 @@ public class ReviewWordDto {
         this.difficulty = difficulty;
     }
 
-    public Integer getReviewCount() {
-        return reviewCount;
-    }
-
-    public void setReviewCount(Integer reviewCount) {
-        this.reviewCount = reviewCount;
-    }
-
     public String getDueDate() {
         return dueDate;
     }
@@ -89,7 +79,6 @@ public class ReviewWordDto {
                 ", meaning='" + meaning + '\'' +
                 ", example='" + example + '\'' +
                 ", difficulty='" + difficulty + '\'' +
-                ", reviewCount=" + reviewCount +
                 ", dueDate='" + dueDate + '\'' +
                 '}';
     }

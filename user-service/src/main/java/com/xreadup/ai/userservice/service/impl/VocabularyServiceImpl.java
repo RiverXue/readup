@@ -63,7 +63,7 @@ public class VocabularyServiceImpl implements VocabularyService {
             // 设置当前用户的复习状态为新单词
             sharedWord.setReviewStatus("new");
             sharedWord.setLastReviewedAt(null);
-            sharedWord.setNextReviewAt(null);
+            sharedWord.setNextReviewAt(LocalDateTime.now()); // 设置为当前时间，确保单词会显示在复习列表中
             sharedWord.setAddedAt(LocalDateTime.now());
             
             return sharedWord;
@@ -125,6 +125,7 @@ public class VocabularyServiceImpl implements VocabularyService {
         newWord.setSourceArticleId(articleId);
         newWord.addUserId(userId);
         newWord.setReviewStatus("new");
+        newWord.setNextReviewAt(LocalDateTime.now()); // 设置为当前时间，确保单词会显示在复习列表中
         newWord.setAddedAt(LocalDateTime.now());
         newWord.setPhonetic(phonetic);
         newWord.setDifficulty(difficulty);
@@ -201,6 +202,7 @@ public class VocabularyServiceImpl implements VocabularyService {
                 wordEntity.setSourceArticleId(articleId);
                 wordEntity.addUserId(addUserId); // 使用addUserId方法添加用户ID
                 wordEntity.setReviewStatus("new");
+                wordEntity.setNextReviewAt(LocalDateTime.now()); // 设置为当前时间，确保单词会显示在复习列表中
                 wordEntity.setAddedAt(LocalDateTime.now());
                 wordEntity.setPhonetic(phonetic);
                 wordEntity.setDifficulty(difficulty);
@@ -479,5 +481,35 @@ public class VocabularyServiceImpl implements VocabularyService {
         
         log.error("从单词用户列表中移除用户失败: {}, 用户: {}", wordId, userId);
         return false;
+    }
+
+
+    private Word createOrUpdateWord(Long userId, String word, String meaning, String example, String context, String source, Long sourceArticleId) {
+        // 检查单词是否已存在
+        Word existingWord = wordMapper.findByWord(word);
+        if (existingWord != null) {
+            // 单词已存在，将当前用户添加到共享列表
+            existingWord.addUserId(userId);
+            wordMapper.updateUserIds(existingWord.getId(), existingWord.getUserIds());
+            return existingWord;
+        } else {
+            // 单词不存在，创建新单词
+            Word newWord = new Word();
+            Set<Long> userIds = new HashSet<>();
+            userIds.add(userId);
+            newWord.setUserIdSet(userIds);
+            newWord.setWord(word);
+            newWord.setMeaning(meaning);
+            newWord.setExample(example);
+            newWord.setContext(context);
+            newWord.setSource(source);
+            newWord.setSourceArticleId(sourceArticleId);
+            newWord.setReviewStatus("new");
+            newWord.setLastReviewedAt(null);
+            newWord.setNextReviewAt(LocalDateTime.now()); // 设置为当前时间，确保新单词会显示在复习列表中
+            newWord.setAddedAt(LocalDateTime.now());
+            wordMapper.insert(newWord);
+            return newWord;
+        }
     }
 }

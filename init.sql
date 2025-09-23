@@ -105,19 +105,7 @@ CREATE TABLE `ai_cache`
   DEFAULT CHARSET = utf8mb4;
 
 
-CREATE TABLE `review_schedule`
-(
-    `id`               BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `user_id`          BIGINT   NOT NULL,
-    `word_id`          BIGINT   NOT NULL,
-    `next_review_time` DATETIME NOT NULL COMMENT '下次复习时间',
-    `review_stage`     INT      DEFAULT 1 COMMENT '复习阶段：1/2/4/7/15（天）',
-    `created_at`       DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX `idx_user_next_review` (`user_id`, `next_review_time`),
-    UNIQUE KEY `uk_user_word` (`user_id`, `word_id`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4 COMMENT ='用户单词复习计划表';
+
 
 
 CREATE TABLE `reading_streak`

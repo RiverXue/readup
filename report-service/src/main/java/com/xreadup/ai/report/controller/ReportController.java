@@ -3,10 +3,8 @@ package com.xreadup.ai.report.controller;
 import com.xreadup.ai.report.common.ApiResponse;
 import com.xreadup.ai.report.dto.DashboardData;
 import com.xreadup.ai.report.dto.ReadingTimeData;
-import com.xreadup.ai.report.dto.ReviewWordDto;
 import com.xreadup.ai.report.dto.VocabularyGrowthData;
 import com.xreadup.ai.report.feign.UserServiceClient;
-import com.xreadup.ai.report.service.EbbinghausService;
 import com.xreadup.ai.report.service.ReadingTimeService;
 import com.xreadup.ai.report.service.VocabularyGrowthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,9 +63,6 @@ public class ReportController {
     private ReadingTimeService readingTimeService;
 
     @Autowired
-    private EbbinghausService ebbinghausService;
-
-    @Autowired
     private UserServiceClient userServiceClient;
 
     @GetMapping("/growth-curve")
@@ -98,13 +93,7 @@ public class ReportController {
         return ApiResponse.success("阅读记录保存成功");
     }
 
-    @GetMapping("/review-today")
-    @Operation(summary = "【今日复习】遗忘曲线", description = "艾宾浩斯智能复习提醒")
-    public ApiResponse<List<ReviewWordDto>> reviewToday(
-            @Parameter(description = "用户ID", required = true) @RequestParam @NotNull(message = "用户ID不能为空") Long userId) {
-        List<ReviewWordDto> reviews = ebbinghausService.getTodayReviewWords(userId);
-        return ApiResponse.success(reviews);
-    }
+
 
     @GetMapping("/today/summary")
     @Operation(summary = "【今日小结】学习日报", description = "今日阅读成果一目了然")
@@ -120,12 +109,7 @@ public class ReportController {
         return ApiResponse.success(readingTimeService.getReadingTrend(userId, 7));
     }
 
-    @GetMapping("/streak/achievement")
-    @Operation(summary = "【学习成就】连续打卡", description = "见证你的坚持，记录每一个学习里程碑")
-    public ApiResponse<Object> streakAchievement(
-            @Parameter(description = "用户ID", required = true) @RequestParam @NotNull(message = "用户ID不能为空") Long userId) {
-        return ApiResponse.success(ebbinghausService.getReviewStats(userId));
-    }
+
 
     @GetMapping("/dashboard")
     @Operation(summary = "【学习仪表盘】综合数据", description = "一站式查看所有学习数据")
@@ -140,14 +124,6 @@ public class ReportController {
         // 获取阅读时长数据
         ReadingTimeData readingData = readingTimeService.getReadingStats(userId);
         dashboard.setReadingData(readingData);
-
-        // 获取今日待复习单词
-        List<ReviewWordDto> todayReviews = ebbinghausService.getTodayReviewWords(userId);
-        dashboard.setTodayReviews(todayReviews);
-
-        // 获取复习统计
-        Map<String, Object> reviewStats = ebbinghausService.getReviewStats(userId);
-        dashboard.setReviewSuccessRate((Double) reviewStats.get("successRate"));
 
         // 计算打卡数据（基于实际数据）
         dashboard.setCurrentStreak(calculateCurrentStreak(userId));
