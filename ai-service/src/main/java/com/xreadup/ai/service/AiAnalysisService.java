@@ -364,7 +364,40 @@ public class AiAnalysisService {
                 "3. 核心含义的中文解释\n" +
                 "4. 关键词汇解析（生词、短语、习语）\n" +
                 "5. 学习建议（如何理解这类句子）\n\n" +
-                "请以JSON格式返回，包含字段：originalSentence, sentenceStructure, grammar, meaning, keyVocabulary, grammarPoints, learningTip",
+                "请以JSON格式返回，严格按照以下结构：\n" +
+                "{\n" +
+                "  \"originalSentence\": \"原句\",\n" +
+                "  \"sentenceStructure\": {\n" +
+                "    \"sentenceType\": \"句子类型\",\n" +
+                "    \"subject\": \"主语\",\n" +
+                "    \"predicate\": \"谓语\",\n" +
+                "    \"object\": \"宾语\",\n" +
+                "    \"adverbial\": \"状语\",\n" +
+                "    \"modifier\": \"修饰语\"\n" +
+                "  },\n" +
+                "  \"grammar\": {\n" +
+                "    \"tense\": \"时态\",\n" +
+                "    \"voice\": \"语态\",\n" +
+                "    \"specialStructures\": [\n" +
+                "      \"特殊结构1\",\n" +
+                "      \"特殊结构2\"\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"meaning\": \"核心含义\",\n" +
+                "  \"keyVocabulary\": [\n" +
+                "    {\n" +
+                "      \"word\": \"单词\",\n" +
+                "      \"phonetic\": \"音标\",\n" +
+                "      \"meaning\": \"中文含义\",\n" +
+                "      \"wordType\": \"词性\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"grammarPoints\": [\n" +
+                "    \"语法要点1\",\n" +
+                "    \"语法要点2\"\n" +
+                "  ],\n" +
+                "  \"learningTip\": \"学习建议\"\n" +
+                "}",
                 sentence
             );
 
