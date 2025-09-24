@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -500,6 +501,26 @@ public class ArticleServiceImpl implements ArticleService {
                 return ApiResponse.success(false); // 返回成功但更新状态为false，避免影响主流程
             }
             
+            // 检查英文内容是否包含分段标记
+            boolean hasParagraphs = contentEn.contains("\n\n") || contentEn.contains("\r\n\r\n");
+            log.info("文章ID: {}，英文内容分段标记检查结果: {}, 包含\n\n: {}, 包含\r\n\r\n: {}", 
+                article.getId(), hasParagraphs, contentEn.contains("\n\n"), contentEn.contains("\r\n\r\n"));
+            
+            // 如果英文内容包含分段标记，但中文翻译不包含，尝试智能分段
+            boolean cnHasParagraphs = contentCn.contains("\n\n") || contentCn.contains("\r\n\r\n");
+            log.info("文章ID: {}，中文翻译分段标记检查结果: {}, 包含\n\n: {}, 包含\r\n\r\n: {}", 
+                article.getId(), cnHasParagraphs, contentCn.contains("\n\n"), contentCn.contains("\r\n\r\n"));
+            
+            if (hasParagraphs && !cnHasParagraphs) {
+                contentCn = segmentChineseTranslation(contentCn, contentEn);
+                log.info("文章ID: {}，已触发智能分段处理，处理前中文长度: {}，处理后中文长度: {}", 
+                    article.getId(), contentCn.length(), contentCn.length());
+            } else if (!hasParagraphs) {
+                log.info("文章ID: {}，未触发智能分段处理 - 英文内容不包含分段标记", article.getId());
+            } else if (cnHasParagraphs) {
+                log.info("文章ID: {}，未触发智能分段处理 - 中文翻译已包含分段标记", article.getId());
+            }
+            
             // 更新中文内容
             article.setContentCn(contentCn);
             int updateResult = articleMapper.updateById(article);
@@ -518,6 +539,144 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
     
+    /**
+     * 智能分段中文翻译内容
+     * 尝试根据英文原文的段落结构对中文翻译进行分段
+     */
+    private String segmentChineseTranslation(String chineseTranslation, String englishContent) {
+        if (chineseTranslation == null || chineseTranslation.isEmpty() || englishContent == null || englishContent.isEmpty()) {
+            log.info("智能分段 - 跳过处理：输入内容为空");
+            return chineseTranslation;
+        }
+        
+        // 分割英文原文为段落
+        String[] englishParagraphs;
+        if (englishContent.contains("\r\n\r\n")) {
+            englishParagraphs = englishContent.split("\\r\\n\\r\\n");
+        } else {
+            englishParagraphs = englishContent.split("\\n\\n");
+        }
+        
+        log.info("智能分段 - 英文段落数量：{}", englishParagraphs.length);
+        for (int i = 0; i < englishParagraphs.length; i++) {
+            log.debug("智能分段 - 英文段落{}长度：{}", i+1, englishParagraphs[i].length());
+        }
+        
+        // 如果英文段落少于2个，不进行分段
+        if (englishParagraphs.length < 2) {
+            log.info("智能分段 - 跳过处理：英文段落少于2个");
+            return chineseTranslation;
+        }
+        
+        // 计算每段英文的平均长度
+        int totalEnglishLength = 0;
+        for (String paragraph : englishParagraphs) {
+            totalEnglishLength += paragraph.length();
+        }
+        double avgParagraphLength = (double) totalEnglishLength / englishParagraphs.length;
+        log.info("智能分段 - 英文总长度：{}, 平均段落长度：{}", totalEnglishLength, avgParagraphLength);
+        
+        // 开始对中文翻译进行分段
+        StringBuilder segmentedChinese = new StringBuilder();
+        int currentPosition = 0;
+        int remainingLength = chineseTranslation.length();
+        
+        // 对除最后一段外的每一段进行处理
+        for (int i = 0; i < englishParagraphs.length - 1; i++) {
+            // 根据英文段落长度计算中文段落的预估长度
+            double ratio = (double) englishParagraphs[i].length() / totalEnglishLength;
+            int estimatedChineseLength = (int) (chineseTranslation.length() * ratio);
+            
+            // 计算实际分段位置
+            int segmentEnd = currentPosition + estimatedChineseLength;
+            
+            // 确保不越界
+            segmentEnd = Math.min(segmentEnd, chineseTranslation.length() - 1);
+            
+            log.debug("智能分段 - 段落{}：预估中文长度={}, 预估位置={}", 
+                i+1, estimatedChineseLength, segmentEnd);
+            
+            // 寻找合适的中文标点符号作为分段点，以保持语义完整
+            // 优先使用句号、问号、感叹号
+            char[] punctuationMarks = { '。', '？', '！', '.', '?', '!' };
+            int punctuationIndex = -1;
+            
+            // 在预估位置附近100个字符范围内寻找合适的标点符号
+            int searchStart = Math.max(currentPosition, segmentEnd - 100);
+            int searchEnd = Math.min(chineseTranslation.length() - 1, segmentEnd + 100);
+            
+            for (int j = searchEnd; j >= searchStart; j--) {
+                char c = chineseTranslation.charAt(j);
+                for (char mark : punctuationMarks) {
+                    if (c == mark) {
+                        punctuationIndex = j;
+                        break;
+                    }
+                }
+                if (punctuationIndex != -1) {
+                    break;
+                }
+            }
+            
+            // 如果找到了合适的标点符号，就在该位置分段
+            if (punctuationIndex != -1) {
+                segmentEnd = punctuationIndex + 1; // 包含标点符号
+                log.debug("智能分段 - 段落{}：找到标点符号 '{}' 在位置 {}, 实际分段位置={}", 
+                    i+1, chineseTranslation.charAt(punctuationIndex), punctuationIndex, segmentEnd);
+            } else {
+                log.debug("智能分段 - 段落{}：未找到合适的标点符号，使用预估位置={}", i+1, segmentEnd);
+            }
+            
+            // 添加当前段落
+            if (segmentEnd > currentPosition) {
+                segmentedChinese.append(chineseTranslation.substring(currentPosition, segmentEnd));
+                segmentedChinese.append("\n\n"); // 添加分段标记
+                log.debug("智能分段 - 段落{}：已添加，长度={}", 
+                    i+1, segmentEnd - currentPosition);
+                currentPosition = segmentEnd;
+            }
+        }
+        
+        // 添加最后一段
+        if (currentPosition < chineseTranslation.length()) {
+            segmentedChinese.append(chineseTranslation.substring(currentPosition));
+            log.debug("智能分段 - 最后一段：长度={}", chineseTranslation.length() - currentPosition);
+        }
+        
+        String result = segmentedChinese.toString().trim();
+        int paragraphCount = countParagraphs(result);
+        log.info("智能分段 - 完成，中文翻译原始长度：{}, 处理后长度：{}, 生成段落数量：{}", 
+            chineseTranslation.length(), result.length(), paragraphCount);
+        
+        return result;
+    }
+    
+    /**
+     * 计算文本中的段落数量
+     */
+    private int countParagraphs(String text) {
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+        
+        String[] paragraphs;
+        if (text.contains("\r\n\r\n")) {
+            paragraphs = text.split("\\r\\n\\r\\n");
+        } else {
+            paragraphs = text.split("\\n\\n");
+        }
+        
+        // 过滤空段落
+        int count = 0;
+        for (String paragraph : paragraphs) {
+            if (!paragraph.trim().isEmpty()) {
+                count++;
+            }
+        }
+        
+        return count;
+    }
+    
     @Override
     @Transactional
     public int fetchAndSaveArticles(String category, int limit) {
@@ -529,20 +688,20 @@ public class ArticleServiceImpl implements ArticleService {
         try {
             // 确保请求数量为非负值
             int safeLimit = Math.max(0, limit);
-            
+              
             // 1. 调用 GNews API 获取文章列表
             List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchArticlesByCategory(category, safeLimit);
-            
+              
             log.info("从GNews API获取到 {} 篇关于 {} 分类的文章", gnewsArticles.size(), category);
-            
+              
             // 2. 遍历每篇文章
             for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
                 totalProcessed++;
                 String url = gnewsArticle.getUrl();
                 String title = gnewsArticle.getTitle();
-                
+                  
                 log.info("处理第{}篇文章: {} - {}", totalProcessed, url, title);
-                
+                  
                 // 3. 检查数据库是否已存在该文章
                 boolean exists = isArticleExists(url);
                 if (exists) {
@@ -550,20 +709,58 @@ public class ArticleServiceImpl implements ArticleService {
                     log.info("文章已存在，跳过({}/{}): {} - {}", totalProcessed, gnewsArticles.size(), title, url);
                     continue;
                 }
-                
+                  
                 // 4. 使用 Readability4J 爬虫服务获取文章全文
                 log.info("尝试使用Readability4J获取文章全文: {}", url);
                 Optional<String> fullContentOptional = scraperService.scrapeArticleContent(url);
-                
+                  
                 if (fullContentOptional.isEmpty()) {
                     failedScrapeCount++;
                     log.warn("未能获取文章全文，跳过存储({}/{}): {} - {}", totalProcessed, gnewsArticles.size(), title, url);
                     continue;
                 }
-                
+                  
                 String fullContent = fullContentOptional.get();
                 log.info("成功获取文章全文，长度: {} 字符", fullContent.length());
-                
+                  
+                // 检查英文内容分段情况
+                boolean hasDoubleNewline = fullContent.contains("\n\n");
+                boolean hasCarriageReturnDoubleNewline = fullContent.contains("\r\n\r\n");
+                boolean hasParagraphs = hasDoubleNewline || hasCarriageReturnDoubleNewline;
+                int paragraphCount = 0;
+                if (hasParagraphs) {
+                    paragraphCount = countParagraphs(fullContent);
+                }
+                log.info("英文内容分段检查 - 包含\n\n: {}, 包含\r\n\r\n: {}, 总段落数: {}", 
+                    hasDoubleNewline, hasCarriageReturnDoubleNewline, paragraphCount);
+                  
+                // 英文内容分段详细分析
+                if (hasParagraphs) {
+                    // 分割英文内容为段落
+                    String[] englishParagraphs;
+                    if (hasCarriageReturnDoubleNewline) {
+                        englishParagraphs = fullContent.split("\\r\\n\\r\\n");
+                    } else {
+                        englishParagraphs = fullContent.split("\\n\\n");
+                    }
+                    
+                    // 过滤空段落
+                    List<String> nonEmptyParagraphs = new ArrayList<>();
+                    for (String paragraph : englishParagraphs) {
+                        if (!paragraph.trim().isEmpty()) {
+                            nonEmptyParagraphs.add(paragraph);
+                        }
+                    }
+                    
+                    log.info("英文内容分段详细信息 - 原始段落数: {}, 非空段落数: {}", 
+                        englishParagraphs.length, nonEmptyParagraphs.size());
+                    
+                    // 记录前3个段落的长度信息
+                    for (int i = 0; i < Math.min(3, nonEmptyParagraphs.size()); i++) {
+                        log.debug("英文段落{}长度: {}字符", i + 1, nonEmptyParagraphs.get(i).length());
+                    }
+                }
+                  
                 // 5. 封装 Article 实体
                 Article article = new Article();
                 article.setTitle(title);
@@ -589,6 +786,8 @@ public class ArticleServiceImpl implements ArticleService {
                     if (insertResult > 0) {
                         savedCount++;
                         log.info("成功存储文章({}/{}): {} (ID: {})", savedCount, gnewsArticles.size(), title, article.getId());
+                        log.info("存储的文章内容信息 - 长度: {}字符, 单词数: {}, 段落数: {}", 
+                            fullContent.length(), article.getWordCount(), paragraphCount);
                     } else {
                         failedInsertCount++;
                         log.warn("数据库插入失败({}/{}): {}", totalProcessed, gnewsArticles.size(), title);
@@ -597,7 +796,7 @@ public class ArticleServiceImpl implements ArticleService {
                     failedInsertCount++;
                     log.error("数据库插入异常({}/{}): {}", totalProcessed, gnewsArticles.size(), title, e);
                 }
-                
+                  
                 // 礼貌延迟，避免被封，每篇文章抓取后延迟3~5秒
                 try {
                     Thread.sleep(3000 + (long)(Math.random() * 2000)); // 3~5秒随机延迟
@@ -607,7 +806,7 @@ public class ArticleServiceImpl implements ArticleService {
                     log.warn("延迟线程被中断");
                 }
             }
-            
+              
             log.info("文章处理完成，统计信息：总获取={}篇，成功存储={}篇，已存在={}篇，抓取失败={}篇，插入失败={}篇", 
                      gnewsArticles.size(), savedCount, existingCount, failedScrapeCount, failedInsertCount);
             return savedCount;

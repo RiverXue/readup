@@ -51,13 +51,16 @@ public class ScraperServiceImpl implements ScraperService {
                     // 例如：Updated [hour]:[minute] [AMPM] [timezone], [monthFull] [day], [year] WASHINGTON (AP) — 
                     String cleanedContent = cleanArticlePrefix(textContent);
                     
+                    // 对文章内容进行智能分段处理
+                    String segmentedContent = segmentArticleContent(cleanedContent);
+                    
                     // 检查提取内容的长度，过短的内容视为失败
-                    if (cleanedContent == null || cleanedContent.trim().length() < 100) {
+                    if (segmentedContent == null || segmentedContent.trim().length() < 100) {
                         log.warn("提取内容过短，视为失败: {}", url);
                         return Optional.empty();
                     }
                     
-                    return Optional.of(cleanedContent);
+                    return Optional.of(segmentedContent);
                 }
             } else {
                 log.warn("Readability4J 无法解析文章：{}", url);
@@ -116,5 +119,60 @@ public class ScraperServiceImpl implements ScraperService {
         
         // 如果没有匹配的前缀模式，返回原始内容
         return content;
+    }
+    
+    /**
+     * 智能分段处理
+     * 基于标点符号和段落语义对文章内容进行分段，并添加特殊标记
+     */
+    private String segmentArticleContent(String content) {
+        if (content == null || content.isEmpty()) {
+            return content;
+        }
+        
+        // 保留原始文本中的换行符，在此基础上进行智能分段
+        String normalizedContent = content.trim();
+        
+        // 检查文本中是否已经包含换行符（段落）
+        if (normalizedContent.contains("\n\n") || normalizedContent.contains("\r\n\r\n")) {
+            // 文本已经有自然段落划分，保留原始分段结构
+            return normalizedContent;
+        }
+        
+        // 定义分段标记
+        String paragraphSeparator = "\n\n";
+        
+        // 使用正则表达式进行智能分段
+        // 匹配句号、问号、感叹号等句子结束符后跟空格和大写字母的模式
+        String regex = "([.!?])\\s+([A-Z])";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(normalizedContent);
+        
+        StringBuilder segmentedContent = new StringBuilder();
+        int lastEnd = 0;
+        
+        // 寻找句子边界并添加分段标记
+        while (matcher.find()) {
+            // 将前一段内容添加到结果中
+            segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(1)));
+            
+            // 如果找到的句子足够长（超过50个字符），则添加分段标记
+            if (matcher.start(1) - lastEnd > 50) {
+                segmentedContent.append(paragraphSeparator);
+            } else {
+                segmentedContent.append(" ");
+            }
+            
+            // 保留匹配到的大写字母
+            segmentedContent.append(matcher.group(2));
+            lastEnd = matcher.end(2);
+        }
+        
+        // 添加剩余内容
+        if (lastEnd < normalizedContent.length()) {
+            segmentedContent.append(normalizedContent.substring(lastEnd));
+        }
+        
+        return segmentedContent.toString();
     }
 }
