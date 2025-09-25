@@ -600,54 +600,166 @@ public class EnhancedAiAnalysisService {
 }
 ```
 
-### 🔄 异步缓存机制
+### 📝 智能分段系统 (从 V1.0 到 V3.5 完整迭代史)
 
-**缓存架构:**
-```
-📊 三层缓存体系:
-├── L1: 应用内存 (最快访问)
-├── L2: Redis缓存 (30分钟TTL)
-└── L3: MySQL持久化 (永久存储)
+#### V1.0 - 基础分段 (2023-11-01)
+**核心功能:**
+- 基础换行符分段 `\n\n` 检测
+- 简单短段落合并（<15个单词）
 
-🔄 缓存更新策略:
-├── Write-Through: 同步写入数据库
-├── Write-Behind: 异步批量写入
-└── Cache-Aside: 缓存失效时更新
-```
-
-**异步缓存实现:**
+**实现代码:**
 ```java
-public CompletableFuture<Void> cacheWordAsync(String word, String meaning, 
-                                            String example, String context, 
-                                            Long userId, Long articleId, String source) {
-    return CompletableFuture.runAsync(() -> {
-        try {
-            // 检查单词是否已存在
-            Word existingWord = wordMapper.findByWord(word.toLowerCase());
-            
-            if (existingWord != null) {
-                // 单词存在：添加用户到共享列表
-                if (!existingWord.containsUserId(userId)) {
-                    existingWord.addUserId(userId);
-                    wordMapper.updateUserIds(existingWord.getId(), existingWord.getUserIds());
-                }
-            } else {
-                // 单词不存在：创建新记录
-                Word newWord = Word.builder()
-                    .word(word.toLowerCase())
-                    .meaning(meaning)
-                    .example(example)
-                    .context(limitContextLength(context))
-                    .source(source)
-                    .sourceArticleId(articleId)
-                    .build();
-                newWord.addUserId(userId);
-                wordMapper.insert(newWord);
-            }
-        } catch (Exception e) {
-            log.error("异步缓存失败: {}", word, e);
+public List<String> segmentArticleContent(String content) {
+    // 基于双换行符简单分段
+    List<String> paragraphs = Arrays.asList(content.split("\\n\\n"));
+    
+    // 简单的短段落合并
+    return mergeShortParagraphs(paragraphs);
+}
+```
+
+**局限性:**
+- 无法处理没有明显换行符的长文本
+- 缺乏语义理解能力
+- 段落划分质量不稳定
+
+#### V2.0 - 规则增强 (2023-12-01)
+**功能增强:**
+- 添加正则表达式规则识别标点符号后的自然分段点
+- 支持句号(.)、问号(?)、感叹号(!)等标点后接空格+大写字母模式
+- 引入段落长度阈值检查（至少80字符）
+
+**核心算法优化:**
+```java
+// 优化的分段规则
+private static final Pattern SENTENCE_END_PATTERN = 
+    Pattern.compile("\\.(?=\\s[A-Z])|\\?(?=\\s[A-Z])|\\!(?=\\s[A-Z])");
+
+// 分段逻辑增强
+public List<String> segmentArticleContent(String content) {
+    List<String> result = new ArrayList<>();
+    String[] sections = content.split("\\n\\n");
+    
+    for (String section : sections) {
+        // 应用正则分段规则
+        List<String> subParagraphs = splitByPunctuation(section);
+        // 合并短段落并添加到结果
+        mergeAndAddToResult(subParagraphs, result);
+    }
+    
+    return result;
+}
+```
+
+#### V2.5 - 中英文双语优化 (2023-12-20)
+**重大改进:**
+- 分离英文和中文分段逻辑，针对不同语言特点优化
+- 英文分段增加句子数量判断和平均句子长度计算
+- 中文分段引入句号、问号、感叹号等中文标点识别
+- 添加 `segmentChineseTranslation` 专门处理中文内容
+
+**中文分段核心逻辑:**
+```java
+public List<String> segmentChineseTranslation(String content) {
+    // 针对中文特点的分段算法
+    int estimatedParagraphs = calculateEstimatedParagraphs(content.length());
+    int idealLength = Math.max(300, content.length() / estimatedParagraphs);
+    
+    List<String> paragraphs = new ArrayList<>();
+    int start = 0;
+    
+    while (start < content.length()) {
+        int end = findNaturalSplitPoint(content, start, idealLength);
+        paragraphs.add(content.substring(start, end).trim());
+        start = end;
+    }
+    
+    return mergeShortParagraphs(paragraphs);
+}
+```
+
+#### V3.0 - 智能策略 (2024-01-01)
+**智能升级:**
+- 实现语义连贯性检查，避免在句子中间分段
+- 优化分段阈值（句号后两个空格+大写字母模式调整为100字符）
+- 多级规则优先级：优先匹配句号后两个空格+大写字母，其次问号/感叹号，最后句号后一个空格
+- 完整的日志记录和性能跟踪
+
+**技术实现:**
+```java
+// 多级规则优先级
+private static final List<Pair<Pattern, Integer>> SEGMENT_PATTERNS = Arrays.asList(
+    new Pair<>(Pattern.compile("\\.(?=\\s{2}[A-Z])"), 100),  // 句号后两个空格+大写字母
+    new Pair<>(Pattern.compile("\\?|\\!(?=\\s{2}[A-Z])"), 100), // 问号/感叹号后两个空格+大写字母
+    new Pair<>(Pattern.compile("\\.(?=\\s[A-Z])"), 150)     // 句号后一个空格+大写字母
+);
+
+// 语义连贯性检查
+private boolean checkSemanticCoherence(String before, String after) {
+    // 检查是否会在句子中间断开，确保语义连贯
+    String lastWord = before.replaceAll("[\\p{Punct}]", "").split("\\s+")[before.split("\\s+").length - 1];
+    String firstWord = after.replaceAll("[\\p{Punct}]", "").split("\\s+")[0];
+    
+    // 根据词汇类型和上下文判断连贯性
+    return !isMidSentenceBreak(lastWord, firstWord);
+}
+```
+
+#### V3.5 - 长句识别与优化 (2024-01-16) - 当前版本
+**突破性改进:**
+- **解决长句单独成段问题**，实现全面段落合理性检查
+- 引入 `isPotentialSingleSentenceParagraph` 方法，基于多维度判断长句
+- 英文长句识别：句子数量少且平均长度超过30词、单词与句子比例高
+- 中文长句识别：`isPotentialSingleSentenceParagraphCn` 方法，基于中文标点特征
+- 实现双策略合并逻辑：短段落智能合并 + 长句识别合并
+
+**核心技术实现:**
+```java
+// 英文长句识别算法
+private boolean isPotentialSingleSentenceParagraph(String paragraph) {
+    // 1. 句子数量统计
+    int sentenceCount = countSentences(paragraph);
+    int wordCount = countWords(paragraph);
+    
+    // 2. 多维度判断条件
+    return sentenceCount < 2 && wordCount > 30 || 
+           sentenceCount == 1 && wordCount > 50 || 
+           paragraph.length() > 300 && sentenceCount < 3;
+}
+
+// 中文长句识别算法
+private boolean isPotentialSingleSentenceParagraphCn(String paragraph) {
+    // 基于中文标点特征的长句识别
+    int periodCount = countOccurrences(paragraph, '。');
+    int commaCount = countOccurrences(paragraph, '，');
+    
+    return periodCount < 2 && paragraph.length() > 200 || 
+           commaCount > 6 && periodCount < 2;
+}
+
+// 双策略合并逻辑
+public List<String> finalizeParagraphs(List<String> paragraphs) {
+    List<String> result = new ArrayList<>();
+    List<String> tempParagraphs = new ArrayList<>(paragraphs);
+    
+    // 1. 短段落智能合并
+    tempParagraphs = mergeShortParagraphs(tempParagraphs);
+    
+    // 2. 长句识别合并
+    for (int i = 0; i < tempParagraphs.size(); i++) {
+        String current = tempParagraphs.get(i);
+        
+        // 如果是长句且不是最后一段，尝试与下一段合并
+        if (isPotentialSingleSentenceParagraph(current) && i < tempParagraphs.size() - 1) {
+            // 合并并跳过下一段
+            result.add(current + " " + tempParagraphs.get(i + 1));
+            i++;
+        } else {
+            result.add(current);
         }
-    });
+    }
+    
+    return result;
 }
 ```
 
@@ -1303,7 +1415,22 @@ release/v[version]        # 版本发布
 
 ## 📊 更新日志
 
-### 🎆 v3.1.0 (2024-01-15) - 当前版本
+### 🎆 v3.5.0 (2024-01-16) - 当前版本
+
+**✨ 新增特性:**
+- 📝 **智能分段系统 V3.5**: 突破性解决长句单独成段问题
+- 🧠 多维度长句识别算法（英文/中文分别优化）
+- 🔄 双策略合并逻辑：短段落智能合并 + 长句识别合并
+- 📊 英文分段增加单词数统计和平均句子长度计算
+- 🌐 中文分段引入句号、逗号特征分析
+
+**技术改进:**
+- 优化正则分段规则优先级
+- 增加语义连贯性检查
+- 提升分段阈值至更合理水平
+- 完善段落合理性评估算法
+
+### 🎆 v3.1.0 (2024-01-15)
 
 **✨ 新增特性:**
 - ⭐ 三级词库策略全面升级，性能提升 97%
