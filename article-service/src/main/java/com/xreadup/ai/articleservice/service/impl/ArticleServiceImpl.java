@@ -539,6 +539,9 @@ public class ArticleServiceImpl implements ArticleService {
         }
     }
     
+    // 定义中文标点符号数组，用于智能分段
+    private static final char[] punctuationMarks = { '。', '？', '！', '.', '?', '!', '；', '…' };
+    
     /**
      * 智能分段中文翻译内容
      * 尝试根据英文原文的段落结构对中文翻译进行分段
@@ -549,6 +552,40 @@ public class ArticleServiceImpl implements ArticleService {
             return chineseTranslation;
         }
         
+        // 首先检查中文翻译是否已经包含分段标记
+        boolean cnHasDoubleNewline = chineseTranslation.contains("\n\n") || chineseTranslation.contains("\r\n\r\n");
+        if (cnHasDoubleNewline) {
+            log.info("智能分段 - 跳过处理：中文翻译已包含分段标记");
+            
+            // 对已有的分段进行优化，合并短段落
+            String[] paragraphs;
+            if (chineseTranslation.contains("\r\n\r\n")) {
+                paragraphs = chineseTranslation.split("\\r\\n\\r\\n");
+            } else {
+                paragraphs = chineseTranslation.split("\\n\\n");
+            }
+            
+            // 过滤空段落并合并短段落
+            List<String> filteredParagraphs = new ArrayList<>();
+            for (int i = 0; i < paragraphs.length; i++) {
+                String paragraph = paragraphs[i].trim();
+                if (paragraph.isEmpty()) {
+                    continue;
+                }
+                
+                // 提高短段落合并阈值，从20字符增加到50字符
+                if (paragraph.length() < 50 && !filteredParagraphs.isEmpty()) {
+                    String lastParagraph = filteredParagraphs.remove(filteredParagraphs.size() - 1);
+                    filteredParagraphs.add(lastParagraph + paragraph);
+                } else {
+                    filteredParagraphs.add(paragraph);
+                }
+            }
+            
+            // 重新组合为带有双换行符的完整内容
+            return String.join("\n\n", filteredParagraphs);
+        }
+        
         // 分割英文原文为段落
         String[] englishParagraphs;
         if (englishContent.contains("\r\n\r\n")) {
@@ -557,8 +594,17 @@ public class ArticleServiceImpl implements ArticleService {
             englishParagraphs = englishContent.split("\\n\\n");
         }
         
+        // 过滤英文空段落
+        List<String> nonEmptyEnglishParagraphs = new ArrayList<>();
+        for (String paragraph : englishParagraphs) {
+            if (!paragraph.trim().isEmpty()) {
+                nonEmptyEnglishParagraphs.add(paragraph);
+            }
+        }
+        englishParagraphs = nonEmptyEnglishParagraphs.toArray(new String[0]);
+        
         log.info("智能分段 - 英文段落数量：{}", englishParagraphs.length);
-        for (int i = 0; i < englishParagraphs.length; i++) {
+        for (int i = 0; i < Math.min(3, englishParagraphs.length); i++) {
             log.debug("智能分段 - 英文段落{}长度：{}", i+1, englishParagraphs[i].length());
         }
         
@@ -579,7 +625,33 @@ public class ArticleServiceImpl implements ArticleService {
         // 开始对中文翻译进行分段
         StringBuilder segmentedChinese = new StringBuilder();
         int currentPosition = 0;
-        int remainingLength = chineseTranslation.length();
+        
+        // 找出所有可能的自然分段点
+        List<Integer> naturalBreaks = new ArrayList<>();
+        for (int i = 0; i < chineseTranslation.length(); i++) {
+            char c = chineseTranslation.charAt(i);
+            for (char mark : punctuationMarks) {
+                if (c == mark) {
+                    // 改进自然分段点识别：不仅检查换行符和空格，还检查其他可能的段落起始标志
+                    if (i + 1 < chineseTranslation.length()) {
+                        char nextChar = chineseTranslation.charAt(i + 1);
+                        // 段落结束的情况：句号后接换行符、空格、数字或大写字母
+                        if (nextChar == '\n' || nextChar == '\r' || 
+                            Character.isWhitespace(nextChar) || 
+                            Character.isDigit(nextChar) || 
+                            Character.isUpperCase(nextChar)) {
+                            // 进一步检查，避免在句子中间分段
+                            int distanceToNext = findNextPunctuation(chineseTranslation, i + 1);
+                            if (distanceToNext < 0 || distanceToNext > 50) {
+                                // 如果下一个标点符号距离较远，认为这是一个段落结束
+                                naturalBreaks.add(i + 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
         // 对除最后一段外的每一段进行处理
         for (int i = 0; i < englishParagraphs.length - 1; i++) {
@@ -597,24 +669,44 @@ public class ArticleServiceImpl implements ArticleService {
                 i+1, estimatedChineseLength, segmentEnd);
             
             // 寻找合适的中文标点符号作为分段点，以保持语义完整
-            // 优先使用句号、问号、感叹号
-            char[] punctuationMarks = { '。', '？', '！', '.', '?', '!' };
             int punctuationIndex = -1;
             
-            // 在预估位置附近100个字符范围内寻找合适的标点符号
-            int searchStart = Math.max(currentPosition, segmentEnd - 100);
-            int searchEnd = Math.min(chineseTranslation.length() - 1, segmentEnd + 100);
+            // 扩大搜索范围，确保找到合适的分割点
+            int searchStart = Math.max(currentPosition, segmentEnd - 200);
+            int searchEnd = Math.min(chineseTranslation.length() - 1, segmentEnd + 200);
             
-            for (int j = searchEnd; j >= searchStart; j--) {
-                char c = chineseTranslation.charAt(j);
-                for (char mark : punctuationMarks) {
-                    if (c == mark) {
-                        punctuationIndex = j;
-                        break;
+            // 优先查找自然分段点
+            if (!naturalBreaks.isEmpty()) {
+                for (int j = 0; j < naturalBreaks.size(); j++) {
+                    int breakPos = naturalBreaks.get(j);
+                    if (breakPos >= searchStart && breakPos <= searchEnd) {
+                        // 检查分段点前后的文本长度，避免过短的段落
+                        int segmentLength = breakPos - currentPosition;
+                        if (segmentLength >= 30) { // 确保分段后的段落长度至少30个字符
+                            punctuationIndex = breakPos - 1; // 指向标点符号位置
+                            break;
+                        }
                     }
                 }
-                if (punctuationIndex != -1) {
-                    break;
+            }
+            
+            // 如果没有找到自然分段点，手动查找标点符号
+            if (punctuationIndex == -1) {
+                for (int j = searchEnd; j >= searchStart; j--) {
+                    char c = chineseTranslation.charAt(j);
+                    for (char mark : punctuationMarks) {
+                        if (c == mark) {
+                            // 确保分段后的段落长度合理
+                            int segmentLength = j - currentPosition + 1;
+                            if (segmentLength >= 30) {
+                                punctuationIndex = j;
+                                break;
+                            }
+                        }
+                    }
+                    if (punctuationIndex != -1) {
+                        break;
+                    }
                 }
             }
             
@@ -644,11 +736,157 @@ public class ArticleServiceImpl implements ArticleService {
         }
         
         String result = segmentedChinese.toString().trim();
+        
+        // 最终检查：合并短段落和优化长句单独成段问题
+        if (result.contains("\n\n")) {
+            String[] paragraphs = result.split("\n\n");
+            List<String> mergedParagraphs = new ArrayList<>();
+            
+            for (int i = 0; i < paragraphs.length; i++) {
+                String paragraph = paragraphs[i].trim();
+                if (paragraph.isEmpty()) {
+                    continue;
+                }
+                
+                // 策略1：合并短段落（少于50个字符）
+                if (paragraph.length() < 50) {
+                    if (!mergedParagraphs.isEmpty() && i < paragraphs.length - 1) {
+                        // 如果前后都有段落，选择较短的一边合并
+                        String lastParagraph = mergedParagraphs.get(mergedParagraphs.size() - 1);
+                        String nextParagraph = paragraphs[i + 1].trim();
+                        
+                        if (lastParagraph.length() <= nextParagraph.length()) {
+                            // 合并到前一段
+                            mergedParagraphs.remove(mergedParagraphs.size() - 1);
+                            mergedParagraphs.add(lastParagraph + paragraph);
+                        } else {
+                            // 暂时保留，后面合并到下一段
+                            mergedParagraphs.add(paragraph);
+                        }
+                    } else if (!mergedParagraphs.isEmpty()) {
+                        // 只有前一段，合并到前一段
+                        String lastParagraph = mergedParagraphs.remove(mergedParagraphs.size() - 1);
+                        mergedParagraphs.add(lastParagraph + paragraph);
+                    } else if (i < paragraphs.length - 1) {
+                        // 只有后一段，暂时保留，后面合并到下一段
+                        mergedParagraphs.add(paragraph);
+                    } else {
+                        // 只有一段，无法合并
+                        mergedParagraphs.add(paragraph);
+                    }
+                } 
+                // 策略2：处理可能的长句单独成段问题
+                else if (isPotentialSingleSentenceParagraphCn(paragraph)) {
+                    // 如果当前段落可能只是一个长句，尝试与前后段落合并
+                    if (!mergedParagraphs.isEmpty()) {
+                        // 先检查前一段是否也是长句
+                        String lastParagraph = mergedParagraphs.get(mergedParagraphs.size() - 1);
+                        if (isPotentialSingleSentenceParagraphCn(lastParagraph)) {
+                            // 前一段也是长句，合并到前一段
+                            mergedParagraphs.remove(mergedParagraphs.size() - 1);
+                            mergedParagraphs.add(lastParagraph + paragraph);
+                        } else {
+                            mergedParagraphs.add(paragraph);
+                        }
+                    } else if (i < paragraphs.length - 1) {
+                        // 检查下一段是否也是长句
+                        String nextParagraph = paragraphs[i + 1].trim();
+                        if (!nextParagraph.isEmpty() && isPotentialSingleSentenceParagraphCn(nextParagraph)) {
+                            // 下一段也是长句，暂时保留，后面合并
+                            mergedParagraphs.add(paragraph);
+                        } else {
+                            mergedParagraphs.add(paragraph);
+                        }
+                    } else {
+                        mergedParagraphs.add(paragraph);
+                    }
+                } else {
+                    // 检查是否有之前保留的短段落需要合并到当前段落
+                    if (!mergedParagraphs.isEmpty()) {
+                        String lastParagraph = mergedParagraphs.get(mergedParagraphs.size() - 1);
+                        if (lastParagraph.length() < 50) {
+                            mergedParagraphs.remove(mergedParagraphs.size() - 1);
+                            mergedParagraphs.add(lastParagraph + paragraph);
+                        } else {
+                            mergedParagraphs.add(paragraph);
+                        }
+                    } else {
+                        mergedParagraphs.add(paragraph);
+                    }
+                }
+            }
+            
+            // 重新组合段落
+            result = String.join("\n\n", mergedParagraphs);
+        }
+        
         int paragraphCount = countParagraphs(result);
         log.info("智能分段 - 完成，中文翻译原始长度：{}, 处理后长度：{}, 生成段落数量：{}", 
             chineseTranslation.length(), result.length(), paragraphCount);
         
         return result;
+    }
+    
+    /**
+     * 查找下一个标点符号的位置
+     */
+    private int findNextPunctuation(String text, int startIndex) {
+        if (text == null || startIndex >= text.length()) {
+            return -1;
+        }
+        
+        for (int i = startIndex; i < text.length(); i++) {
+            char c = text.charAt(i);
+            for (char mark : punctuationMarks) {
+                if (c == mark) {
+                    return i - startIndex;
+                }
+            }
+        }
+        
+        return -1;
+    }
+    
+    /**
+     * 判断中文段落是否可能只是一个长句
+     * 基于标点符号数量、段落长度等多维度分析
+     */
+    private boolean isPotentialSingleSentenceParagraphCn(String paragraph) {
+        if (paragraph == null || paragraph.isEmpty()) {
+            return false;
+        }
+        
+        // 计算段落中的句子结束符数量
+        int sentenceEndersCount = 0;
+        for (char c : paragraph.toCharArray()) {
+            if (c == '。' || c == '？' || c == '！' || c == '.' || c == '?' || c == '!') {
+                sentenceEndersCount++;
+            }
+        }
+        
+        // 计算段落长度（字符数）
+        int length = paragraph.length();
+        
+        // 中文特有判断：考虑逗号数量，中文句子通常有更多的逗号分割
+        int commaCount = 0;
+        for (char c : paragraph.toCharArray()) {
+            if (c == '，' || c == ',') {
+                commaCount++;
+            }
+        }
+        
+        // 多维度判断：
+        // 1. 如果段落中只有一个或没有句子结束符，且长度不是特别长
+        // 2. 句子结束符与段落长度的比例很低（每个句子平均长度过长）
+        // 3. 逗号数量很多但句子结束符很少（表明句子被逗号分割得很细但缺少句号）
+        boolean hasFewSentences = sentenceEndersCount <= 2;
+        boolean highCommaToSentenceRatio = sentenceEndersCount > 0 && commaCount / sentenceEndersCount > 5;
+        boolean isLongParagraphButFewSentences = length > 150 && sentenceEndersCount <= 2;
+        
+        return (sentenceEndersCount <= 1 && length < 250) || 
+               (sentenceEndersCount > 0 && length / sentenceEndersCount > 120) ||
+               (hasFewSentences && highCommaToSentenceRatio) ||
+               isLongParagraphButFewSentences;
     }
     
     /**
