@@ -138,6 +138,8 @@ public class AiReadingAssistantService {
             }
             cleanJson = cleanJson.trim();
             
+            log.info("清理后的JSON: {}", cleanJson);
+            
             // 使用ObjectMapper解析JSON
             List<Map<String, Object>> questionMaps = objectMapper.readValue(cleanJson, List.class);
             
@@ -153,11 +155,19 @@ public class AiReadingAssistantService {
                 Object optionsObj = questionMap.get("options");
                 if (optionsObj instanceof List) {
                     question.setOptions((List<String>) optionsObj);
+                } else {
+                    question.setOptions(new ArrayList<>());
                 }
                 
-                question.setAnswer((String) questionMap.get("answer"));
-                question.setCorrectAnswer((String) questionMap.get("answer"));
-                question.setCorrectAnswerText((String) questionMap.get("answer"));
+                // 处理答案 - 支持多种字段名
+                String answer = (String) questionMap.get("answer");
+                if (answer == null) {
+                    answer = (String) questionMap.get("correctAnswer");
+                }
+                question.setAnswer(answer);
+                question.setCorrectAnswer(answer);
+                question.setCorrectAnswerText(answer);
+                
                 question.setExplanation((String) questionMap.get("explanation"));
                 question.setQuestionType("comprehension");
                 question.setDifficulty("medium");
@@ -165,6 +175,7 @@ public class AiReadingAssistantService {
                 questions.add(question);
             }
             
+            log.info("成功解析测验题数量: {}", questions.size());
             return questions;
             
         } catch (Exception e) {

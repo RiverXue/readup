@@ -593,8 +593,47 @@ public class AiAnalysisService {
             log.debug("清理后的测验题响应: {}", cleanResponse);
             
             // 3. 尝试解析JSON
-            QuizQuestion[] questions = objectMapper.readValue(cleanResponse, QuizQuestion[].class);
-            return Arrays.asList(questions);
+            List<Map<String, Object>> questionMaps = objectMapper.readValue(cleanResponse, List.class);
+            
+            List<QuizQuestion> questions = new ArrayList<>();
+            for (int i = 0; i < questionMaps.size(); i++) {
+                Map<String, Object> questionMap = questionMaps.get(i);
+                QuizQuestion question = new QuizQuestion();
+                
+                // 设置ID
+                question.setId(String.valueOf(i + 1));
+                
+                // 设置问题
+                question.setQuestion((String) questionMap.get("question"));
+                
+                // 处理选项
+                Object optionsObj = questionMap.get("options");
+                if (optionsObj instanceof List) {
+                    question.setOptions((List<String>) optionsObj);
+                } else {
+                    question.setOptions(new ArrayList<>());
+                }
+                
+                // 处理答案 - 支持多种字段名
+                String answer = (String) questionMap.get("answer");
+                if (answer == null) {
+                    answer = (String) questionMap.get("correctAnswer");
+                }
+                question.setAnswer(answer);
+                question.setCorrectAnswerText(answer);
+                
+                // 设置解析
+                question.setExplanation((String) questionMap.get("explanation"));
+                
+                // 设置默认值
+                question.setQuestionType("comprehension");
+                question.setDifficulty("medium");
+                
+                questions.add(question);
+            }
+            
+            log.info("成功解析测验题数量: {}", questions.size());
+            return questions;
         } catch (Exception e) {
             log.error("解析测验题响应失败: {}, 错误: {}", response, e.getMessage(), e);
             return createFallbackQuizQuestions(5);
@@ -642,9 +681,9 @@ public class AiAnalysisService {
             QuizQuestion question = new QuizQuestion();
             question.setId(String.valueOf(i + 1));
             question.setQuestion("测验题生成暂时不可用，请稍后重试");
-            question.setOptions(Arrays.asList("选项A", "选项B", "选项C", "选项D"));
-            question.setCorrectAnswer(0);
-            question.setCorrectAnswerText("暂无正确答案");
+            question.setOptions(Arrays.asList("A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"));
+            question.setAnswer("A");
+            question.setCorrectAnswerText("A");
             question.setExplanation("测验题生成服务暂时不可用");
             question.setQuestionType("comprehension");
             question.setDifficulty("medium");
