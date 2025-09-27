@@ -27,7 +27,10 @@ public class QuizQuestion {
     @Schema(description = "正确答案索引", example = "2")
     private Integer correctAnswer;
     
-    @Schema(description = "正确答案", example = "C. The importance of environmental protection")
+    @Schema(description = "正确答案", example = "A")
+    private String answer;
+    
+    @Schema(description = "正确答案文本", example = "C. The importance of environmental protection")
     private String correctAnswerText;
     
     @Schema(description = "解析说明", example = "文章主要讲述了环境保护的重要性...")

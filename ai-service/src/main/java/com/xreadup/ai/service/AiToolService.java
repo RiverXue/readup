@@ -287,36 +287,54 @@ public class AiToolService {
             }
             cleanJson = cleanJson.trim();
             
+            log.info("清理后的JSON: {}", cleanJson);
+            
             // 使用ObjectMapper解析JSON
             ObjectMapper mapper = new ObjectMapper();
             List<Map<String, Object>> questionMaps = mapper.readValue(cleanJson, List.class);
             
             List<QuizQuestion> questions = new ArrayList<>();
-            for (Map<String, Object> questionMap : questionMaps) {
+            for (int i = 0; i < questionMaps.size(); i++) {
+                Map<String, Object> questionMap = questionMaps.get(i);
                 QuizQuestion question = new QuizQuestion();
+                
+                // 设置ID
+                question.setId(String.valueOf(i + 1));
+                
+                // 设置问题
                 question.setQuestion((String) questionMap.get("question"));
                 
                 // 处理选项
                 Object optionsObj = questionMap.get("options");
                 if (optionsObj instanceof List) {
                     question.setOptions((List<String>) optionsObj);
+                } else {
+                    question.setOptions(new ArrayList<>());
                 }
                 
-                question.setAnswer((String) questionMap.get("answer"));
+                // 处理答案 - 支持多种字段名
+                String answer = (String) questionMap.get("answer");
+                if (answer == null) {
+                    answer = (String) questionMap.get("correctAnswer");
+                }
+                question.setAnswer(answer);
+                question.setCorrectAnswerText(answer);
+                
+                // 设置解析
                 question.setExplanation((String) questionMap.get("explanation"));
+                
+                // 设置默认值
+                question.setQuestionType("comprehension");
+                question.setDifficulty("medium");
+                
                 questions.add(question);
             }
             
+            log.info("成功解析测验题数量: {}", questions.size());
             return questions;
         } catch (Exception e) {
             log.error("解析测验题JSON失败: {}", json, e);
-            // 返回一个示例问题
-            QuizQuestion fallback = new QuizQuestion();
-            fallback.setQuestion("基于文章内容，请选择正确答案");
-            fallback.setOptions(List.of("A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"));
-            fallback.setAnswer("A");
-            fallback.setExplanation("JSON解析失败，这是示例问题");
-            return List.of(fallback);
+            return createFallbackQuiz();
         }
     }
 
@@ -324,18 +342,30 @@ public class AiToolService {
      * 测验问题DTO
      */
     public static class QuizQuestion {
+        private String id;
         private String question;
         private List<String> options;
         private String answer;
+        private String correctAnswerText;
         private String explanation;
+        private String questionType;
+        private String difficulty;
 
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
         public String getQuestion() { return question; }
         public void setQuestion(String question) { this.question = question; }
         public List<String> getOptions() { return options; }
         public void setOptions(List<String> options) { this.options = options; }
         public String getAnswer() { return answer; }
         public void setAnswer(String answer) { this.answer = answer; }
+        public String getCorrectAnswerText() { return correctAnswerText; }
+        public void setCorrectAnswerText(String correctAnswerText) { this.correctAnswerText = correctAnswerText; }
         public String getExplanation() { return explanation; }
         public void setExplanation(String explanation) { this.explanation = explanation; }
+        public String getQuestionType() { return questionType; }
+        public void setQuestionType(String questionType) { this.questionType = questionType; }
+        public String getDifficulty() { return difficulty; }
+        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
     }
 }
