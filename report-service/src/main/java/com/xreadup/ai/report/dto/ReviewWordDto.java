@@ -10,6 +10,9 @@ public class ReviewWordDto {
     private String example;
     private String difficulty;
     private String dueDate;
+    private String nextReviewTime; // 下次复习时间
+    private int progress; // 复习进度百分比
+    private String formattedReviewTime; // 格式化的复习时间
 
     public ReviewWordDto() {}
 
@@ -70,6 +73,30 @@ public class ReviewWordDto {
     public void setDueDate(String dueDate) {
         this.dueDate = dueDate;
     }
+    
+    public String getNextReviewTime() {
+        return nextReviewTime;
+    }
+    
+    public void setNextReviewTime(String nextReviewTime) {
+        this.nextReviewTime = nextReviewTime;
+    }
+    
+    public int getProgress() {
+        return progress;
+    }
+    
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
+    
+    public String getFormattedReviewTime() {
+        return formattedReviewTime;
+    }
+    
+    public void setFormattedReviewTime(String formattedReviewTime) {
+        this.formattedReviewTime = formattedReviewTime;
+    }
 
     @Override
     public String toString() {
@@ -80,6 +107,9 @@ public class ReviewWordDto {
                 ", example='" + example + '\'' +
                 ", difficulty='" + difficulty + '\'' +
                 ", dueDate='" + dueDate + '\'' +
+                ", nextReviewTime='" + nextReviewTime + '\'' +
+                ", progress=" + progress +
+                ", formattedReviewTime='" + formattedReviewTime + '\'' +
                 '}';
     }
 }
