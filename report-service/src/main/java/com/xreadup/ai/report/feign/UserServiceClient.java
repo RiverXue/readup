@@ -2,8 +2,12 @@ package com.xreadup.ai.report.feign;
 
 import com.xreadup.ai.report.common.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Map;
 
 /**
  * 用户服务Feign客户端，用于调用user-service的API
@@ -18,4 +22,12 @@ public interface UserServiceClient {
      */
     @PostMapping("/progress/check-in")
     ApiResponse<Integer> getCheckInStreak(@RequestParam("userId") Long userId);
+    
+    /**
+     * 获取用户详情
+     * @param id 用户ID
+     * @return 包含用户详情的响应对象
+     */
+    @GetMapping("/{id}")
+    ApiResponse<Map<String, Object>> getUserDetail(@PathVariable("id") Long id);
 }
