@@ -1,6 +1,7 @@
 package com.xreadup.ai.userservice.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -31,4 +32,7 @@ public class User {
     private Integer targetReadingTime;
 
     private LocalDateTime createdAt;
+    
+    // 注意：需要确保数据库表中存在status字段
+    private String status = "ACTIVE";
 }

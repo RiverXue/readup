@@ -1,6 +1,7 @@
 package com.xreadup.ai.userservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xreadup.ai.userservice.dto.*;
 import com.xreadup.ai.userservice.entity.ReadingStreak;
 import com.xreadup.ai.userservice.entity.User;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 用户服务实现类
@@ -132,5 +134,58 @@ public class UserServiceImpl implements UserService {
         readingStreakMapper.updateById(streak);
         
         return streak.getStreakDays();
+    }
+    
+    @Override
+    public User getUserById(Long userId) {
+        return userMapper.selectById(userId);
+    }
+    
+    @Override
+    public void updateUser(User user) {
+        userMapper.updateById(user);
+    }
+    
+    @Override
+    public Page<User> getUserList(int page, int pageSize, Map<String, Object> params) {
+        // 创建分页对象
+        Page<User> userPage = new Page<>(page, pageSize);
+        
+        // 创建查询条件
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 根据参数添加过滤条件
+        if (params != null) {
+            // 用户名模糊查询
+            if (params.containsKey("username")) {
+                queryWrapper.like(User::getUsername, params.get("username"));
+            }
+            
+            // 电话精确查询
+            if (params.containsKey("phone")) {
+                queryWrapper.eq(User::getPhone, params.get("phone"));
+            }
+            
+            // 兴趣标签模糊查询
+            if (params.containsKey("interestTag")) {
+                queryWrapper.like(User::getInterestTag, params.get("interestTag"));
+            }
+            
+            // 身份标签模糊查询
+            if (params.containsKey("identityTag")) {
+                queryWrapper.like(User::getIdentityTag, params.get("identityTag"));
+            }
+            
+            // 状态查询
+            if (params.containsKey("status")) {
+                queryWrapper.eq(User::getStatus, params.get("status"));
+            }
+        }
+        
+        // 按创建时间倒序排序
+        queryWrapper.orderByDesc(User::getCreatedAt);
+        
+        // 执行分页查询
+        return userMapper.selectPage(userPage, queryWrapper);
     }
 }

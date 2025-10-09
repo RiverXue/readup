@@ -163,3 +163,10 @@ CREATE TABLE subscription (
                               INDEX idx_end_date (end_date),
                               FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) COMMENT='用户订阅表';
+
+CREATE TABLE `admin_user` (
+                              `user_id` BIGINT NOT NULL PRIMARY KEY,
+                              `role` ENUM('ADMIN', 'SUPER_ADMIN') NOT NULL DEFAULT 'ADMIN',
+                              `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                              FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

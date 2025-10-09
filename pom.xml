@@ -128,5 +128,6 @@
         <module>ai-service</module>
         <module>report-service</module>
         <module>gateway</module>
+        <module>admin-service</module>
     </modules>
 </project>
