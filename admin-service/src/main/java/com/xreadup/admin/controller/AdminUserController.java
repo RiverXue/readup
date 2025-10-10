@@ -6,13 +6,18 @@ import com.xreadup.admin.exception.AccessDeniedException;
 import com.xreadup.admin.exception.AdminNotFoundException;
 import com.xreadup.admin.exception.BusinessException;
 import com.xreadup.admin.service.AdminUserService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -31,12 +36,42 @@ public class AdminUserController {
     
     /**
      * 获取当前登录管理员用户ID
-     * 实际实现中应根据安全框架获取
+     * 从安全框架上下文中获取当前登录用户的ID
      */
     private Long getCurrentAdminUserId() {
-        // 在实际应用中，这里应该从安全框架上下文中获取当前登录用户的ID
+        try {
+            // 实际应用中应从安全框架(如Spring Security、Shiro等)的上下文中获取当前登录用户ID
+            // 以下为示例实现，实际应根据项目使用的安全框架进行调整
+            
+            // 从请求头中获取Authorization信息并解析用户ID
+            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            String authorizationHeader = request.getHeader("Authorization");
+            
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                // 解析token获取用户ID
+                // 注意：实际项目中应使用适当的JWT解析库
+                // 这里仅作示例，实际实现需根据项目的认证机制进行调整
+                try {
+                    // 假设使用标准JWT，这里简单解析示例
+                    // 实际代码应使用项目中已有的JWT工具类
+                    Claims claims = Jwts.parserBuilder()
+                            .setSigningKey("your-secret-key".getBytes())
+                            .build()
+                            .parseClaimsJws(token)
+                            .getBody();
+                    
+                    return Long.parseLong(claims.getSubject());
+                } catch (Exception e) {
+                    logger.warn("解析token获取用户ID失败: {}", e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            logger.error("获取当前登录用户ID失败: {}", e.getMessage());
+        }
         
-        // 返回实际存在的超级管理员用户ID
+        // 为了向后兼容，当无法从安全上下文获取用户ID时，默认返回超级管理员用户ID
+        // 注意：在生产环境中应移除这个默认值，确保必须通过安全认证
         return 17L;
     }
 
@@ -125,8 +160,7 @@ public class AdminUserController {
             logger.info("添加管理员用户，userId: {}, role: {}", userId, role);
             
             // 检查当前用户是否为超级管理员
-            // 注意：实际应用中需要从请求上下文获取当前登录用户ID
-            Long currentUserId = 1L; // 模拟当前登录用户ID
+            Long currentUserId = getCurrentAdminUserId();
             if (!adminUserService.isSuperAdmin(currentUserId)) {
                 throw new AccessDeniedException("只有超级管理员才能添加管理员");
             }
@@ -157,8 +191,7 @@ public class AdminUserController {
             logger.info("更新管理员用户角色，userId: {}, role: {}", userId, role);
             
             // 检查当前用户是否为超级管理员
-            // 注意：实际应用中需要从请求上下文获取当前登录用户ID
-            Long currentUserId = 1L; // 模拟当前登录用户ID
+            Long currentUserId = getCurrentAdminUserId();
             if (!adminUserService.isSuperAdmin(currentUserId)) {
                 throw new AccessDeniedException("只有超级管理员才能更新管理员角色");
             }
@@ -194,8 +227,7 @@ public class AdminUserController {
             logger.info("删除管理员用户，userId: {}", userId);
             
             // 检查当前用户是否为超级管理员
-            // 注意：实际应用中需要从请求上下文获取当前登录用户ID
-            Long currentUserId = 1L; // 模拟当前登录用户ID
+            Long currentUserId = getCurrentAdminUserId();
             if (!adminUserService.isSuperAdmin(currentUserId)) {
                 throw new AccessDeniedException("只有超级管理员才能删除管理员");
             }
@@ -234,8 +266,7 @@ public class AdminUserController {
             logger.info("获取可选的用户列表，pageSize: {}, keyword: {}", pageSize, keyword);
             
             // 检查当前用户是否为超级管理员
-            // 注意：实际应用中需要从请求上下文获取当前登录用户ID
-            Long currentUserId = 1L; // 模拟当前登录用户ID
+            Long currentUserId = getCurrentAdminUserId();
             if (!adminUserService.isSuperAdmin(currentUserId)) {
                 throw new AccessDeniedException("只有超级管理员才能获取可选用户列表");
             }

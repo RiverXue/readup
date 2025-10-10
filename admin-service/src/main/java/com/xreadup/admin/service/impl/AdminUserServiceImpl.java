@@ -103,29 +103,49 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     @Transactional
     public void addAdminUser(Long userId, String role) {
+        logger.info("开始添加管理员用户: userId={}, role={}", userId, role);
+
         // 检查用户是否已存在
         AdminUser existingAdmin = adminUserMapper.selectByUserId(userId);
         if (existingAdmin != null) {
+            logger.warn("添加管理员失败: 用户已经是管理员, userId={}", userId);
             throw new BusinessException("该用户已经是管理员");
         }
-        
+
         // 检查用户是否存在
         try {
             var userDetailResponse = userServiceClient.getUserDetail(userId);
+            logger.debug("用户服务响应: code={}, data={}", userDetailResponse != null ? userDetailResponse.getCode() : "null", userDetailResponse != null ? userDetailResponse.getData() : "null");
+            
             // 增强响应判断逻辑：检查响应是否成功，同时考虑code为200的情况
             if (userDetailResponse == null || userDetailResponse.getCode() != 200 || userDetailResponse.getData() == null) {
-                throw new BusinessException("用户不存在");
+                String errorMsg = "用户不存在或用户服务响应异常"; 
+                logger.error(errorMsg + ": userId={}, responseCode={}", userId, userDetailResponse != null ? userDetailResponse.getCode() : "null");
+                throw new BusinessException(errorMsg);
             }
+            
+            // 获取用户状态并验证
+            var userDetail = userDetailResponse.getData();
+            String status = (String) userDetail.get("status");
+            if (status != null && !"ACTIVE".equals(status)) {
+                throw new BusinessException("用户状态异常，无法添加为管理员");
+            }
+            
+            logger.debug("用户验证成功: userId={}, username={}", userId, userDetail.get("username"));
+        } catch (BusinessException e) {
+            // 捕获已知业务异常并重新抛出
+            throw e;
         } catch (Exception e) {
-            throw new BusinessException("验证用户信息失败", e);
+            logger.error("验证用户信息失败: userId={}, 错误信息={}", userId, e.getMessage(), e);
+            throw new BusinessException("验证用户信息失败：" + e.getMessage());
         }
-        
+
         // 创建新的管理员用户
         AdminUser adminUser = new AdminUser();
         adminUser.setUserId(userId);
         adminUser.setRole(role);
         adminUser.setCreatedAt(LocalDateTime.now());
-        
+
         adminUserMapper.insert(adminUser);
         logger.info("添加管理员用户成功: userId={}, role={}", userId, role);
     }

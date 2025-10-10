@@ -106,6 +106,19 @@ spring:
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@remoteAddrKeyResolver}"
 
+        # 管理员服务路由
+        - id: admin-service-api
+          uri: lb://admin-service
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@remoteAddrKeyResolver}"
+
         # 文档路由
         - id: doc-route
           uri: lb://user-service
