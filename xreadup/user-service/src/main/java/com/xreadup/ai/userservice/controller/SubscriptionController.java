@@ -227,8 +227,8 @@ public class SubscriptionController {
                 plan.put("maxWordsPerArticle", planData.get("maxWordsPerArticle"));
                 plan.put("aiFeaturesEnabled", planData.get("aiFeaturesEnabled"));
                 plan.put("prioritySupport", planData.get("prioritySupport"));
-                plan.put("createTime", "2025-01-01 00:00:00");
-                plan.put("updateTime", "2025-01-01 00:00:00");
+                plan.put("createTime", "2025-09-15 00:00:00");
+                plan.put("updateTime", "2025-09-15 00:00:00");
                 plan.put("deleted", 0);
                 
                 planList.add(plan);

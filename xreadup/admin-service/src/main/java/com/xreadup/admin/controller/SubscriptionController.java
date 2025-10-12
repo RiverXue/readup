@@ -83,8 +83,8 @@ public class SubscriptionController {
         freePlan.put("maxWordsPerArticle", 1000);
         freePlan.put("aiFeaturesEnabled", false);
         freePlan.put("prioritySupport", false);
-        freePlan.put("createTime", "2025-01-01 00:00:00");
-        freePlan.put("updateTime", "2025-01-01 00:00:00");
+        freePlan.put("createTime", "2025-09-15 00:00:00");
+        freePlan.put("updateTime", "2025-09-15 00:00:00");
         freePlan.put("deleted", 0);
         defaultPlans.add(freePlan);
         
@@ -98,8 +98,8 @@ public class SubscriptionController {
         basicPlan.put("maxWordsPerArticle", 5000);
         basicPlan.put("aiFeaturesEnabled", true);
         basicPlan.put("prioritySupport", false);
-        basicPlan.put("createTime", "2025-01-01 00:00:00");
-        basicPlan.put("updateTime", "2025-01-01 00:00:00");
+        basicPlan.put("createTime", "2025-09-15 00:00:00");
+        basicPlan.put("updateTime", "2025-09-15 00:00:00");
         basicPlan.put("deleted", 0);
         defaultPlans.add(basicPlan);
         
@@ -113,8 +113,8 @@ public class SubscriptionController {
         proPlan.put("maxWordsPerArticle", 10000);
         proPlan.put("aiFeaturesEnabled", true);
         proPlan.put("prioritySupport", true);
-        proPlan.put("createTime", "2025-01-01 00:00:00");
-        proPlan.put("updateTime", "2025-01-01 00:00:00");
+        proPlan.put("createTime", "2025-09-15 00:00:00");
+        proPlan.put("updateTime", "2025-09-15 00:00:00");
         proPlan.put("deleted", 0);
         defaultPlans.add(proPlan);
         
