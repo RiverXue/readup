@@ -102,7 +102,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}   # Redis主机地址（支持环境变量覆盖）
       port: ${REDIS_PORT:6379}        # Redis端口
-      password: ${REDIS_PASSWORD:123456} # Redis密码
+      password: ${REDIS_PASSWORD:YOUR_REDIS_PASSWORD} # Redis密码
       timeout: 5000ms                 # 连接超时时间
       lettuce:                        # Lettuce连接池配置
         pool:

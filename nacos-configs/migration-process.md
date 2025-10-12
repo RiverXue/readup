@@ -58,7 +58,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/${MYSQL_DB:readup_ai}?...
     username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:123456}
+    password: ${MYSQL_PASSWORD:YOUR_MYSQL_PASSWORD}
     hikari:
       minimum-idle: 5
       maximum-pool-size: 15
@@ -71,7 +71,7 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:123456}
+      password: ${REDIS_PASSWORD:YOUR_REDIS_PASSWORD}
 ```
 
 #### 2.2 创建服务专用配置
