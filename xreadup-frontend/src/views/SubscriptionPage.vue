@@ -42,7 +42,12 @@
           </div>
 
           <div class="subscription-actions">
-            <el-button type="primary" @click="showUpgradeDialog = true" class="unified-button">
+            <el-button 
+              v-if="currentSubscription.planType !== 'ENTERPRISE'" 
+              type="primary" 
+              @click="showUpgradeDialog = true" 
+              class="unified-button"
+            >
               升级套餐
             </el-button>
             <el-button type="danger" plain @click="cancelSubscription" class="unified-button">
@@ -389,6 +394,11 @@ const availableUpgrades = computed(() => {
   if (!currentSubscription.value || currentSubscription.value.planType === 'FREE') {
     // 如果是免费用户或没有订阅，显示所有付费套餐
     return mergedSubscriptionPlans.value.filter(plan => plan.type !== 'FREE')
+  }
+
+  // 如果已经是最高级别（ENTERPRISE），不显示任何升级选项
+  if (currentSubscription.value.planType === 'ENTERPRISE') {
+    return []
   }
 
   const currentIndex = mergedSubscriptionPlans.value.findIndex(
