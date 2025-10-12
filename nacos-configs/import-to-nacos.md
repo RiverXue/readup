@@ -234,7 +234,7 @@ spring:
 
 # JWT配置
 jwt:
-  secret: ${JWT_SECRET:xreadup-secret-key-2024}
+  secret: ${JWT_SECRET:xreadup-secret-key-2025}
   expiration: 86400000  # 24小时
 
 # 三级词库配置
@@ -394,7 +394,7 @@ spring:
 
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
-| `JWT_SECRET` | xreadup-secret-key-2024 | JWT签名密钥 |
+| `JWT_SECRET` | xreadup-secret-key-2025 | JWT签名密钥 |
 
 ## 🔄 配置管理最佳实践
 

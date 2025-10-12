@@ -1092,7 +1092,7 @@ export const getRecentActivities = () =>
       
       <!-- 版权信息 -->
       <div class="footer-bottom">
-        <p>&copy; 2024 XReadUp. All rights reserved.</p>
+        <p>&copy; 2025 XReadUp. All rights reserved.</p>
       </div>
     </div>
   </footer>
