@@ -582,8 +582,8 @@ POST /api/ai/analyze
       "chineseTranslation": "中文翻译",
       "chineseSummary": "中文摘要",
       "keywords": "关键词1,关键词2",
-      "createdTime": "2025-01-01 12:00:00",
-      "updatedTime": "2025-01-01 12:00:00"
+      "createdTime": "2025-09-15 12:00:00",
+      "updatedTime": "2025-09-15 12:00:00"
     }
   }
   ```
@@ -727,7 +727,7 @@ GET /api/article/explore
           "difficultyLevel": "B2",
           "wordCount": 500,
           "readCount": 150,
-          "publishedAt": "2025-01-01 10:00:00",
+          "publishedAt": "2025-09-15 10:00:00",
           "isFeatured": false
         }
       ],
@@ -767,7 +767,7 @@ GET /api/article/read/{id}
       "manualDifficulty": "B1",
       "wordCount": 500,
       "readCount": 151,
-      "publishedAt": "2025-01-01 10:00:00",
+      "publishedAt": "2025-09-15 10:00:00",
       "source": "BBC News",
       "url": "https://example.com/article"
     }
@@ -872,13 +872,13 @@ POST /api/article/discover/category
         {
           "title": "新闻标题",
           "url": "https://example.com/article",
-          "publishedAt": "2025-01-01 10:00:00",
+          "publishedAt": "2025-09-15 10:00:00",
           "source": "BBC News",
           "image": "https://example.com/image.jpg"
         }
       ],
       "totalFound": 15,
-      "timestamp": "2025-01-01 12:00:00"
+      "timestamp": "2025-09-15 12:00:00"
     }
   }
   ```
@@ -911,7 +911,7 @@ POST /api/article/discover/trending
           "readingLevel": "intermediate"
         }
       ],
-      "lastUpdated": "2025-01-01 12:00:00"
+      "lastUpdated": "2025-09-15 12:00:00"
     }
   }
   ```
@@ -939,7 +939,7 @@ GET /api/article/extract-content?url={url}
   
       "title": "文章标题",
       "author": "作者",
-      "publishDate": "2025-01-01",
+      "publishDate": "2025-09-15",
       "wordCount": 850,
       "readingTime": "3-4 minutes"
   
@@ -1138,9 +1138,9 @@ GET /api/user/vocabulary/my-words?userId={userId}
         "context": "Technology is changing our lives.",
         "difficulty": "B2",
         "reviewStatus": "learning", // new, learning, mastered
-        "lastReviewedAt": "2025-01-01 10:00:00",
-        "nextReviewAt": "2025-01-03 10:00:00",
-        "addedAt": "2025-01-01 08:00:00",
+        "lastReviewedAt": "2025-09-15 10:00:00",
+        "nextReviewAt": "2025-09-17 10:00:00",
+        "addedAt": "2025-09-15 08:00:00",
         "sourceArticleId": 456
       }
     ]
@@ -1202,8 +1202,8 @@ POST /api/subscription/create
       "price": 19.99,
       "currency": "USD",
       "status": "ACTIVE",
-      "startDate": "2025-01-01 12:00:00",
-      "endDate": "2025-02-01 12:00:00",
+      "startDate": "2025-09-15 12:00:00",
+      "endDate": "2025-10-15 12:00:00",
       "maxArticlesPerMonth": 50,
       "maxWordsPerArticle": 5000,
       "aiFeaturesEnabled": true,
@@ -1238,7 +1238,7 @@ GET /api/subscription/current/{userId}
       "usedArticlesThisMonth": 23,
       "maxWordsPerArticle": 5000,
       "aiFeaturesEnabled": true,
-      "nextBillingDate": "2025-02-01"
+      "nextBillingDate": "2025-10-15"
     }
   }
   ```
@@ -1261,8 +1261,8 @@ GET /api/subscription/history/{userId}
         "id": 456,
         "planType": "PRO",
         "status": "ACTIVE",
-        "startDate": "2025-01-01",
-        "endDate": "2025-02-01",
+        "startDate": "2025-09-15",
+        "endDate": "2025-10-15",
         "price": 19.99,
         "paymentMethod": "ALIPAY"
       },
@@ -1271,7 +1271,7 @@ GET /api/subscription/history/{userId}
         "planType": "BASIC",
         "status": "EXPIRED",
         "startDate": "2024-12-01",
-        "endDate": "2025-01-01",
+        "endDate": "2025-09-15",
         "price": 9.99,
         "paymentMethod": "WECHAT"
       }
@@ -1340,7 +1340,7 @@ GET /api/subscription/quota/{userId}
         "total": 50,
         "used": 23,
         "remaining": 27,
-        "resetDate": "2025-02-01"
+        "resetDate": "2025-10-15"
       },
       "wordsQuota": {
         "perArticleLimit": 5000,
@@ -1405,7 +1405,7 @@ POST /api/vocabulary/lookup
       "source": "ai", // local, ai, shared
       "difficulty": "B2",
       "reviewStatus": "new",
-      "addedAt": "2025-01-01 12:00:00",
+      "addedAt": "2025-09-15 12:00:00",
       "cacheHit": false, // 是否命中缓存
       "responseTime": 150
     }
@@ -1832,7 +1832,7 @@ const wordResponse = await fetch('/api/vocabulary/lookup', {
 
 ## 📈 版本更新记录
 
-### v2.2.0 (2025-01-07) - 当前版本
+### v2.2.0 (2025-09-07) - 当前版本
 
 - ✨ **新增功能**：完成三级词库策略升级
 - ✨ **新增功能**：Function Calling支持，增强AI交互能力
