@@ -13,13 +13,23 @@ nacos-configs/*.yml
 
 # 环境变量文件
 .env
+.env.*
 .env.local
 .env.production
 .env.development
+.env.test
+.env.staging
+.env.backup
+.env.template
 **/.env
+**/.env.*
 **/.env.local
 **/.env.production
 **/.env.development
+**/.env.test
+**/.env.staging
+**/.env.backup
+**/.env.template
 
 # 应用配置文件（包含敏感信息）
 **/application-prod.yml
