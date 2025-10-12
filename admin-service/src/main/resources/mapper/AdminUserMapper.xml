@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xreadup.admin.mapper.AdminUserMapper">
+    
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.xreadup.admin.model.AdminUser">
+        <id column="user_id" property="userId" jdbcType="BIGINT" />
+        <result column="role" property="role" jdbcType="VARCHAR" />
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP" />
+    </resultMap>
+    
+    <!-- 根据用户ID查询管理员用户 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT
+            user_id,
+            role,
+            created_at
+        FROM
+            admin_user
+        WHERE
+            user_id = #{userId}
+    </select>
+    
+    <!-- 根据用户ID删除管理员用户 -->
+    <delete id="deleteByUserId">
+        DELETE FROM admin_user
+        WHERE user_id = #{userId}
+    </delete>
+    
+    <!-- 查询管理员用户列表 -->
+    <select id="selectAdminUsers" resultMap="BaseResultMap">
+        <!-- 使用bind标签计算偏移量，解决MyBatis不支持在#{}中执行表达式的问题 -->
+        <bind name="offset" value="(page - 1) * pageSize" />
+        
+        SELECT
+            user_id,
+            role,
+            created_at
+        FROM
+            admin_user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                user_id = #{keyword} OR role LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY created_at DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+    
+    <!-- 统计管理员用户数量 -->
+    <select id="countAdminUsers" resultType="int">
+        SELECT
+            COUNT(*)
+        FROM
+            admin_user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                user_id = #{keyword} OR role LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+    </select>
+    
+</mapper>

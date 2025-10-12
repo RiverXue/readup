@@ -1,0 +1,33 @@
+# 文章服务Nacos配置 - 服务发现 + 配置中心
+spring:
+  application:
+    name: article-service
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+      username: nacos
+      password: nacos
+      discovery:
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        namespace: public
+        group: DEFAULT_GROUP
+        username: nacos
+        password: nacos
+        refresh-enabled: true
+        shared-configs:
+          - data-id: shared-mysql-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true
+          - data-id: shared-redis-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true
+        extension-configs:
+          - data-id: article-service-dev.yml
+            group: DEFAULT_GROUP
+            refresh: true

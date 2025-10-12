@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xreadup.ai.userservice.mapper.WordMapper">
+
+    <!-- 注意：此XML配置文件已被WordMapper.java中的注解方法覆盖 -->
+    <!-- 保留此文件仅为兼容旧代码，实际查询逻辑请查看WordMapper.java中的注解 -->
+
+</mapper>

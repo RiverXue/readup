@@ -9,11 +9,11 @@ CREATE TABLE `user`
     `password`            VARCHAR(100) NOT NULL COMMENT '密码（BCrypt加密）',
     `phone`               VARCHAR(20) COMMENT '手机号',
     `interest_tag`        VARCHAR(50) COMMENT '兴趣标签：tech/business/culture',
-    `created_at`          DATETIME DEFAULT CURRENT_TIMESTAMP,
     `identity_tag`        VARCHAR(50) COMMENT '身份标签：考研/四六级/职场/留学',
     `learning_goal_words` INT      DEFAULT 0 COMMENT '目标词汇量',
     `target_reading_time` INT      DEFAULT 0 COMMENT '每日目标阅读时长（分钟）',
-    `status`              VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT '用户状态'
+    `status`              VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT '用户状态',
+    `created_at`          DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
 
@@ -34,26 +34,23 @@ CREATE TABLE `admin_user`
 -- 假设用户ID为1的用户是超级管理员
 INSERT INTO `admin_user` (`user_id`, `role`) VALUES (1, 'SUPER_ADMIN');
 
-
 CREATE TABLE `article`
 (
     `id`                BIGINT PRIMARY KEY AUTO_INCREMENT,
     `title`             VARCHAR(200) NOT NULL COMMENT '标题',
     `content_en`        LONGTEXT     NOT NULL COMMENT '英文原文',
     `content_cn`        LONGTEXT     NOT NULL COMMENT '中文翻译',
-    `difficulty`        VARCHAR(10) COMMENT '难度等级',
-    `category`          VARCHAR(50) COMMENT 'AI自动分类',
-    `read_count`        INT      DEFAULT 0 COMMENT '阅读次数',
-    `created_at`        DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `manual_difficulty` VARCHAR(10) COMMENT '手动标注难度：A2/B1/B2/C1',
-    `manual_category`   VARCHAR(50) COMMENT '手动标注分类：科技/商业/文化',
     `description`       VARCHAR(500) COMMENT '文章描述',
     `url`               VARCHAR(500) COMMENT '原文链接',
     `image`             VARCHAR(500) COMMENT '文章图片',
     `published_at`      DATETIME COMMENT '发布时间',
     `source`            VARCHAR(100) COMMENT '文章来源',
+    `category`          VARCHAR(50) COMMENT 'AI自动分类',
     `difficulty_level`  VARCHAR(10) COMMENT 'AI自动难度等级：A1/A2/B1/B2/C1/C2',
+    `manual_difficulty` VARCHAR(10) COMMENT '手动标注难度：A2/B1/B2/C1',
+    `manual_category`   VARCHAR(50) COMMENT '手动标注分类：科技/商业/文化',
     `word_count`        INT      DEFAULT 0 COMMENT '单词数量',
+    `read_count`        INT      DEFAULT 0 COMMENT '阅读次数',
     `like_count`        INT      DEFAULT 0 COMMENT '点赞次数',
     `is_featured`       TINYINT  DEFAULT 0 COMMENT '是否精选：0否 1是',
     `status`            VARCHAR(20) DEFAULT 'normal' COMMENT '文章状态',
@@ -72,6 +69,7 @@ CREATE TABLE `ai_analysis`
 (
     `id`                 BIGINT PRIMARY KEY AUTO_INCREMENT,
     `article_id`         BIGINT       NOT NULL COMMENT '文章ID',
+<<<<<<< HEAD
     `title`              VARCHAR(500) COMMENT '文章标题',
     `difficulty_level`   VARCHAR(10) COMMENT '难度等级：A1/A2/B1/B2/C1/C2',
     `keywords`           TEXT COMMENT '关键词列表（JSON格式）',
@@ -98,6 +96,22 @@ CREATE TABLE `ai_analysis`
     INDEX `idx_sentence_content` (`sentence_content`(100))
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT ='AI文章分析结果表';
+=======
+    `title`              VARCHAR(200) COMMENT '文章标题',
+    `difficulty_level`   VARCHAR(10) COMMENT '难度等级：A1/A2/B1/B2/C1/C2',
+    `keywords`           JSON COMMENT '关键词列表（JSON格式）',
+    `summary`            TEXT COMMENT '文章摘要',
+    `chinese_translation` LONGTEXT COMMENT '中文翻译',
+    `simplified_content` LONGTEXT COMMENT '简化内容',
+    `key_phrases`        JSON COMMENT '关键短语（JSON格式）',
+    `readability_score`  DECIMAL(5,2) COMMENT '可读性评分',
+    `word_translations`  LONGTEXT COMMENT '选词翻译结果（JSON格式存储多个翻译结果）',
+    `created_at`         DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at`         DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY `uk_article_id` (`article_id`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='AI文章分析结果表';
+>>>>>>> 4d05312dacfc9a0262c05916497f8a41ceb43cf4
 
 CREATE TABLE `word`
 (
@@ -144,6 +158,10 @@ CREATE TABLE `ai_cache`
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4d05312dacfc9a0262c05916497f8a41ceb43cf4
 CREATE TABLE `reading_streak`
 (
     `id`             BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -155,6 +173,24 @@ CREATE TABLE `reading_streak`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户阅读打卡记录';
 
+<<<<<<< HEAD
+=======
+-- 添加句子解析结果字段
+ALTER TABLE ai_analysis ADD COLUMN sentence_parse_results LONGTEXT COMMENT '句子解析结果（JSON格式存储）';
+
+-- 添加测验题字段
+ALTER TABLE ai_analysis ADD COLUMN quiz_questions LONGTEXT COMMENT '测验题列表（JSON格式存储）';
+
+-- 添加学习建议字段
+ALTER TABLE ai_analysis ADD COLUMN learning_tips TEXT COMMENT '个性化学习建议';
+
+-- 添加分析元数据字段
+ALTER TABLE ai_analysis ADD COLUMN analysis_metadata TEXT COMMENT '分析元数据（JSON格式存储）';
+
+-- 添加最后分析类型字段
+ALTER TABLE ai_analysis ADD COLUMN last_analysis_type VARCHAR(50) COMMENT '最后一次分析类型';
+
+>>>>>>> 4d05312dacfc9a0262c05916497f8a41ceb43cf4
 -- 验证表结构
 DESCRIBE ai_analysis;
 
@@ -185,6 +221,7 @@ CREATE TABLE subscription (
                               FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) COMMENT='用户订阅表';
 
+<<<<<<< HEAD
 -- 插入初始超级管理员用户
 -- 注意：实际部署时，请替换为真实的用户ID
 INSERT INTO admin_user (user_id, role) VALUES (17, 'SUPER_ADMIN');
@@ -232,3 +269,11 @@ INSERT INTO `system_config` (`config_key`, `config_value`, `config_type`, `descr
 ('limits.max_articles_per_user', '1000', 'NUMBER', '用户最大文章数', 'LIMITS', TRUE),
 ('limits.max_words_per_article', '10000', 'NUMBER', '单篇文章最大字数', 'LIMITS', TRUE),
 ('limits.max_vocabulary_per_user', '5000', 'NUMBER', '用户最大词汇量', 'LIMITS', TRUE);
+=======
+CREATE TABLE `admin_user` (
+                              `user_id` BIGINT NOT NULL PRIMARY KEY,
+                              `role` ENUM('ADMIN', 'SUPER_ADMIN') NOT NULL DEFAULT 'ADMIN',
+                              `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                              FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+>>>>>>> 4d05312dacfc9a0262c05916497f8a41ceb43cf4
