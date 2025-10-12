@@ -1,3 +1,4 @@
+
 ## 2025-10-12 环境变量和YAML配置修复
 
 ### 问题描述
@@ -3245,7 +3246,7 @@ return {
 ```bash
 curl -X POST http://localhost:8085/api/admin/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"郝润锋","password":"123456","rememberMe":true}'
+  -d '{"username":"admin","password":"your_password","rememberMe":true}'
 ```
 
 **响应结果**:
@@ -3254,10 +3255,10 @@ curl -X POST http://localhost:8085/api/admin/login \
   "code": 200,
   "message": "登录成功",
   "data": {
-    "token": "YOKsXQyMA4iusJgO-YJbon1uXuBVarSHweh8jWHvxLY",
-    "tokenExpireTime": 1760261359975,
+    "token": "your_jwt_token_here",
+    "tokenExpireTime": 1234567890123,
     "userId": 17,
-    "username": "郝润锋",
+    "username": "admin",
     "role": "SUPER_ADMIN",
     "permissions": [],
     "superAdmin": true
