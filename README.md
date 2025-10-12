@@ -128,8 +128,8 @@ cp ENV_CONFIG.md .env
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/RiverXue/xreadup.git
-cd xreadup
+git clone https://github.com/RiverXue/readup.git
+cd readup
 
 # 2. 启动基础设施
 docker-compose up -d mysql redis nacos
@@ -449,8 +449,8 @@ GET /api/admin/system-config/all
 
 ### 💬 联系方式
 
-- **项目地址**: [GitHub Repository](https://github.com/RiverXue/xreadup)
-- **问题反馈**: [GitHub Issues](https://github.com/RiverXue/xreadup/issues)
+- **项目地址**: [GitHub Repository](https://github.com/RiverXue/readup)
+- **问题反馈**: [GitHub Issues](https://github.com/RiverXue/readup/issues)
 - **邮箱**: dev@xreadup.com
 
 ### 🆘 获得帮助
@@ -485,9 +485,9 @@ GET /api/admin/system-config/all
   <h3>🎉 感谢使用 XReadUp 智能英语学习平台!</h3>
   <p>如果这个项目对你有帮助，请给我们一个 ⭐ Star!</p>
 
-![GitHub stars](https://img.shields.io/github/stars/RiverXue/xreadup?style=social)
-![GitHub forks](https://img.shields.io/github/forks/RiverXue/xreadup?style=social)
-![GitHub issues](https://img.shields.io/github/issues/RiverXue/xreadup)
+![GitHub stars](https://img.shields.io/github/stars/RiverXue/readup?style=social)
+![GitHub forks](https://img.shields.io/github/forks/RiverXue/readup?style=social)
+![GitHub issues](https://img.shields.io/github/issues/RiverXue/readup)
 
 **让英语学习变得更智能、更高效！**
 
