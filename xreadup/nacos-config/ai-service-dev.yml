@@ -1,0 +1,29 @@
+# AI服务开发环境配置
+server:
+  port: 8084
+
+spring:
+  application:
+    name: ai-service
+  
+  # AI服务特有配置
+  ai:
+    openai:
+      base-url: https://api.deepseek.com
+      api-key: sk-e005be5ef3b0410da65d30969e33fa67
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.7
+          max-tokens: 4000
+
+# AI服务特有配置
+ai:
+  analysis:
+    timeout: 30000  # AI分析超时时间30秒
+    retry-count: 3  # 重试次数
+    chunk-size: 2000  # 分段分析大小
+    
+  # 缓存配置
+  cache:
+    analysis-result: 86400  # 分析结果缓存24小时

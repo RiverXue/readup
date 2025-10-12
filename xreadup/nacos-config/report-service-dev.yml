@@ -1,0 +1,19 @@
+# 报表服务开发环境配置
+server:
+  port: 8083
+
+spring:
+  application:
+    name: report-service
+
+# 报表服务特有配置
+report:
+  # 统计配置
+  statistics:
+    batch-size: 1000  # 批量处理大小
+    refresh-interval: 3600  # 统计刷新间隔(秒)
+  
+  # 缓存配置
+  cache:
+    statistics: 1800  # 统计数据缓存30分钟
+    report-data: 3600  # 报表数据缓存1小时

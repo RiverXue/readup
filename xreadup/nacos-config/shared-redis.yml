@@ -1,0 +1,14 @@
+# 共享Redis配置 - 所有服务通用
+spring:
+  data:
+    redis:
+      host: 172.29.77.89  # WSL Redis地址
+      port: 6379
+      password: 123456
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms

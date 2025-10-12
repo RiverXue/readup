@@ -2,6 +2,37 @@
 
 ## 版本历史
 
+### [1.0.45] - 2025-01-27
+
+#### 🔧 配置修复 - 数据库和JWT密钥配置统一
+
+**功能描述**
+修复了所有后端服务的application.yml配置文件，统一设置了MySQL和Redis密码，并添加了真实的JWT密钥配置。
+
+**配置修复**
+- **MySQL密码**: 所有服务统一设置为123456
+- **Redis密码**: 所有服务统一设置为123456  
+- **JWT密钥**: user-service添加了真实的JWT密钥配置
+- **配置一致性**: 确保所有服务使用相同的数据库和缓存配置
+
+**修复的服务**
+- **admin-service**: MySQL密码配置修复
+- **user-service**: MySQL密码、Redis密码、JWT密钥配置修复
+- **ai-service**: Redis密码配置修复
+- **article-service**: Redis密码配置修复
+- **gateway**: Redis密码配置修复
+- **report-service**: MySQL密码、Redis密码配置修复（修复了Redis密码变量错误）
+
+**技术细节**
+- MySQL密码: `${MYSQL_PASSWORD:123456}`
+- Redis密码: `${REDIS_PASSWORD:123456}`
+- JWT密钥: `${JWT_SECRET:readupSecretKey2025ForJWTAuthenticationWithStrongSecurity}`
+
+**影响范围**
+- 所有后端服务现在可以正常连接到MySQL和Redis
+- JWT token生成和验证功能正常工作
+- 配置环境变量优先级保持不变
+
 ### [1.0.44] - 2025-01-27
 
 #### 📚 文档更新 - 总体README全面重构与项目架构展示

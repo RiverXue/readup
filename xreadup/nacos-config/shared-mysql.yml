@@ -1,41 +1,18 @@
-server:
-  port: 8083
-
+# 共享MySQL配置 - 所有服务通用
 spring:
-  application:
-    name: report-service
-  profiles:
-    active: dev
-
-  # 数据源配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3307/readup_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
-    password: ${MYSQL_PASSWORD:123456}
+    password: 123456
     hikari:
       minimum-idle: 5
       maximum-pool-size: 15
       idle-timeout: 300000
       max-lifetime: 1800000
       connection-timeout: 30000
-      connection-test-query: SELECT 1
 
-  # Redis配置
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: ${REDIS_PASSWORD:123456}
-      timeout: 5000ms
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1ms
-
-# MyBatis Plus配置
+# MyBatis Plus共享配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -47,10 +24,3 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
       table-prefix: t_
-
-# 日志配置
-logging:
-  level:
-    com.xreadup.ai.report: debug
-    com.baomidou.mybatisplus: info
-    org.springframework.cloud: info

@@ -1,0 +1,31 @@
+# 文章服务开发环境配置
+server:
+  port: 8082
+
+spring:
+  application:
+    name: article-service
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/readup_article?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+
+  # Redis配置
+  data:
+    redis:
+      database: 1
+
+# 文章服务特有配置
+article:
+  gnews:
+    api-key: your_gnews_api_key_here
+    base-url: https://gnews.io/api/v4
+  
+  # 缓存配置
+  cache:
+    article-list: 3600  # 文章列表缓存1小时
+    article-detail: 1800  # 文章详情缓存30分钟
+    ai-analysis: 7200  # AI分析结果缓存2小时

@@ -1,0 +1,56 @@
+# 网关服务开发环境配置
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  
+  # 网关路由配置
+  cloud:
+    gateway:
+      routes:
+        # 用户服务路由
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=2
+        
+        # 文章服务路由
+        - id: article-service
+          uri: lb://article-service
+          predicates:
+            - Path=/api/article/**
+          filters:
+            - StripPrefix=2
+        
+        # AI服务路由
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=2
+        
+        # 报表服务路由
+        - id: report-service
+          uri: lb://report-service
+          predicates:
+            - Path=/api/report/**
+          filters:
+            - StripPrefix=2
+
+# 网关特有配置
+gateway:
+  cors:
+    enabled: true
+    allowed-origins: "*"
+    allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+    allowed-headers: "*"
+  
+  # 限流配置
+  rate-limiter:
+    enabled: true
+    default-rate: 100  # 每秒100个请求
