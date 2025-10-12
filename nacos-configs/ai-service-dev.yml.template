@@ -60,8 +60,8 @@ spring:
 tencent:
   cloud:
     translate:
-      secret-id: ${TENCENT_CLOUD_SECRET_ID:AKIDZ9XheOvEJFj170iFZjgQwFLDuRpsohT4}
-      secret-key: ${TENCENT_CLOUD_SECRET_KEY:UlrkRxJTSDnAcs7C4pPp45tZ5PYVFH9n}
+      secret-id: ${TENCENT_CLOUD_SECRET_ID:YOUR_TENCENT_SECRET_ID}
+      secret-key: ${TENCENT_CLOUD_SECRET_KEY:YOUR_TENCENT_SECRET_KEY}
       region: ${TENCENT_CLOUD_REGION:ap-beijing}
       endpoint: ${TENCENT_CLOUD_ENDPOINT:tmt.tencentcloudapi.com}
       timeout: 5000
