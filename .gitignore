@@ -9,6 +9,7 @@ nacos-configs/*.yml
 !nacos-configs/README.md
 !nacos-configs/import-to-nacos.md
 !nacos-configs/migration-process.md
+!nacos-configs/import-all.bat
 
 # 环境变量文件
 .env

@@ -4,33 +4,52 @@
 
 所有配置文件已通过 `import-simple.ps1` 成功导入到Nacos配置中心。
 
-### 📁 当前文件结构
+# Nacos配置中心使用指南
+
+## 📁 当前文件结构
 ```
 nacos-configs/
-├── README.md                 # 本使用指南
-├── import-simple.ps1        # ✅ 成功使用的导入脚本
-├── verify-import.ps1        # 验证配置导入状态
-├── article-service-dev.yml   # 文章服务配置
-├── ai-service-dev.yml        # AI服务配置  
-├── gateway-dev.yml          # 网关服务配置
-├── user-service-dev.yml      # 用户服务配置
-├── report-service-dev.yml    # 报告服务配置
-├── shared-mysql-dev.yml      # MySQL共享配置
-└── shared-redis-dev.yml      # Redis共享配置
+├── README.md                           # 本使用指南
+├── import-all.bat                      # 批量导入脚本
+├── import-to-nacos.md                  # 详细导入说明
+├── migration-process.md                # 迁移流程文档
+├── *.yml.template                      # 配置模板文件（安全，可提交Git）
+└── *.yml                               # 实际配置文件（包含敏感信息，已忽略）
 ```
 
-### 🚀 如何使用
+## 🔒 安全说明
 
-#### 1. 重新导入配置（如有需要）
-```powershell
-# 在nacos-configs目录下运行
-powershell -ExecutionPolicy Bypass -File import-simple.ps1
+- **模板文件** (`*.yml.template`) - 包含占位符，安全可提交
+- **实际配置文件** (`*.yml`) - 包含敏感信息，已被.gitignore忽略
+- **环境变量** - 所有敏感信息通过.env文件管理
+
+## 🚀 如何使用
+
+### 1. 创建实际配置文件
+```bash
+# 复制模板文件为实际配置文件
+cp *.yml.template *.yml
+
+# 编辑实际配置文件，替换占位符为实际值
+# 或通过环境变量自动替换
 ```
 
-#### 2. 验证配置状态
-```powershell
-# 检查所有配置是否已导入
-powershell -ExecutionPolicy Bypass -File verify-import.ps1
+### 2. 导入配置到Nacos
+```bash
+# 使用批量导入脚本
+./import-all.bat
+
+# 或参考 import-to-nacos.md 手动导入
+```
+
+### 3. 环境变量配置
+确保.env文件包含所有必要的环境变量：
+```bash
+MYSQL_PASSWORD=your_actual_password
+REDIS_PASSWORD=your_actual_password
+JWT_SECRET=your_actual_jwt_secret
+DEEPSEEK_API_KEY=your_actual_api_key
+# ... 其他配置
 ```
 
 #### 3. 访问Nacos控制台
