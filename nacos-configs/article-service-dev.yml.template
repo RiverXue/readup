@@ -1,0 +1,115 @@
+# 文章服务开发环境配置 - Nacos配置中心
+server:
+  port: 8082
+
+# 数据源配置
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/${MYSQL_DB:readup_ai}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:123456}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+
+  # Redis配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Knife4j配置
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.xreadup.ai.articleservice.controller
+
+# Knife4j增强配置
+knife4j:
+  enable: true
+  openapi:
+    title: 文章服务API文档
+    description: 文章服务RESTful API接口文档
+    version: 1.0.0
+    group:
+      default:
+        group-name: 文章管理
+        api-rule: package
+        api-rule-resources:
+          - com.xreadup.ai.articleservice.controller
+
+# 日志配置
+logging:
+  level:
+    com.xreadup.ai.articleservice: debug
+
+# 自定义配置
+article:
+  # gnews.io API配置
+  gnews:
+    api-key: ${GNEWS_API_KEY:1ff143298425f0b83a18593906c234b7}
+    base-url: https://gnews.io/api/v4
+    max-results: 100
+    language: en
+    country: us
+  
+  # 缓存配置
+  cache:
+    article-ttl: 3600  # 文章缓存1小时
+    list-ttl: 1800     # 列表缓存30分钟
+
+# AI翻译配置 - 通过AI服务统一处理
+ai:
+  translation:
+    enabled: true
+    service-url: ${AI_SERVICE_URL:http://localhost:8084}
+    timeout: 10000
+    max-retries: 2
+    cache:
+      enabled: true
+      ttl: 7200  # AI翻译结果缓存2小时
+      max-size: 5000
+
+# 阅读体验配置
+reading:
+  experience:
+    enabled: true
+    learning-mode: true
+    collaborative-mode: true
+    quality-assessment: true
+    cache:
+      enabled: true
+      ttl: 1800  # 阅读体验缓存30分钟
+      max-size: 2000

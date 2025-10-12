@@ -1,0 +1,160 @@
+/* 移动端响应式样式 */
+@media (max-width: 768px) {
+  /* 全局样式 */
+  body {
+    font-size: 14px;
+  }
+
+  /* 容器样式 */
+  .reader-container,
+  .vocabulary-container,
+  .report-container {
+    padding: 10px;
+    margin: 0;
+  }
+
+  /* 阅读页样式 */
+  .bilingual-content {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .english,
+  .chinese {
+    padding: 15px;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .ai-toolbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ai-toolbar .el-button {
+    width: 100%;
+    margin: 0;
+  }
+
+  /* 生词本样式 */
+  .stats .el-card {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters .el-input,
+  .filters .el-select {
+    width: 100% !important;
+  }
+
+  /* 报告页样式 */
+  .stats-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 15px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-icon {
+    margin: 0 0 10px 0;
+  }
+
+  .charts-area {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .achievement-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* 表格样式 */
+  .el-table {
+    font-size: 14px;
+  }
+
+  .el-table .el-button {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  /* 对话框样式 */
+  .el-dialog {
+    width: 90% !important;
+    margin: 10px auto;
+  }
+
+  /* 登录页样式 */
+  .login-container {
+    padding: 20px;
+  }
+
+  .login-form {
+    padding: 30px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-toolbar .el-button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .english,
+  .chinese {
+    font-size: 15px;
+    padding: 12px;
+  }
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+  .english p:hover {
+    background: transparent;
+  }
+
+  .english p:active {
+    background: #e9ecef;
+  }
+
+  .el-button:active {
+    transform: scale(0.98);
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .reader-container,
+  .vocabulary-container,
+  .report-container {
+    background: #1a1a1a;
+    color: #e0e0e0;
+  }
+
+  .english,
+  .chinese {
+    background: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  .english p:hover {
+    background: #404040;
+  }
+}

@@ -1,0 +1,81 @@
+# 用户服务开发环境配置 - Nacos配置中心
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  
+  # MyBatis Plus配置 - 继承共享数据库配置
+  mybatis-plus:
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    global-config:
+      db-config:
+        id-type: auto
+        logic-delete-field: deleted
+        logic-delete-value: 1
+        logic-not-delete-value: 0
+        table-prefix: t_
+    mapper-locations: classpath*:mapper/**/*.xml
+
+# JWT配置
+jwt:
+  secret: readupSecretKey2025ForJWTAuthenticationWithStrongSecurity
+  expiration: 86400000
+  refresh-expiration: 604800000
+  token-prefix: Bearer
+  header-string: Authorization
+
+# 用户服务业务配置
+user:
+  security:
+    password-strength: 8
+    max-login-attempts: 5
+    lock-duration: 1800
+    
+  # 用户相关业务配置
+  profile:
+    max-avatar-size: 2097152  # 2MB头像大小限制
+    allowed-avatar-types: jpg,jpeg,png,gif
+    
+  # 缓存配置
+  cache:
+    user-info-ttl: 3600      # 用户信息缓存1小时
+    session-ttl: 7200        # 会话缓存2小时
+
+# Knife4j配置 - 优化后：去除冗余配置，集中管理
+springdoc:
+  api-docs:
+    enabled: true  # 仅保留基础启用配置
+
+# Knife4j增强配置（整合所有配置，避免重复）
+knife4j:
+  enable: true
+  openapi:
+    title: 用户服务API文档
+    description: 用户服务RESTful API接口文档
+    version: 1.0.0
+    group:
+      default:
+        group-name: 用户服务
+        api-rule: package
+        api-rule-resources:
+          - com.xreadup.ai.userservice.controller
+  setting:
+    language: zh_cn
+    enable-interface-sorting: true
+    enable-version: true
+
+# 日志配置
+logging:
+  level:
+    com.xreadup.ai.userservice: info
+    com.baomidou.mybatisplus: info
+    org.apache.catalina: warn
+    org.apache.coyote: warn
+    org.apache.http: warn
+
+# 注意：订阅套餐配置已从代码中硬编码实现，不再需要Nacos配置
+# 如需修改套餐价格、名称等信息，请直接修改代码中的SubscriptionPlanProperties.java文件

@@ -1,0 +1,125 @@
+# 网关服务开发环境配置 - Nacos配置中心
+# 此文件包含网关的所有核心配置，包括端口、跨域设置、服务路由、Redis和日志配置
+# 所有配置完全由Nacos统一管理，本地application.yml中不应包含任何重复配置
+
+# 服务器基本配置
+server:
+  port: 8080  # 统一网关端口 - 所有服务唯一入口
+
+# Spring配置
+spring:
+  # 云原生网关核心配置
+  cloud:
+    gateway:
+      # 服务发现配置
+      discovery:
+        locator:
+          enabled: true              # 启用服务发现定位器
+          lower-case-service-id: true # 服务ID转为小写
+      
+      # 全局跨域配置 - Spring Cloud Gateway标准配置格式
+      globalcors:
+        cors-configurations:
+          '[/**]':  # 对所有路径生效
+            allowedOrigins:  # 允许的前端域名列表
+              - "http://localhost:3000"
+              - "http://127.0.0.1:3000"
+              - "http://localhost:5173"  # 用户当前使用的端口
+              - "http://127.0.0.1:5173"
+              - "http://localhost:8081"
+              - "http://127.0.0.1:8081"
+              - "https://example.com"
+              - "https://*.example.com"
+            allowedMethods: "GET,POST,PUT,DELETE,OPTIONS"  # 允许的HTTP方法
+            allowedHeaders: "*"  # 允许的请求头
+            allowCredentials: true  # 允许携带凭证
+            maxAge: 3600  # 预检请求缓存时间(秒)
+
+      # 路由配置 - 所有后端服务的访问入口
+      routes:
+        # 用户服务路由（带api前缀）
+        - id: user-service-api
+          uri: lb://user-service      # 负载均衡到用户服务
+          predicates:
+            - Path=/api/user/**       # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+        # 订阅服务路由（通过用户服务处理，带api前缀）
+        - id: subscription-service-api
+          uri: lb://user-service      # 负载均衡到用户服务
+          predicates:
+            - Path=/api/subscription/** # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+
+        # 词汇服务路由（通过用户服务处理，带api前缀）
+        - id: vocabulary-service-api
+          uri: lb://user-service      # 负载均衡到用户服务
+          predicates:
+            - Path=/api/vocabulary/** # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+
+        # 文章服务路由（带api前缀）
+        - id: article-service-api
+          uri: lb://article-service    # 负载均衡到文章服务
+          predicates:
+            - Path=/api/article/**     # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+
+        # AI服务路由（带api前缀）
+        - id: ai-service-api
+          uri: lb://ai-service         # 负载均衡到AI服务
+          predicates:
+            - Path=/api/ai/**          # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+
+        # 报告服务路由（带api前缀）
+        - id: report-service-api
+          uri: lb://report-service     # 负载均衡到报告服务
+          predicates:
+            - Path=/api/report/**      # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+            - name: RequestRateLimiter # 请求限流配置
+              args:
+                redis-rate-limiter.replenishRate: 50   # 每秒补充的令牌数
+                redis-rate-limiter.burstCapacity: 100  # 最大令牌桶容量
+                key-resolver: "#{@ipKeyResolver}"    # 使用IP作为限流key
+        
+        # 管理员服务路由（带api前缀）
+        - id: admin-service-api
+          uri: lb://admin-service      # 负载均衡到管理员服务
+          predicates:
+            - Path=/api/admin/**       # API路径匹配规则
+          filters:
+            - StripPrefix=0           # 不剥离路径前缀
+
+  # Redis配置（用于限流、缓存等功能）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}   # Redis主机地址（支持环境变量覆盖）
+      port: ${REDIS_PORT:6379}        # Redis端口
+      password: ${REDIS_PASSWORD:123456} # Redis密码
+      timeout: 5000ms                 # 连接超时时间
+      lettuce:                        # Lettuce连接池配置
+        pool:
+          max-active: 8               # 最大活动连接数
+          max-idle: 8                 # 最大空闲连接数
+          min-idle: 0                 # 最小空闲连接数
+          max-wait: -1ms              # 最大等待时间（-1表示无限等待）
+
+# 自定义配置
+admin:
+  service:
+    url: http://localhost:8085  # 管理员服务URL，供维护模式过滤器使用
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: debug  # 网关调试日志
+    org.springframework.cloud.loadbalancer: debug # 负载均衡调试日志
+    org.springframework.web.cors: DEBUG       # CORS相关调试日志
+    com.xreadup.ai.gateway.filter: debug      # 维护模式过滤器调试日志

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xreadup.ai.articleservice.mapper.ArticleMapper">
+    
+    <select id="selectArticlePage" resultType="com.xreadup.ai.articleservice.model.entity.Article">
+        SELECT 
+            id, title, content_en, content_cn, description, url, image,
+            published_at, source, category, difficulty_level, manual_difficulty,
+            word_count, read_count, like_count, is_featured,
+            create_time, update_time
+        FROM article
+        WHERE deleted = 0
+        <if test="query.category != null and query.category != ''">
+            AND category = #{query.category}
+        </if>
+        <if test="query.difficultyLevel != null and query.difficultyLevel != ''">
+            AND difficulty_level = #{query.difficultyLevel}
+        </if>
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (
+                title LIKE CONCAT('%', #{query.keyword}, '%')
+                OR description LIKE CONCAT('%', #{query.keyword}, '%')
+                OR source LIKE CONCAT('%', #{query.keyword}, '%')
+            )
+        </if>
+        <choose>
+            <when test="query.sortBy == 'publishedAt'">
+                ORDER BY published_at
+                <if test="!query.ascending">DESC</if>
+            </when>
+            <when test="query.sortBy == 'readCount'">
+                ORDER BY read_count
+                <if test="!query.ascending">DESC</if>
+            </when>
+            <when test="query.sortBy == 'likeCount'">
+                ORDER BY like_count
+                <if test="!query.ascending">DESC</if>
+            </when>
+            <otherwise>
+                ORDER BY create_time DESC
+            </otherwise>
+        </choose>
+    </select>
+    
+</mapper>

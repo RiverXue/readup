@@ -1,0 +1,63 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: admin-service
+  
+  # MyBatis Plus配置 - 继承共享数据库配置
+  mybatis-plus:
+    mapper-locations: classpath:mapper/*.xml
+    type-aliases-package: com.xreadup.admin.model
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    global-config:
+      db-config:
+        id-type: auto
+        logic-delete-field: deleted
+        logic-delete-value: 1
+        logic-not-delete-value: 0
+
+# OpenFeign 配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+  circuitbreaker:
+    enabled: true
+
+# Knife4j配置
+knife4j:
+  enable: true
+  openapi:
+    title: 管理服务API文档
+    description: 后台管理系统RESTful API接口文档
+    version: 1.0.0
+    group:
+      default:
+        group-name: 管理服务
+        api-rule: package
+        api-rule-resources:
+          - com.xreadup.admin.controller
+  setting:
+    language: zh_cn
+    enable-interface-sorting: true
+    enable-version: true
+  basic: 
+    enable: true
+    username: admin
+    password: admin123
+
+# 日志配置
+logging:
+  level:
+    com.xreadup.admin: info
+    com.xreadup.admin.client: info
+    org.springframework.cloud.openfeign: debug
+    com.baomidou.mybatisplus: info
+    org.apache.catalina: warn
+    org.apache.coyote: warn

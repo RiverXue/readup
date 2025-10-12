@@ -1,0 +1,39 @@
+services:
+  nacos:
+    image: nacos/nacos-server:v2.5.1
+    container_name: project-nacos-server
+    environment:
+      - MODE=standalone
+      - NACOS_AUTH_ENABLE=false
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    volumes:
+      - ./nacos/logs:/home/nacos/logs
+      - ./nacos/data:/home/nacos/data
+    restart: always
+
+  mysql:
+    image: mysql:8.0
+    container_name: project-mysql-server
+    environment:
+      MYSQL_ROOT_ACCOUNT: root
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: projectmanager
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"  # 使用3307端口避免冲突，应用程序连接localhost:3307
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/conf:/etc/mysql/conf.d
+    restart: always
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: project-redis-server
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/data
+    restart: always

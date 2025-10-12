@@ -1,0 +1,183 @@
+# ===========================================
+# XReadUp 项目统一 .gitignore 配置
+# ===========================================
+
+# ========== 敏感配置文件 ==========
+# Nacos配置文件（包含敏感信息）
+nacos-configs/*.yml
+!nacos-configs/*.yml.template
+!nacos-configs/README.md
+!nacos-configs/import-to-nacos.md
+!nacos-configs/migration-process.md
+
+# 环境变量文件
+.env
+.env.local
+.env.production
+.env.development
+**/.env
+**/.env.local
+**/.env.production
+**/.env.development
+
+# 应用配置文件（包含敏感信息）
+**/application-prod.yml
+**/application-secret.yml
+**/application-local.yml
+**/bootstrap-prod.yml
+**/bootstrap-secret.yml
+
+# ========== Java/Maven 相关 ==========
+# Maven构建产物
+**/target/
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+**/release.properties
+**/dependency-reduced-pom.xml
+**/buildNumber.properties
+**/.mvn/timing.properties
+**/.mvn/wrapper/maven-wrapper.jar
+
+# IDE文件
+**/.idea/
+**/.vscode/
+**/*.iml
+**/*.ipr
+**/*.iws
+**/.project
+**/.classpath
+**/.settings/
+**/.metadata/
+
+# ========== Node.js/前端相关 ==========
+# 依赖目录
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+
+# 构建产物
+**/dist/
+**/build/
+**/.nuxt/
+**/.output/
+**/.vite/
+**/.temp/
+**/.cache/
+
+# 前端环境文件
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# ========== 数据库相关 ==========
+# MySQL数据文件
+**/mysql/data/
+**/mysql/logs/
+**/mysql/conf/my.cnf.backup
+
+# Redis数据文件
+**/redis/data/
+**/redis/logs/
+
+# SQLite数据库
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# ========== 日志文件 ==========
+# 应用日志
+**/logs/
+**/*.log
+**/*.log.*
+**/log/
+**/log.*
+**/error.log
+**/access.log
+**/debug.log
+**/info.log
+**/warn.log
+
+# ========== 临时文件 ==========
+# 系统临时文件
+**/.DS_Store
+**/Thumbs.db
+**/.Trash-*
+**/ehthumbs.db
+**/Desktop.ini
+
+# 编辑器临时文件
+**/*~
+**/*.swp
+**/*.swo
+**/*.tmp
+**/*.temp
+**/.vscode/
+**/.idea/
+
+# ========== 部署相关 ==========
+# Docker相关
+**/docker-compose.override.yml
+**/.dockerignore
+
+# 部署脚本（如果包含敏感信息）
+**/deploy-prod.sh
+**/deploy-secret.sh
+**/backup-prod.sh
+
+# ========== 证书和密钥 ==========
+# SSL证书
+**/*.pem
+**/*.key
+**/*.crt
+**/*.p12
+**/*.pfx
+
+# SSH密钥
+**/id_rsa
+**/id_rsa.pub
+**/id_ed25519
+**/id_ed25519.pub
+
+# ========== 备份文件 ==========
+# 数据库备份
+**/*.sql.backup
+**/*.sql.gz
+**/*.dump
+**/*.backup
+
+# 项目备份
+**/*.bak
+**/*.backup
+**/*.old
+
+# ========== 测试相关 ==========
+# 测试覆盖率报告
+**/coverage/
+**/.nyc_output/
+**/test-results/
+**/junit.xml
+
+# ========== 其他 ==========
+# 压缩文件
+**/*.zip
+**/*.tar.gz
+**/*.rar
+**/*.7z
+
+# 大文件
+**/*.mp4
+**/*.avi
+**/*.mov
+**/*.mkv
+**/*.iso
+**/*.dmg
+
+# 本地开发工具
+**/.vscode/settings.json
+**/.vscode/launch.json
+**/.vscode/extensions.json
