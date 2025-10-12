@@ -57,10 +57,10 @@ article:
   # gnews.io API配置
   gnews:
     api-key: ${GNEWS_API_KEY:YOUR_GNEWS_API_KEY}
-    base-url: https://gnews.io/api/v4
-    max-results: 100
-    language: en
-    country: us
+    base-url: ${GNEWS_BASE_URL:https://gnews.io/api/v4}
+    max-results: ${GNEWS_MAX_RESULTS:100}
+    language: ${GNEWS_LANGUAGE:en}
+    country: ${GNEWS_COUNTRY:us}
   
   # 缓存配置
   cache:
