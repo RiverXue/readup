@@ -123,11 +123,12 @@
     </build>
 
     <modules>
-        <module>user-service</module>
-        <module>article-service</module>
-        <module>ai-service</module>
-        <module>report-service</module>
-        <module>gateway</module>
-        <module>admin-service</module>
+        <module>xreadup/common</module>
+        <module>xreadup/user-service</module>
+        <module>xreadup/article-service</module>
+        <module>xreadup/ai-service</module>
+        <module>xreadup/report-service</module>
+        <module>xreadup/gateway</module>
+        <module>xreadup/admin-service</module>
     </modules>
 </project>
