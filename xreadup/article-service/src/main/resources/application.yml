@@ -56,7 +56,7 @@ logging:
 article:
   # gnews.io API配置
   gnews:
-    api-key: ${GNEWS_API_KEY:1ff143298425f0b83a18593906c234b7}
+    api-key: ${GNEWS_API_KEY:YOUR_GNEWS_API_KEY}
     base-url: https://gnews.io/api/v4
     max-results: 100
     language: en
