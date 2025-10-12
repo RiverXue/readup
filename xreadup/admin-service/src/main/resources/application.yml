@@ -1,6 +1,6 @@
 # 服务器端口
 server:
-  port: 8085
+  port: ${ADMIN_SERVICE_PORT:8085}
 
 spring:
   application:
@@ -11,8 +11,8 @@ spring:
   # 数据源配置 - 开发环境使用本地配置，生产环境将使用Nacos配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/readup_ai?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/${MYSQL_DB:readup_ai}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:123456}
     hikari:
       minimum-idle: 5

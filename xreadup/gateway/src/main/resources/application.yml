@@ -1,5 +1,5 @@
 server:
-  port: 8080  # 统一网关端口 - 所有服务唯一入口
+  port: ${GATEWAY_PORT:8080}  # 统一网关端口 - 所有服务唯一入口
 
 spring:
   application:
@@ -144,10 +144,10 @@ spring:
   # Redis配置（用于限流）
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:123456}
-      timeout: 5000ms
+      timeout: ${REDIS_TIMEOUT:5000}ms
       lettuce:
         pool:
           max-active: 8
