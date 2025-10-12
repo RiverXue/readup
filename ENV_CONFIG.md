@@ -22,12 +22,13 @@ REDIS_PASSWORD=your_redis_password
 
 ### AI服务配置
 ```bash
-# OpenAI配置
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_BASE_URL=https://api.openai.com/v1
+# DeepSeek配置
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
 
-# Anthropic配置
-ANTHROPIC_API_KEY=your_anthropic_api_key
+# GNews配置
+GNEWS_API_KEY=your_gnews_api_key
 
 # 其他AI服务
 AI_SERVICE_URL=http://localhost:8084
