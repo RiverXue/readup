@@ -116,7 +116,7 @@ XReadUp 是一个基于 **Vue 3 + Spring Boot** 构建的现代化智能英语�
 
 ```bash
 # 1. 复制环境变量模板
-cp ENV_CONFIG.md .env
+cp .env.example .env
 
 # 2. 编辑环境变量文件，填入实际配置
 # 参考 ENV_CONFIG.md 文件中的详细说明
