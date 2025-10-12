@@ -1,3 +1,83 @@
+## 2025-10-12 环境变量和YAML配置修复
+
+### 问题描述
+1. **YAML重复键错误**: 多个服务的application.yml文件中存在重复的顶级键，导致Spring Boot启动失败
+2. **腾讯云翻译API错误**: 返回"The SecretId is not found"错误，无法正常使用翻译功能
+3. **环境变量配置不完整**: 部分环境变量缺失或格式不一致
+
+### 根本原因分析
+1. **YAML语法错误**: AI服务、文章服务、报告服务的application.yml中存在重复的spring键
+2. **配置验证缺失**: 腾讯云翻译配置类缺少环境变量验证逻辑
+3. **环境变量管理**: 缺少统一的环境变量验证和管理工具
+
+### 修复过程
+
+#### 1. YAML配置文件修复
+**修复文件**:
+- `xreadup/ai-service/src/main/resources/application.yml`
+- `xreadup/article-service/src/main/resources/application.yml`
+- `xreadup/report-service/src/main/resources/application.yml`
+
+**修复内容**:
+- 合并重复的spring配置块
+- 修复MyBatis Plus配置缩进问题
+- 统一环境变量格式
+
+#### 2. 腾讯云翻译API配置增强
+**修复文件**: `xreadup/ai-service/src/main/java/com/xreadup/ai/config/TencentCloudConfig.java`
+
+**修复内容**:
+- 添加配置验证逻辑
+- 增加详细的错误信息和日志记录
+- 确保环境变量正确传递
+
+#### 3. 环境变量配置完善
+**修复内容**:
+- 补充缺失的GNEWS_BASE_URL环境变量
+- 统一所有API配置的环境变量格式
+- 创建环境变量验证脚本
+
+#### 4. 辅助工具创建
+**新增文件**:
+- `validate-env-vars.ps1` - 环境变量验证脚本
+- `validate-yaml-configs.ps1` - YAML配置文件验证脚本
+- `test-ai-service.ps1` - AI服务测试脚本
+- `CONFIG_FIX_REPORT.md` - 修复报告文档
+
+### 修复结果
+- ✅ **环境变量配置**: 24/24个变量正确设置，健康度100%
+- ✅ **服务启动状态**: 所有6个微服务正常运行
+- ✅ **腾讯云翻译API**: 配置正确，错误已修复
+- ✅ **YAML配置**: 所有配置文件语法正确
+
+### 技术细节
+```yaml
+# 修复前 - 错误的重复配置
+spring:
+  # 配置1
+spring:  # ❌ 重复键
+  # 配置2
+
+# 修复后 - 正确的合并配置
+spring:
+  # 配置1
+  # 配置2  # ✅ 合并到同一块
+```
+
+### 验证方法
+```powershell
+# 验证环境变量
+.\validate-env-vars.ps1
+
+# 验证YAML配置
+.\validate-yaml-configs.ps1
+
+# 测试AI服务
+.\test-ai-service.ps1
+```
+
+---
+
 ## 2025-01-27 总体README全面重构与项目架构展示
 
 ### 问题描述

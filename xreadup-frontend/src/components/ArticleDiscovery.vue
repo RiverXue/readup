@@ -471,7 +471,7 @@ const fetchTrendingArticles = async () => {
   isLoadingTrending.value = true
   try {
       // 调用热点文章API
-      const response = await articleApi.getTrendingArticles(6)
+      const response = await articleApi.getTrendingArticles(9)
       // 将difficultyLevel映射到difficulty属性
       articles.value = (response.data || []).map((article: any) => ({
         ...article,
@@ -503,7 +503,7 @@ const fetchCategoryArticles = async () => {
   isLoadingCategory.value = true
   try {
       // 调用主题文章API
-      const response = await articleApi.getArticlesByCategory(selectedCategory.value, 6)
+      const response = await articleApi.getArticlesByCategory(selectedCategory.value, 9)
       // 将difficultyLevel映射到difficulty属性
       articles.value = (response.data || []).map((article: any) => ({
         ...article,
@@ -555,7 +555,7 @@ const fetchCustomTopicArticles = async () => {
   try {
       // 调用自定义主题文章API
       // 注意：这里使用了getArticlesByCategory作为临时实现，实际项目中可能需要一个专门的API
-      const response = await articleApi.getArticlesByCategory(customTopic.value, 6)
+      const response = await articleApi.getArticlesByCategory(customTopic.value, 9)
       // 将difficultyLevel映射到difficulty属性
       articles.value = (response.data || []).map((article: any) => ({
         ...article,

@@ -5,6 +5,7 @@ import com.tencentcloudapi.common.profile.ClientProfile;
 import com.tencentcloudapi.common.profile.HttpProfile;
 import com.tencentcloudapi.tmt.v20180321.TmtClient;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
  * @version 1.0.0
  */
 @Data
+@Slf4j
 @Configuration
 public class TencentCloudConfig {
 
@@ -39,6 +41,9 @@ public class TencentCloudConfig {
      */
     @Bean
     public TmtClient tmtClient() {
+        
+        log.info("初始化腾讯云翻译客户端: region={}, endpoint={}, secretId={}", region, endpoint, secretId.substring(0, 8) + "****");
+        
         // 实例化认证对象
         Credential cred = new Credential(secretId, secretKey);
         
