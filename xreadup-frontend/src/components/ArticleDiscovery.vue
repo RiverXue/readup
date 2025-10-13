@@ -208,22 +208,12 @@
     <div class="articles-result" v-if="articles.length > 0">
       <h3 class="result-title">{{ resultTitle }}</h3>
       <div class="articles-grid">
-        <el-card
+        <DiscoveryArticleCard
           v-for="article in articles"
           :key="article.id"
-          class="article-card"
-          @click="() => $router.push(`/article/${article.id}`)"
-        >
-          <div class="article-meta">
-            <el-tag size="small">{{ article.category || '未分类' }}</el-tag>
-            <el-tag size="small" type="info">{{ article.difficulty || '未知' }}</el-tag>
-          </div>
-          <h3>{{ article.title || '无标题' }}</h3>
-          <p>{{ article.description || article.enContent?.substring(0, 100) + '...' || '暂无描述' }}</p>
-          <div class="article-action">
-            <el-button type="text">开始阅读 →</el-button>
-          </div>
-        </el-card>
+          :article="article"
+          :discovery-type="getDiscoveryType()"
+        />
       </div>
     </div>
 
@@ -265,6 +255,7 @@ import { articleApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { watch } from 'vue'
+import DiscoveryArticleCard from '@/components/DiscoveryArticleCard.vue'
 
 // 重命名图标组件以避免命名冲突
 const TrendChartsIcon = TrendCharts
@@ -343,10 +334,13 @@ const canFetchCategory = computed(() => {
   return true
 })
 
-const canFetchCustomTopic = computed(() => {
-  // 自定义主题搜索仅对PRO和ENTERPRISE会员开放
-  return isProOrEnterpriseUser.value
-})
+// 获取当前发现类型
+const getDiscoveryType = () => {
+  if (resultTitle.value.includes('热点')) return 'trending'
+  if (resultTitle.value.includes('主题')) return 'category'
+  if (resultTitle.value.includes('自定义') || resultTitle.value.includes('搜索')) return 'custom'
+  return 'trending' // 默认
+}
 
 // 初始化时加载用户配额和文章数据
 onMounted(async () => {
@@ -472,10 +466,11 @@ const fetchTrendingArticles = async () => {
   try {
       // 调用热点文章API
       const response = await articleApi.getTrendingArticles(9)
-      // 将difficultyLevel映射到difficulty属性
+      // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
       articles.value = (response.data || []).map((article: any) => ({
         ...article,
-        difficulty: article.difficultyLevel || ''
+        difficulty: article.difficultyLevel || '',
+        wordCount: article.wordCount || article.word_count || 0
       }))
       resultTitle.value = '🔥 热点文章'
 
@@ -504,10 +499,11 @@ const fetchCategoryArticles = async () => {
   try {
       // 调用主题文章API
       const response = await articleApi.getArticlesByCategory(selectedCategory.value, 9)
-      // 将difficultyLevel映射到difficulty属性
+      // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
       articles.value = (response.data || []).map((article: any) => ({
         ...article,
-        difficulty: article.difficultyLevel || ''
+        difficulty: article.difficultyLevel || '',
+        wordCount: article.wordCount || article.word_count || 0
       }))
 
     // 设置结果标题（根据选择的主题显示对应的中文名称）
@@ -556,10 +552,11 @@ const fetchCustomTopicArticles = async () => {
       // 调用自定义主题文章API
       // 注意：这里使用了getArticlesByCategory作为临时实现，实际项目中可能需要一个专门的API
       const response = await articleApi.getArticlesByCategory(customTopic.value, 9)
-      // 将difficultyLevel映射到difficulty属性
+      // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
       articles.value = (response.data || []).map((article: any) => ({
         ...article,
-        difficulty: article.difficultyLevel || ''
+        difficulty: article.difficultyLevel || '',
+        wordCount: article.wordCount || article.word_count || 0
       }))
       resultTitle.value = `🔍 "${customTopic.value}" 主题文章`
 

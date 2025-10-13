@@ -14,6 +14,7 @@ export interface User {
   streakDays?: number
   createdAt?: string
   subscription?: Subscription
+  interestTag?: string
 }
 
 export const useUserStore = defineStore('user', () => {

@@ -4,6 +4,8 @@ import { useUserStore } from '@/stores/user'
 import { articleApi, learningApi, vocabularyApi } from '@/utils/api'
 import { Reading, Collection, TrendCharts, Calendar, Clock, Message, Search, Refresh } from '@element-plus/icons-vue'
 import ArticleDiscovery from '@/components/ArticleDiscovery.vue'
+import TactileButton from '@/components/common/TactileButton.vue'
+import ArticleCard from '@/components/ArticleCard.vue'
 
 const userStore = useUserStore()
 
@@ -26,7 +28,7 @@ const fetchLearningStats = async () => {
     // 统一用户ID类型为字符串
     const userId = userStore.userInfo.id.toString()
     const numericUserId = parseInt(userId)
-    
+
     // 先调用dailyCheckIn接口获取准确的连续打卡天数
     let checkInRes
     try {
@@ -65,22 +67,22 @@ const fetchLearningStats = async () => {
         }
         // 使用totalWords而不是totalWordsLearned，因为后端返回的是totalWords
         learningStats.value.totalWordsLearned = summaryRes.data.totalWords || 0
-        
+
         // 初始化待复习单词数为0
         let dueForReviewCount = 0
-        
+
         // 优先使用getTodayReviewWords的结果
         if (reviewWordsRes?.data && Array.isArray(reviewWordsRes.data)) {
           dueForReviewCount = reviewWordsRes.data.length || 0
           console.log('从getTodayReviewWords获取待复习单词数:', dueForReviewCount)
         }
-        
+
         // 如果API返回的待复习单词数为0，尝试从本地单词列表中计算实际需要复习的单词数
         if (dueForReviewCount === 0) {
           // 获取本地存储的单词列表（与VocabularyPage.vue保持一致的数据源）
           const localWords = localStorage.getItem('userWords')
           let wordsList = []
-          
+
           try {
             if (localWords) {
               wordsList = JSON.parse(localWords)
@@ -88,37 +90,37 @@ const fetchLearningStats = async () => {
           } catch (e) {
             console.warn('解析本地单词列表失败:', e)
           }
-          
+
           // 如果本地有单词列表
           if (Array.isArray(wordsList) && wordsList.length > 0) {
             // 计算今天需要复习的单词（严格按照VocabularyPage.vue的主逻辑）
             const todayEnd = new Date(new Date().setHours(23, 59, 59, 999))
-            
+
             // 添加详细日志记录，查看数据结构
             console.log('本地单词列表总数:', wordsList.length)
             const wordsWithNextReviewAt = wordsList.filter((word: any) => word.nextReviewAt).length
             const wordsWithNextReviewTime = wordsList.filter((word: any) => word.nextReviewTime).length
             console.log('含有nextReviewAt字段的单词数:', wordsWithNextReviewAt)
             console.log('含有nextReviewTime字段的单词数:', wordsWithNextReviewTime)
-            
+
             // 先尝试使用VocabularyPage.vue主逻辑中的筛选条件，同时检查nextReviewAt和nextReviewTime
-            const locallyDueForReview = wordsList.filter((word: any) => 
-              (word.nextReviewTime || word.nextReviewAt) && 
+            const locallyDueForReview = wordsList.filter((word: any) =>
+              (word.nextReviewTime || word.nextReviewAt) &&
               new Date(word.nextReviewTime || word.nextReviewAt) <= todayEnd
             ).length
-            
+
             console.log('按主逻辑筛选的待复习单词数:', locallyDueForReview)
-            
+
             // 如果主逻辑筛选结果为0，尝试使用错误处理中的逻辑（检查reviewStatus）
             if (locallyDueForReview === 0) {
-              const errorHandlingDueForReview = wordsList.filter((word: any) => 
-                word.reviewStatus === 'reviewing' && 
-                (word.nextReviewTime || word.nextReviewAt) && 
+              const errorHandlingDueForReview = wordsList.filter((word: any) =>
+                word.reviewStatus === 'reviewing' &&
+                (word.nextReviewTime || word.nextReviewAt) &&
                 new Date(word.nextReviewTime || word.nextReviewAt) <= new Date()
               ).length
-              
+
               console.log('按错误处理逻辑筛选的待复习单词数:', errorHandlingDueForReview)
-              
+
               // 如果错误处理逻辑有结果，使用该结果
               if (errorHandlingDueForReview > 0) {
                 dueForReviewCount = errorHandlingDueForReview
@@ -127,37 +129,37 @@ const fetchLearningStats = async () => {
               // 如果主逻辑有结果，使用主逻辑的结果
               dueForReviewCount = locallyDueForReview
             }
-            
+
             if (dueForReviewCount > 0) {
               console.log('从本地单词列表计算待复习单词数:', dueForReviewCount)
             }
           }
         }
-        
+
         if (dueForReviewCount === 0 && userWordsRes?.data && Array.isArray(userWordsRes.data)) {
           // 计算今天需要复习的单词，同时检查nextReviewAt和nextReviewTime字段
           const todayEnd = new Date(new Date().setHours(23, 59, 59, 999))
-          
+
           // 添加详细日志记录，查看数据结构
           console.log('用户单词列表总数:', userWordsRes.data.length)
           const wordsWithNextReviewAt = userWordsRes.data.filter((word: any) => word.nextReviewAt).length
           const wordsWithNextReviewTime = userWordsRes.data.filter((word: any) => word.nextReviewTime).length
           console.log('含有nextReviewAt字段的单词数:', wordsWithNextReviewAt)
           console.log('含有nextReviewTime字段的单词数:', wordsWithNextReviewTime)
-          
-          const locallyDueForReview = userWordsRes.data.filter((word: any) => 
-            (word.nextReviewTime || word.nextReviewAt) && 
+
+          const locallyDueForReview = userWordsRes.data.filter((word: any) =>
+            (word.nextReviewTime || word.nextReviewAt) &&
             new Date(word.nextReviewTime || word.nextReviewAt) <= todayEnd
           ).length
-          
+
           console.log('符合条件的待复习单词数:', locallyDueForReview)
-          
+
           if (locallyDueForReview > 0) {
             dueForReviewCount = locallyDueForReview
             console.log('从用户单词列表计算待复习单词数:', dueForReviewCount)
           }
         }
-        
+
         learningStats.value.dueForReview = dueForReviewCount
       }
 
@@ -171,7 +173,7 @@ const fetchLearningStats = async () => {
       const localWordsLearned = localStorage.getItem('totalWordsLearned')
       const localReadingTime = localStorage.getItem('totalReadingTime')
       const localDueForReview = localStorage.getItem('dueForReview')
-      
+
       if (localStreakDays) {
         learningStats.value.streakDays = parseInt(localStreakDays) || 0
       }
@@ -193,9 +195,9 @@ const fetchLearningStats = async () => {
     learningStats.value.totalWordsLearned = 0
   } finally {
     statsLoading.value = false
-    
+
     console.log('学习统计数据加载完成:', learningStats.value)
-    
+
     // 保存数据到本地存储，作为下次加载的备用
     if (learningStats.value.streakDays > 0) {
       localStorage.setItem('streakDays', learningStats.value.streakDays.toString())
@@ -219,8 +221,7 @@ const formatReadingTime = computed(() => {
     return `${minutes}分钟`
   } else {
     const hours = Math.floor(minutes / 60)
-    const remainingMinutes = minutes % 60
-    return `${hours}小时${remainingMinutes > 0 ? remainingMinutes + '分钟' : ''}`
+    return `${hours}小时`
   }
 })
 
@@ -257,7 +258,7 @@ const welcomeMessage = computed(() => {
   // 场景化快捷入口 - 根据用户状态动态生成
 const quickActions = computed(() => {
   // 基础操作
-  const actions: Array<{ 
+  const actions: Array<{
     title: string
     description: string
     icon: string
@@ -295,7 +296,7 @@ const quickActions = computed(() => {
 
   // 使用从API获取的已学习单词量来判断用户阶段
   const totalWords = learningStats.value.totalWordsLearned || 0
-  
+
   // 新用户（单词量<50）
   if (totalWords < 50) {
     actions.push(
@@ -325,7 +326,7 @@ const quickActions = computed(() => {
   // 活跃用户（单词量50-200）
   else if (totalWords < 200) {
     actions.push(
-      { 
+      {
         title: `今日待复习单词 (${learningStats.value.dueForReview})`,
         description: '按时复习巩固记忆，提升学习效果',
         icon: 'refresh',
@@ -398,10 +399,15 @@ interface Article {
   enContent?: string
 }
 
+// 推荐文章相关
+const recommendArticles = ref<Article[]>([])
+const recommendLoading = ref(false)
+const userInterestTags = ref<string[]>([])
+
+// 文章筛选功能（保留用于探索文章）
 const articles = ref<Article[]>([])
 const loading = ref(false)
 
-// 文章筛选功能
 const filters = ref({
   category: '',
   difficulty: '',
@@ -410,6 +416,149 @@ const filters = ref({
 })
 
 const totalArticles = ref(0)
+
+// 分类中英文映射
+const categoryMap: Record<string, string> = {
+  'technology': '科技',
+
+  'business': '商业',
+  'culture': '文化',
+  'education': '教育',
+  'health': '健康',
+  'sports': '体育',
+  'entertainment': '娱乐',
+  'travel': '旅行',
+  'food': '美食'
+}
+
+// 创建反向映射（中文到英文）
+const reverseCategoryMap: Record<string, string> = {}
+Object.entries(categoryMap).forEach(([en, zh]) => {
+  reverseCategoryMap[zh] = en
+})
+
+// 将兴趣标签转换为英文分类
+const convertInterestTagsToEnglish = (tags: string[]): string[] => {
+  return tags.map(tag => {
+    const trimmedTag = tag.trim()
+    // 如果是中文，转换为英文
+    if (reverseCategoryMap[trimmedTag]) {
+      return reverseCategoryMap[trimmedTag]
+    }
+    // 如果已经是英文，直接返回
+    if (categoryMap[trimmedTag]) {
+      return trimmedTag
+    }
+    // 如果都不匹配，尝试模糊匹配
+    const fuzzyMatch = Object.keys(categoryMap).find(key => 
+      key.toLowerCase().includes(trimmedTag.toLowerCase()) ||
+      categoryMap[key].includes(trimmedTag)
+    )
+    return fuzzyMatch || trimmedTag
+  }).filter(tag => categoryMap[tag]) // 只保留有效的分类
+}
+
+// 获取用户兴趣标签
+const fetchUserInterestTags = async () => {
+  if (!userStore.isLoggedIn || !userStore.userInfo?.id) {
+    console.log('用户未登录，使用默认兴趣标签')
+    userInterestTags.value = ['technology', 'health', 'business'] // 默认标签
+    return
+  }
+
+  try {
+    // 从用户信息中获取兴趣标签
+    const userInfo = userStore.userInfo as any
+    if (userInfo?.interestTag) {
+      // 如果interestTag是字符串，按逗号分割
+      const rawTags = userInfo.interestTag.split(',').map((tag: string) => tag.trim())
+      // 转换为英文分类
+      userInterestTags.value = convertInterestTagsToEnglish(rawTags)
+    } else {
+      // 如果没有兴趣标签，使用默认标签
+      userInterestTags.value = ['technology', 'health', 'business', 'education', 'entertainment']
+    }
+    console.log('用户兴趣标签（原始）:', userInfo?.interestTag)
+    console.log('用户兴趣标签（转换后）:', userInterestTags.value)
+  } catch (error) {
+    console.warn('获取用户兴趣标签失败，使用默认标签:', error)
+    userInterestTags.value = ['technology', 'health', 'business']
+  }
+}
+
+// 获取推荐文章
+const fetchRecommendArticles = async (isRefresh = false) => {
+  recommendLoading.value = true
+  try {
+    // 确保有用户兴趣标签
+    if (userInterestTags.value.length === 0) {
+      await fetchUserInterestTags()
+    }
+
+    // 随机选择一个兴趣标签
+    let randomTag
+    if (isRefresh && userInterestTags.value.length > 1) {
+      // 换一批时，如果用户有多个兴趣标签，随机选择不同的标签
+      const currentTag = recommendArticles.value.length > 0 ? recommendArticles.value[0]?.category : null
+      const availableTags = userInterestTags.value.filter(tag => tag !== currentTag)
+      randomTag = availableTags[Math.floor(Math.random() * availableTags.length)] || userInterestTags.value[Math.floor(Math.random() * userInterestTags.value.length)]
+    } else {
+      randomTag = userInterestTags.value[Math.floor(Math.random() * userInterestTags.value.length)]
+    }
+    
+    // 使用不同的排序方式确保获取不同内容
+    const sortOptions = [
+      { sortBy: 'publishedAt', sortOrder: 'desc' },
+      { sortBy: 'publishedAt', sortOrder: 'asc' },
+      { sortBy: 'readCount', sortOrder: 'desc' },
+      { sortBy: 'readCount', sortOrder: 'asc' }
+    ]
+    
+    // 如果是刷新，随机选择排序方式；否则使用默认排序
+    const sortOption = isRefresh 
+      ? sortOptions[Math.floor(Math.random() * sortOptions.length)]
+      : sortOptions[0]
+    
+    // 如果是刷新，使用随机页码（1-3页）获取不同内容
+    const page = isRefresh ? Math.floor(Math.random() * 3) + 1 : 1
+    
+    const response = await articleApi.getArticles({
+      category: randomTag,
+      page: page,
+      size: 9,
+      sortBy: sortOption.sortBy,
+      sortOrder: sortOption.sortOrder
+    })
+
+    if (response?.data?.list) {
+      recommendArticles.value = response.data.list.map((article: any) => ({
+        ...article,
+        difficulty: article.difficultyLevel || '',
+        wordCount: article.wordCount || article.word_count || 0
+      }))
+    } else {
+      recommendArticles.value = []
+    }
+    
+    console.log(`获取推荐文章成功，基于标签: ${randomTag}，排序: ${sortOption.sortBy}-${sortOption.sortOrder}，页码: ${page}，共${recommendArticles.value.length}篇`)
+  } catch (error) {
+    console.error('获取推荐文章失败:', error)
+    recommendArticles.value = []
+  } finally {
+    recommendLoading.value = false
+  }
+}
+
+// 换一批推荐文章
+const refreshRecommendArticles = async () => {
+  await fetchRecommendArticles(true) // 传递true表示是刷新操作
+}
+
+// 处理文章点击
+const handleArticleClick = (article: Article) => {
+  // 这里可以添加点击统计或其他逻辑
+  console.log('点击文章:', article.title)
+}
 
 const fetchArticles = async () => {
   loading.value = true
@@ -443,15 +592,19 @@ const handlePageChange = (page: number) => {
 
 onMounted(async () => {
   console.log('HomeView onMounted 开始加载数据')
-  
+
   // 获取学习统计数据
   await fetchLearningStats()
   console.log('学习统计数据加载完成:', learningStats.value)
-  
-  // 获取文章列表
+
+  // 获取推荐文章
+  await fetchRecommendArticles()
+  console.log('推荐文章加载完成:', recommendArticles.value.length, '篇')
+
+  // 获取文章列表（用于探索文章）
   await fetchArticles()
   console.log('文章列表加载完成:', articles.value.length, '篇')
-  
+
   // 等待DOM更新完成
   await nextTick()
   console.log('DOM更新完成，应该可以看到待复习单词了')
@@ -467,15 +620,21 @@ onMounted(async () => {
         <h1>AI驱动的英语学习平台</h1>
         <p>用人工智能重新定义你的英语学习体验</p>
         <div class="hero-actions">
-          <el-button type="primary" size="large" @click="$router.push('/article/1')">
+          <TactileButton variant="primary" size="lg" @click="$router.push('/article/1')">
+            <template #icon>
+              <Reading size="20" />
+            </template>
             开始阅读
-          </el-button>
-          <el-button size="large" @click="$router.push('/login')">
+          </TactileButton>
+          <TactileButton variant="liquid-glass" size="lg" @click="$router.push('/login')">
+            <template #icon>
+              <Message size="20" />
+            </template>
             立即登录
-          </el-button>
+          </TactileButton>
         </div>
       </div>
-      
+
       <!-- 已登录状态 -->
       <div v-else class="hero-content logged-in">
         <div class="welcome-message">
@@ -489,7 +648,7 @@ onMounted(async () => {
           <span v-else-if="learningStats.streakDays < 100" class="info-part">超级棒！连续学习{{ learningStats.streakDays }}天，你已经是学习达人了！</span>
           <span v-else class="info-part">学习大神！已连续学习{{ learningStats.streakDays }}天，继续创造辉煌！</span>
         </div>
-        
+
         <!-- 学习统计数据，带加载状态 -->
         <div class="learning-summary" v-if="!statsLoading">
           <div class="summary-item">
@@ -509,25 +668,31 @@ onMounted(async () => {
             <span>连续打卡：{{ learningStats.streakDays }}天</span>
           </div>
           <!-- 数据加载失败时显示提示 -->
-          <div v-if="learningStats.streakDays === 0 && learningStats.totalWordsLearned === 0 && learningStats.totalReadingTime === 0 && learningStats.dueForReview === 0" 
+          <div v-if="learningStats.streakDays === 0 && learningStats.totalWordsLearned === 0 && learningStats.totalReadingTime === 0 && learningStats.dueForReview === 0"
                class="data-loading-error">
             <Message size="20" class="summary-icon" />
             <span>正在同步数据，请稍后刷新页面</span>
           </div>
         </div>
-        
+
         <!-- 加载状态指示器 -->
         <div v-else class="learning-summary-loading">
           <el-skeleton :rows="3" animated class="skeleton-item" />
         </div>
-        
+
         <div class="hero-actions">
-          <el-button type="primary" size="large" @click="$router.push('/vocabulary')">
+          <TactileButton variant="warning" size="lg" @click="$router.push('/vocabulary')">
+            <template #icon>
+              <Refresh size="20" />
+            </template>
             今日复习
-          </el-button>
-          <el-button size="large" @click="$router.push('/article/1')">
+          </TactileButton>
+          <TactileButton variant="primary" size="lg" @click="$router.push('/article/1')">
+            <template #icon>
+              <Reading size="20" />
+            </template>
             继续阅读
-          </el-button>
+          </TactileButton>
         </div>
       </div>
     </div>
@@ -559,68 +724,33 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 智能文章发现中心 -->
-    <div class="discovery-section">
-      <h2>推荐文章</h2>
-      
-      <!-- 筛选栏 -->
-      <div class="filters-bar">
-        <el-select v-model="filters.category" placeholder="全部分类" size="small" @change="fetchArticles" style="min-width: 120px;">
-          <el-option value="">全部分类</el-option>
-          <el-option value="technology">科技</el-option>
-          <el-option value="health">健康</el-option>
-          <el-option value="business">商业</el-option>
-          <el-option value="education">教育</el-option>
-          <el-option value="entertainment">娱乐</el-option>
-          <el-option value="sports">体育</el-option>
-          <el-option value="travel">旅行</el-option>
-          <el-option value="food">美食</el-option>
-        </el-select>
-        <el-select v-model="filters.difficulty" placeholder="难度" size="small" @change="fetchArticles" style="min-width: 100px;">
-          <el-option value="">全难度</el-option>
-          <el-option v-for="level in ['A1','A2','B1','B2','C1','C2']" :key="level" :label="level" :value="level" />
-        </el-select>
-        <el-button type="primary" @click="fetchArticles" size="small">
-          筛选
-        </el-button>
+    <!-- 智能文章推荐中心 -->
+    <div class="recommend-section">
+      <div class="section-header">
+        <h2>推荐文章</h2>
+        <TactileButton variant="primary" size="md" @click="refreshRecommendArticles" class="refresh-button">
+          <template #icon>
+            <Refresh size="16" />
+          </template>
+          换一批
+        </TactileButton>
       </div>
 
       <!-- 文章列表 -->
-      <div v-if="loading" class="loading-container">
+      <div v-if="recommendLoading" class="loading-container">
         <el-skeleton :rows="3" animated />
       </div>
-      <div v-else-if="articles.length === 0" class="empty-container">
-        <el-empty description="暂无文章数据" />
+      <div v-else-if="recommendArticles.length === 0" class="empty-container">
+        <el-empty description="暂无推荐文章" />
       </div>
-      <div v-else class="articles-grid">
-        <el-card
-          v-for="article in articles"
+      <div v-else class="recommend-articles-grid">
+        <ArticleCard
+          v-for="article in recommendArticles"
           :key="article.id"
-          class="article-card"
-          @click="$router.push(`/article/${article.id}`)"
-        >
-          <div class="article-meta">
-            <el-tag size="small">{{ article.category || '未分类' }}</el-tag>
-            <el-tag size="small" type="info">{{ article.difficultyLevel || '未知' }}</el-tag>
-          </div>
-          <h3>{{ article.title || '无标题' }}</h3>
-          <p>{{ article.description || article.enContent?.substring(0, 100) + '...' || '暂无描述' }}</p>
-          <div class="article-action">
-            <el-button type="text">开始阅读 →</el-button>
-          </div>
-        </el-card>
+          :article="article"
+          @click="handleArticleClick(article)"
+        />
       </div>
-
-      <!-- 分页 -->
-      <el-pagination
-        v-if="totalArticles > 0"
-        v-model:current-page="filters.page"
-        :page-size="filters.size"
-        :total="totalArticles"
-        @current-change="handlePageChange"
-        layout="prev, pager, next, total"
-        class="pagination"
-      />
     </div>
 
     <!-- 文章发现组件 -->
@@ -650,16 +780,30 @@ onMounted(async () => {
   }
 }
 
+@keyframes liquidFlow {
+  0%, 100% { 
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.2;
+    transform: scale(1.02);
+  }
+}
+
 .hero-section {
   text-align: center;
-  padding: var(--space-20) var(--space-6);
+  padding: var(--space-12) var(--space-6);
   background: var(--gradient-primary);
   color: var(--text-inverse);
-  border-radius: var(--radius-4xl);
-  margin-bottom: var(--space-16);
+  border-radius: var(--radius-3xl);
+  margin-bottom: var(--space-12);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-ios-heavy);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
 }
 
 .hero-section::before {
@@ -671,6 +815,7 @@ onMounted(async () => {
   bottom: 0;
   background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
   pointer-events: none;
+  animation: liquidFlow 15s ease-in-out infinite;
 }
 
 .welcome-message {
@@ -733,9 +878,11 @@ onMounted(async () => {
 
 .hero-actions {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-6);
   justify-content: center;
-  margin-top: var(--space-6);
+  margin-top: var(--space-8);
+  position: relative;
+  z-index: 3;
 }
 
 .learning-summary {
@@ -752,14 +899,16 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--glass-white-medium);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   padding: var(--space-4) var(--space-6);
   border-radius: var(--radius-ios-large);
   font-size: var(--text-sm);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: var(--shadow-ios-light);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 8px 32px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
@@ -783,52 +932,26 @@ onMounted(async () => {
 
 .summary-item:hover {
   transform: translateY(-3px) scale(1.02);
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: var(--shadow-ios-medium);
+  background: var(--glass-white-strong);
+  box-shadow:
+    0 12px 40px var(--glass-shadow-medium),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .summary-icon {
   color: #fff;
+  animation: iconGlow 3s ease-in-out infinite;
 }
-
-.summary-icon.review {
-  color: #ffcc00;
-  animation: pulse 2s infinite;
-}
-
-.summary-icon.time {
-      color: #409eff;
-      animation: glowEffect 3s infinite;
-    }
-
-    .summary-icon.words {
-      color: #67c23a;
-      animation: glowEffect 3s infinite;
-    }
-
-    .summary-icon.streak {
-      color: #ff6b6b;
-      animation: glowEffect 3s infinite;
-    }
-
-    @keyframes glowEffect {
-      0%, 100% {
-        filter: brightness(1) drop-shadow(0 0 2px currentColor);
-      }
-      50% {
-        filter: brightness(1.2) drop-shadow(0 0 6px currentColor);
-      }
-    }
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
+.summary-icon.time { color: #ba68c8; }
+.summary-icon.words { color: #67c23a; }
+.summary-icon.review { color: #ffcc00; }
+.summary-icon.streak { color: #ff6b6b; }
+@keyframes iconGlow {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
   }
   50% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 1;
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
   }
 }
 
@@ -912,13 +1035,17 @@ onMounted(async () => {
   cursor: pointer;
   transition: all var(--transition-normal);
   text-align: center;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--glass-border);
   background: var(--bg-primary);
-  box-shadow: var(--shadow-ios-light);
+  box-shadow:
+    0 4px 20px var(--glass-shadow),
+    0 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: var(--radius-ios-large);
   position: relative;
   overflow: hidden;
   font-family: var(--font-family-primary);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .action-card::before,
@@ -941,8 +1068,11 @@ onMounted(async () => {
 .action-card:hover,
 .article-card:hover {
   transform: translateY(-8px) scale(1.03);
-  box-shadow: var(--shadow-ios-heavy);
+  box-shadow:
+    0 20px 40px var(--glass-shadow-medium),
+    0 4px 8px rgba(0, 0, 0, 0.08);
   border-color: var(--ios-blue);
+  background: var(--glass-white);
 }
 
 .action-icon {
@@ -983,10 +1113,119 @@ onMounted(async () => {
 
 .filters-bar {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-6);
   justify-content: center;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-8);
   flex-wrap: wrap;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.filter-label {
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.modern-select {
+  min-width: 180px;
+}
+
+.custom-select-wrapper {
+  min-width: 180px;
+}
+
+.custom-select-wrapper :deep(.el-input__wrapper) {
+  background: var(--glass-white) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 
+    0 4px 16px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all var(--transition-normal) !important;
+}
+
+.custom-select-wrapper :deep(.el-input__wrapper:hover) {
+  border-color: var(--ios-blue) !important;
+  box-shadow: 
+    0 6px 20px var(--glass-shadow-medium),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+.custom-select-wrapper :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--ios-blue) !important;
+  box-shadow: 
+    0 0 0 3px rgba(0, 122, 255, 0.1),
+    0 6px 20px var(--glass-shadow-medium) !important;
+}
+
+.custom-select-wrapper :deep(.el-input__inner) {
+  color: var(--text-primary) !important;
+  font-size: 14px !important;
+}
+
+.custom-select-wrapper :deep(.el-select__caret) {
+  color: var(--text-secondary) !important;
+}
+
+.filter-button {
+  margin-top: var(--space-6);
+}
+
+/* 推荐文章部分样式 */
+.recommend-section {
+  margin-bottom: var(--space-12);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.refresh-button {
+  margin-left: var(--space-4);
+}
+
+.recommend-articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+}
+
+@media (max-width: 768px) {
+  .recommend-articles-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  
+  .refresh-button {
+    margin-left: 0;
+  }
 }
 
 .article-meta {
@@ -1005,11 +1244,43 @@ onMounted(async () => {
   margin-bottom: var(--space-4);
 }
 
-.pagination {
+.pagination-container {
   margin-top: var(--space-8);
-  text-align: center;
   display: flex;
   justify-content: center;
+}
+
+.modern-pagination :deep(.el-pagination) {
+  background: var(--glass-white);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: 
+    0 4px 16px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.modern-pagination :deep(.el-pager li) {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  margin: 0 var(--space-1);
+  transition: all var(--transition-normal);
+}
+
+.modern-pagination :deep(.el-pager li:hover) {
+  background: var(--glass-white-medium);
+  border-color: var(--ios-blue);
+  transform: translateY(-1px);
+}
+
+.modern-pagination :deep(.el-pager li.is-active) {
+  background: var(--gradient-primary);
+  border-color: var(--ios-blue);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-primary);
 }
 
 .user-section {
@@ -1077,10 +1348,11 @@ onMounted(async () => {
 .hero-action-icon {
   color: var(--text-inverse);
 }
-  
+
 @media (max-width: 768px) {
   .hero-section {
-    padding: var(--space-12) var(--space-5);
+    padding: var(--space-8) var(--space-4);
+    margin-bottom: var(--space-8);
   }
 
   .hero-section h1 {
@@ -1090,6 +1362,7 @@ onMounted(async () => {
   .hero-actions {
     flex-direction: column;
     align-items: center;
+    gap: var(--space-4);
   }
 
   .learning-summary {
@@ -1109,11 +1382,20 @@ onMounted(async () => {
   .filters-bar {
     flex-direction: column;
     align-items: center;
+    gap: var(--space-4);
   }
 
-  .filters-bar .el-select {
+  .filter-group {
     width: 100%;
     max-width: 200px;
+  }
+
+  .modern-select {
+    width: 100%;
+  }
+
+  .filter-button {
+    margin-top: var(--space-4);
   }
   
   .hero-quick-actions {

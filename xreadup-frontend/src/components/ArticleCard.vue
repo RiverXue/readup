@@ -1,47 +1,43 @@
 <template>
-  <div class="article-card" @click="handleClick">
-    <!-- 文章内容 -->
-    <div class="card-content">
-      <!-- 文章分类标签和难度等级 -->
-      <div class="article-category-container" v-if="article.category || true">
-        <div class="article-category" v-if="article.category">
-          {{ article.category }}
-        </div>
-        <div class="article-difficulty">
-          {{ getDifficultyText(article.difficulty) }}
-        </div>
+  <div class="airbnb-modern-card tactile-button" @click="handleClick">
+    <!-- 卡片内容 -->
+    <div class="card-content compact">
+      <!-- 分类与难度 -->
+      <div class="compact-meta">
+        <span class="tag category">{{ article.category || '未分类' }}</span>
+        <span class="tag difficulty">{{ getDifficultyText(article.difficulty || '') }}</span>
       </div>
 
-      <!-- 文章标题 -->
-      <h3 class="article-title">{{ article.title }}</h3>
+      <!-- 标题 -->
+      <h3 class="card-title">{{ article.title }}</h3>
 
-      <!-- 文章摘要 -->
-      <p class="article-excerpt">
-        {{ article.description || (article.enContent ? truncateText(article.enContent, 100) + '...' : '暂无描述') }}
+      <!-- 摘要 -->
+      <p class="card-description">
+        {{ article.description || (article.enContent ? truncateText(article.enContent, 120) + '...' : '暂无描述') }}
       </p>
 
-      <!-- 文章元信息 -->
-      <div class="article-meta">
-        <span class="meta-item word-count" v-if="article.wordCount">
-          {{ formatWordCount(article.wordCount) }}字 · {{ getEstimatedReadTime }}分钟
-        </span>
-        <span class="meta-item read-time" v-else>
-          {{ getEstimatedReadTime }}分钟
-        </span>
+      <!-- 元信息 -->
+      <div class="card-meta">
+        <div class="meta-item">
+          <span class="meta-icon">⏱️</span>
+          <span>{{ getEstimatedReadTime }}分钟</span>
+        </div>
+        <div class="meta-item" v-if="article.wordCount">
+          <span class="meta-icon">📝</span>
+          <span>{{ formatWordCount(article.wordCount) }}词</span>
+        </div>
       </div>
     </div>
 
-    <!-- 悬浮效果层 -->
-    <div class="card-overlay">
-      <span class="read-more">阅读全文</span>
+    <!-- 智能加载状态 -->
+    <div v-if="loading" class="smart-loading-overlay">
+      <div class="loading-spinner"></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-// 移除Reading图标的导入
-
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 // Props定义
@@ -64,6 +60,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const loading = ref(false)
 
 // 截断文本函数
 const truncateText = (text: string, maxLength: number): string => {
@@ -81,7 +78,12 @@ const formatWordCount = (count: number): string => {
 
 // 处理卡片点击事件
 const handleClick = () => {
-  router.push(`/article/${props.article.id}`)
+  loading.value = true
+  router.push(`/article/${props.article.id || 1}`)
+  // 模拟加载完成
+  setTimeout(() => {
+    loading.value = false
+  }, 1000)
 }
 
 // 将难度等级转换为文本描述（与HomeView.vue保持一致）
@@ -163,189 +165,213 @@ const cardGradient = computed(() => {
 </script>
 
 <style scoped>
-.article-card {
-  position: relative;
-  background: #fff;
-  border-radius: 12px;
+@import '@/assets/design-system.css';
+
+.airbnb-modern-card {
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%);
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-.article-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.card-content {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 分类和难度等级容器 */
-.article-category-container {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-self: flex-start;
-}
-
-.article-category {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #ecf5ff;
-  color: #409eff;
-  font-size: 12px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-/* 难度等级样式 */
-.article-difficulty {
-  display: inline-block;
-  padding: 4px 10px;
-  background: #fff7e6;
-  color: #e6a23c;
-  font-size: 12px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-.article-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 12px;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.article-excerpt {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.6;
-  margin-bottom: 16px;
-  flex: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.article-meta {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-size: 12px;
-  color: #909399;
-  background: rgba(255, 255, 255, 0.8);
-  padding: 4px 8px;
-  border-radius: 12px;
-  backdrop-filter: blur(2px);
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.meta-icon {
-  font-size: 12px;
-}
-
-.card-overlay {
+.airbnb-modern-card::before {
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+  background: linear-gradient(135deg, 
+    rgba(0, 122, 255, 0.1) 0%, 
+    rgba(255, 119, 198, 0.1) 50%, 
+    rgba(120, 219, 255, 0.1) 100%);
+  border-radius: 20px;
   opacity: 0;
   transition: opacity 0.3s ease;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 24px;
-  color: white;
+  pointer-events: none;
 }
 
-.article-card:hover .card-overlay {
+.airbnb-modern-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.airbnb-modern-card:hover::before {
   opacity: 1;
 }
 
-.read-more {
+.card-content.compact {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.compact-meta {
+  display: flex;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tag.category {
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(90, 200, 250, 0.2) 100%);
+  color: #007AFF;
+}
+
+.tag.category::before {
+  content: '📂';
+  font-size: 10px;
+}
+
+.tag.difficulty {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 235, 59, 0.2) 100%);
+  color: #FF9500;
+}
+
+.tag.difficulty::before {
+  content: '⭐';
+  font-size: 10px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-description {
   font-size: 14px;
-  font-weight: 500;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, var(--text-secondary) 0%, rgba(0, 0, 0, 0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: auto;
+  justify-content: flex-end;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  padding: 6px 12px;
   border-radius: 20px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
-.article-card:hover .read-more {
-  background: rgba(255, 255, 255, 0.3);
+.meta-item:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
-/* 响应式设计 */
+.meta-item:first-child {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.meta-item:last-child {
+  background: linear-gradient(135deg, #4ECDC4 0%, #7EDDD6 100%);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+/* 智能加载状态和响应式保留 */
+.smart-loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; backdrop-filter: blur(10px); }
+.loading-spinner { width: 32px; height: 32px; border: 3px solid var(--border-light); border-top: 3px solid var(--ios-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+
 @media (max-width: 768px) {
-  .article-card {
-    border-radius: 8px;
+  .airbnb-modern-card { 
+    border-radius: 16px; 
   }
-
-  .card-content {
-    padding: 16px;
+  .card-content.compact { 
+    padding: 20px; 
+    border-radius: 12px;
   }
-
-  .article-title {
-    font-size: 16px;
+  .card-title { 
+    font-size: 16px; 
   }
-
-  .article-excerpt {
-    font-size: 13px;
+  .card-description { 
+    font-size: 13px; 
   }
-}
-
-/* 骨架屏样式适配 */
-:deep(.skeleton-cover) {
-  display: none;
-}
-
-:deep(.skeleton-title) {
-  width: 80%;
-  height: 20px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-:deep(.skeleton-desc) {
-  width: 100%;
-  height: 16px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-:deep(.skeleton-meta) {
-  width: 50%;
-  height: 14px;
-  background: #f5f5f5;
-  border-radius: 4px;
+  .tag {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .meta-item {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 16px;
+  }
 }
 </style>

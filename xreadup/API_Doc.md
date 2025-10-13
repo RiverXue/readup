@@ -28,13 +28,13 @@ XReadUp AI采用Spring Cloud微服务架构，包含以下核心服务：
 
 ## 📊 API 概览
 
-目前系统共包含 **60+个** REST API接口，分布如下：
+目前系统共包含 **80+个** REST API接口，分布如下：
 
 - **AI服务**：22个接口（DeepSeek智能分析、腾讯云翻译、AI助手）
 - **文章服务**：7个接口（文章发现、阅读管理、内容提取）
 - **用户服务**：18个接口（用户认证、三级词库、订阅管理）
 - **报告服务**：9个接口（学习统计、艾宾浩斯复习、数据仪表盘）
-- **管理员服务**：5个接口（系统配置管理、管理员权限控制）
+- **管理员服务**：25个接口（系统配置管理、后台管理、数据统计）
 
 ## 🔐 认证说明
 
@@ -1646,6 +1646,7 @@ GET /api/report/health
 | 文章服务 | http://localhost:8082/swagger-ui.html | 管理文章内容、分类和阅读功能   |
 | 报告服务 | http://localhost:8083/swagger-ui.html | 学习统计、报表生成和学习建议   |
 | 用户服务 | http://localhost:8081/swagger-ui.html | 用户管理、认证和词汇学习     |
+| 管理员服务 | http://localhost:8085/swagger-ui.html | 系统配置管理、后台管理功能   |
 
 ---
 
@@ -1864,11 +1865,111 @@ const wordResponse = await fetch('/api/vocabulary/lookup', {
 
 ---
 
-## 🔧 管理员服务 (admin-service) - 5个接口
+## 🔧 管理员服务 (admin-service) - 25个接口
 
-提供系统配置管理、管理员权限控制和后台管理功能。支持动态配置更新和权限验证。
+提供系统配置管理、管理员权限控制、后台管理功能和数据统计。支持动态配置更新、权限验证和完整的后台管理功能。
 
-### 1. 管理员权限管理
+### 1. 管理员认证与会话管理
+
+> **使用场景**：管理员登录、会话管理和权限验证。
+
+#### 管理员登录
+
+```http
+POST /api/admin/login
+```
+
+- **使用场景**：管理员专用登录接口，独立于普通用户登录
+- **业务逻辑**：
+  - 验证用户名和密码
+  - 检查管理员权限
+  - 生成管理员专用Token
+  - 记录登录IP和User-Agent
+- **请求体**：`AdminLoginRequest`
+  
+  ```json
+  {
+    "username": "admin",
+    "password": "admin123"
+  }
+  ```
+- **响应**：`ApiResponse<AdminLoginResponse>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "token": "admin_token_xxx",
+      "userId": 17,
+      "username": "admin",
+      "role": "SUPER_ADMIN",
+      "expireTime": "2025-09-16 12:00:00"
+    }
+  }
+  ```
+
+#### 管理员会话检查
+
+```http
+GET /api/admin/session/check
+```
+
+- **使用场景**：验证管理员Token是否有效，获取管理员基本信息
+- **业务逻辑**：
+  - 验证Token有效性
+  - 检查IP和User-Agent一致性
+  - 返回管理员权限信息
+- **请求头**：`Authorization: Bearer {admin_token}`
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "isValid": true,
+      "userId": 17,
+      "role": "SUPER_ADMIN",
+      "isSuperAdmin": true
+    }
+  }
+  ```
+
+#### 延长管理员会话
+
+```http
+POST /api/admin/session/extend
+```
+
+- **使用场景**：延长管理员Token有效期，前端自动续期
+- **请求头**：`Authorization: Bearer {admin_token}`
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "token": "new_admin_token_xxx",
+      "expireTime": "2025-09-16 12:00:00",
+      "userId": 17,
+      "role": "SUPER_ADMIN"
+    }
+  }
+  ```
+
+#### 管理员登出
+
+```http
+POST /api/admin/session/logout
+```
+
+- **使用场景**：管理员退出登录，清除Token
+- **请求头**：`Authorization: Bearer {admin_token}`
+- **响应**：`ApiResponse<String>`
+
+### 2. 管理员权限管理
 
 > **使用场景**：管理员身份验证、权限检查和用户管理。
 
@@ -1903,9 +2004,111 @@ GET /api/admin/detail?userId={userId}
 
 - **使用场景**：获取管理员用户的详细信息
 - **请求参数**：`userId` - 用户ID
-- **响应**：`ApiResponse<AdminUserDTO>`
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "userId": 17,
+      "role": "SUPER_ADMIN",
+      "username": "admin",
+      "phone": "+86-13800138000",
+      "createdAt": "2025-09-15 10:00:00"
+    }
+  }
+  ```
 
-### 2. 系统配置管理
+#### 获取管理员用户列表
+
+```http
+GET /api/admin/list?page={page}&pageSize={pageSize}&keyword={keyword}
+```
+
+- **使用场景**：分页获取管理员用户列表
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认10）
+  - `keyword` - 搜索关键字（可选）
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "list": [
+        {
+          "userId": 17,
+          "role": "SUPER_ADMIN",
+          "username": "admin",
+          "phone": "+86-13800138000",
+          "createdAt": "2025-09-15 10:00:00"
+        }
+      ],
+      "total": 1,
+      "page": 1,
+      "pageSize": 10,
+      "pages": 1
+    }
+  }
+  ```
+
+#### 添加管理员用户
+
+```http
+POST /api/admin/add
+```
+
+- **使用场景**：将普通用户添加为管理员
+- **业务逻辑**：只有超级管理员可以添加其他管理员
+- **请求体**：`AdminUserCreateDTO`
+  
+  ```json
+  {
+    "userId": 123,
+    "role": "ADMIN"
+  }
+  ```
+- **响应**：`ApiResponse<Void>`
+
+#### 更新管理员用户
+
+```http
+PUT /api/admin/update?userId={userId}&role={role}&phone={phone}
+```
+
+- **使用场景**：更新管理员用户的角色和手机号信息
+- **请求参数**：
+  - `userId` - 用户ID
+  - `role` - 管理员角色
+  - `phone` - 手机号（可选）
+- **响应**：`ApiResponse<Void>`
+
+#### 删除管理员用户
+
+```http
+DELETE /api/admin/delete?userId={userId}
+```
+
+- **使用场景**：移除用户的管理员权限
+- **请求参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<Void>`
+
+#### 获取可添加为管理员的用户列表
+
+```http
+GET /api/admin/available-users?pageSize={pageSize}&keyword={keyword}
+```
+
+- **使用场景**：获取还不是管理员的普通用户列表
+- **请求参数**：
+  - `pageSize` - 每页大小（默认20）
+  - `keyword` - 搜索关键字（可选）
+- **响应**：`ApiResponse<List<AdminUserDTO>>`
+
+### 3. 系统配置管理
 
 > **使用场景**：动态配置系统参数、功能开关和业务限制。
 
@@ -1935,73 +2138,768 @@ GET /api/admin/system-config/all
   }
   ```
 
-#### 更新系统配置
+#### 根据分类获取系统配置
 
 ```http
-POST /api/admin/system-config/update
+GET /api/admin/system-config/category/{category}
 ```
 
-- **使用场景**：更新系统配置参数
-- **请求体**：`SystemConfigUpdateRequest`
-  
-  ```json
-  {
-    "configKey": "maintenance.enabled",
-    "configValue": "true"
-  }
-  ```
-- **响应**：`ApiResponse<Boolean>`
+- **使用场景**：根据配置分类获取对应的配置项
+- **路径参数**：`category` - 配置分类
+- **响应**：`ApiResponse<List<SystemConfigDTO>>`
 
-#### 获取配置值
+#### 获取配置分类列表
+
+```http
+GET /api/admin/system-config/categories
+```
+
+- **使用场景**：获取系统中所有的配置分类
+- **响应**：`ApiResponse<List<String>>`
+
+#### 根据配置键获取配置值
 
 ```http
 GET /api/admin/system-config/value/{configKey}
 ```
 
-- **使用场景**：获取指定配置项的值
+- **使用场景**：根据配置键获取对应的配置值
 - **路径参数**：`configKey` - 配置键
 - **响应**：`ApiResponse<String>`
 
-### 3. 用户管理
+#### 更新单个配置
+
+```http
+PUT /api/admin/system-config/update/{configKey}?configValue={value}
+```
+
+- **使用场景**：更新指定配置键的配置值
+- **路径参数**：`configKey` - 配置键
+- **请求参数**：`configValue` - 配置值
+- **响应**：`ApiResponse<Boolean>`
+
+#### 批量更新配置
+
+```http
+PUT /api/admin/system-config/batch-update
+```
+
+- **使用场景**：批量更新多个配置项
+- **请求体**：`Map<String, String>`
+  
+  ```json
+  {
+    "maintenance.enabled": "true",
+    "feature.ai.enabled": "false"
+  }
+  ```
+- **响应**：`ApiResponse<Boolean>`
+
+#### 重置配置为默认值
+
+```http
+PUT /api/admin/system-config/reset/{configKey}
+```
+
+- **使用场景**：将指定配置重置为默认值
+- **路径参数**：`configKey` - 配置键
+- **响应**：`ApiResponse<Boolean>`
+
+#### 获取系统信息
+
+```http
+GET /api/admin/system-config/system-info
+```
+
+- **使用场景**：获取系统的基本信息
+- **响应**：`ApiResponse<Map<String, Object>>`
+
+#### 检查功能是否启用
+
+```http
+GET /api/admin/system-config/feature/{featureKey}/enabled
+```
+
+- **使用场景**：检查指定功能是否启用
+- **路径参数**：`featureKey` - 功能键
+- **响应**：`ApiResponse<Boolean>`
+
+#### 获取业务限制值
+
+```http
+GET /api/admin/system-config/limit/{limitKey}?defaultValue={defaultValue}
+```
+
+- **使用场景**：获取指定业务限制的值
+- **路径参数**：`limitKey` - 限制键
+- **请求参数**：`defaultValue` - 默认值（可选）
+- **响应**：`ApiResponse<Integer>`
+
+#### 检查系统维护状态
+
+```http
+GET /api/admin/system-config/maintenance/status
+```
+
+- **使用场景**：检查系统是否处于维护模式
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "maintenanceMode": false,
+      "maintenanceMessage": "系统正常运行"
+    }
+  }
+  ```
+
+#### 内部接口：检查系统维护状态
+
+```http
+GET /api/admin/system-config/internal/maintenance/status
+```
+
+- **使用场景**：供网关等内部服务调用，无需认证
+- **响应**：`ApiResponse<Map<String, Object>>`
+
+### 4. 用户管理
 
 > **使用场景**：管理员查看和管理普通用户。
 
 #### 获取用户列表
 
 ```http
-GET /api/admin/users/list?page={page}&pageSize={pageSize}&keyword={keyword}
+GET /api/admin/users/list?page={page}&pageSize={pageSize}&username={username}&phone={phone}&interestTag={interestTag}&identityTag={identityTag}&status={status}
 ```
 
-- **使用场景**：管理员查看用户列表
+- **使用场景**：分页获取用户列表，支持多条件筛选
 - **请求参数**：
   - `page` - 页码（默认1）
   - `pageSize` - 每页大小（默认10）
-  - `keyword` - 搜索关键字（可选）
-- **响应**：`ApiResponse<List<UserDTO>>`
+  - `username` - 用户名（可选）
+  - `phone` - 电话（可选）
+  - `interestTag` - 兴趣标签（可选）
+  - `identityTag` - 身份标签（可选）
+  - `status` - 用户状态（可选）
+- **响应**：`ApiResponse<Map<String, Object>>`
 
-### 4. 管理员用户管理
+#### 获取用户详情
+
+```http
+GET /api/admin/users/detail?userId={userId}
+```
+
+- **使用场景**：根据用户ID获取用户的详细信息
+- **请求参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<Object>`
+
+#### 更新用户信息
+
+```http
+PUT /api/admin/users/update/{userId}
+```
+
+- **使用场景**：根据用户ID更新用户的信息
+- **路径参数**：`userId` - 用户ID
+- **请求体**：`UserUpdateDTO`
+- **响应**：`ApiResponse<Object>`
+
+#### 禁用用户
+
+```http
+PUT /api/admin/users/disable/{userId}
+```
+
+- **使用场景**：根据用户ID禁用用户
+- **路径参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<Object>`
+
+#### 启用用户
+
+```http
+PUT /api/admin/users/enable/{userId}
+```
+
+- **使用场景**：根据用户ID启用用户
+- **路径参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<Object>`
+
+#### 获取用户订阅列表
+
+```http
+GET /api/admin/users/subscriptions?page={page}&pageSize={pageSize}&userId={userId}&planType={planType}&status={status}
+```
+
+- **使用场景**：分页获取用户的订阅信息，支持筛选
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认10）
+  - `userId` - 用户ID（可选筛选）
+  - `planType` - 计划类型（可选筛选）
+  - `status` - 状态（可选筛选）
+- **响应**：`ApiResponse<Object>`
+
+#### 获取用户学习进度统计
+
+```http
+GET /api/admin/users/progress/{userId}
+```
+
+- **使用场景**：根据用户ID获取用户的学习进度统计信息
+- **路径参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<Object>`
+
+### 5. 管理员用户管理
 
 > **使用场景**：超级管理员管理其他管理员用户。
+
+#### 获取管理员用户列表
+
+```http
+GET /api/admin/admins/list?page={page}&pageSize={pageSize}&keyword={keyword}
+```
+
+- **使用场景**：分页获取管理员用户列表，可以根据关键字进行筛选
+- **权限要求**：只有超级管理员才能查看管理员列表
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认10）
+  - `keyword` - 关键字（用户名或ID）
+- **响应**：`ApiResponse<List<AdminUserDTO>>`
+
+#### 获取管理员用户详情
+
+```http
+GET /api/admin/admins/detail/{userId}
+```
+
+- **使用场景**：根据用户ID获取管理员用户的详细信息
+- **权限要求**：只有管理员才能查看管理员详情
+- **路径参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<AdminUserDTO>`
 
 #### 添加管理员用户
 
 ```http
-POST /api/admin/admins/add
+POST /api/admin/admins/add?userId={userId}&role={role}
 ```
 
-- **使用场景**：将普通用户提升为管理员
-- **请求体**：`AdminUserCreateDTO`
+- **使用场景**：将普通用户添加为管理员
+- **权限要求**：只有超级管理员才能添加管理员
+- **请求参数**：
+  - `userId` - 用户ID
+  - `role` - 管理员角色
+- **响应**：`ApiResponse<Boolean>`
+
+#### 更新管理员用户角色
+
+```http
+PUT /api/admin/admins/update/{userId}?role={role}
+```
+
+- **使用场景**：更新管理员用户的角色
+- **权限要求**：只有超级管理员才能更新管理员角色
+- **路径参数**：`userId` - 用户ID
+- **请求参数**：`role` - 新的管理员角色
+- **响应**：`ApiResponse<Boolean>`
+
+#### 删除管理员用户
+
+```http
+DELETE /api/admin/admins/delete/{userId}
+```
+
+- **使用场景**：删除管理员用户权限
+- **权限要求**：只有超级管理员才能删除管理员
+- **路径参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<Boolean>`
+
+#### 获取可选的用户列表
+
+```http
+GET /api/admin/admins/available-users?pageSize={pageSize}&keyword={keyword}
+```
+
+- **使用场景**：获取可以添加为管理员的普通用户列表
+- **权限要求**：只有超级管理员才能获取可选用户列表
+- **请求参数**：
+  - `pageSize` - 每页大小（默认20）
+  - `keyword` - 关键字
+- **响应**：`ApiResponse<Object>`
+
+### 6. 仪表盘数据统计
+
+> **使用场景**：管理后台的仪表盘数据统计和可视化。
+
+#### 获取管理员统计数据
+
+```http
+GET /api/admin/stats
+```
+
+- **使用场景**：获取管理后台的统计数据
+- **业务逻辑**：
+  - 获取用户总数（通过微服务调用）
+  - 获取文章总数（直接查询数据库）
+  - 获取订阅总数（直接查询数据库）
+  - 获取AI分析总数（直接查询数据库）
+  - 获取服务状态
+- **响应**：`ApiResponse<Map<String, Object>>`
   
   ```json
   {
-    "userId": 123,
-    "role": "ADMIN",
-    "phone": "+86-13800138000"
+    "code": 200,
+    "success": true,
+    "data": {
+      "totalUsers": 150,
+      "totalArticles": 500,
+      "totalSubscriptions": 25,
+      "totalAIAnalyses": 1200,
+      "serviceStatus": {
+        "userService": true,
+        "articleService": true,
+        "subscriptionService": true,
+        "aiService": true
+      }
+    }
   }
   ```
+
+#### 获取文章分类分布
+
+```http
+GET /api/admin/dashboard/article-categories
+```
+
+- **使用场景**：获取文章按分类的分布统计
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "categories": [
+        {
+          "category": "technology",
+          "count": 150
+        },
+        {
+          "category": "science",
+          "count": 100
+        }
+      ]
+    }
+  }
+  ```
+
+#### 获取用户增长趋势
+
+```http
+GET /api/admin/dashboard/user-growth?days={days}
+```
+
+- **使用场景**：获取指定天数内的用户增长趋势
+- **请求参数**：`days` - 统计天数（默认7）
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "growth": [
+        {
+          "date": "2025-09-15",
+          "count": 5
+        },
+        {
+          "date": "2025-09-16",
+          "count": 8
+        }
+      ]
+    }
+  }
+  ```
+
+#### 获取学习活动统计
+
+```http
+GET /api/admin/dashboard/learning-activities?days={days}
+```
+
+- **使用场景**：获取用户学习活动统计数据
+- **请求参数**：`days` - 统计天数（默认7）
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "activities": [
+        {
+          "date": "2025-09-15",
+          "activities": {
+            "阅读文章": 25,
+            "AI分析": 15,
+            "词汇学习": 30,
+            "订阅购买": 2
+          }
+        }
+      ]
+    }
+  }
+  ```
+
+#### 获取最近活动数据
+
+```http
+GET /api/admin/dashboard/recent-activities?limit={limit}
+```
+
+- **使用场景**：获取系统中的最近操作活动记录
+- **请求参数**：`limit` - 获取的活动数量限制（默认20）
+- **响应**：`ApiResponse<Map<String, Object>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": {
+      "activities": [
+        {
+          "entityId": 123,
+          "title": "新用户 learner123 注册了",
+          "type": "用户注册",
+          "time": "2025-09-15"
+        },
+        {
+          "entityId": 456,
+          "title": "admin 阅读了文章「AI技术发展」",
+          "type": "阅读记录",
+          "time": "2025-09-15"
+        }
+      ]
+    }
+  }
+  ```
+
+#### 获取数据统计趋势
+
+```http
+GET /api/admin/dashboard/trends?type={type}&days={days}
+```
+
+- **使用场景**：获取指定类型的数据统计趋势
+- **请求参数**：
+  - `type` - 统计类型：user, activity
+  - `days` - 统计天数（默认7）
+- **响应**：`ApiResponse<Map<String, Object>>`
+
+### 7. AI服务管理
+
+> **使用场景**：后台管理系统对AI分析和学习助手功能的管理。
+
+#### 分析文章内容
+
+```http
+POST /api/admin/ai/analyze?articleId={articleId}&content={content}&difficulty={difficulty}
+```
+
+- **使用场景**：使用AI分析文章内容并返回分析结果
+- **请求参数**：
+  - `articleId` - 文章ID（可选）
+  - `content` - 文章内容（可选）
+  - `difficulty` - 目标难度（可选）
+- **响应**：`ApiResponse<String>`
+
+#### 获取AI学习助手回答
+
+```http
+POST /api/admin/ai/assistant?question={question}&context={context}
+```
+
+- **使用场景**：向AI学习助手提问并获取回答
+- **请求参数**：
+  - `question` - 用户问题（必填）
+  - `context` - 上下文信息（可选）
+- **响应**：`ApiResponse<AssistantResponseDTO>`
+
+#### 检查AI服务状态
+
+```http
+GET /api/admin/ai/health
+```
+
+- **使用场景**：检查AI服务是否正常运行
+- **响应**：`ApiResponse<String>`
+
+#### 获取AI分析结果列表
+
+```http
+GET /api/admin/ai/analysis?page={page}&pageSize={pageSize}&articleTitle={articleTitle}&analysisType={analysisType}&status={status}&startDate={startDate}&endDate={endDate}
+```
+
+- **使用场景**：获取AI分析结果列表，支持分页和筛选
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认10）
+  - `articleTitle` - 文章标题搜索关键字（可选）
+  - `analysisType` - 分析类型（可选）
+  - `status` - 状态（可选）
+  - `startDate` - 开始日期（可选）
+  - `endDate` - 结束日期（可选）
+- **响应**：`ApiResponse<Map<String, Object>>`
+
+#### 获取AI分析详情
+
+```http
+GET /api/admin/ai/analysis/{analysisId}
+```
+
+- **使用场景**：根据分析ID获取AI分析的详细信息
+- **路径参数**：`analysisId` - 分析ID
+- **响应**：`ApiResponse<Map<String, Object>>`
+
+### 8. 文章管理
+
+> **使用场景**：后台管理系统对文章的管理功能。
+
+#### 获取文章列表
+
+```http
+GET /api/admin/articles/list?page={page}&pageSize={pageSize}&title={title}&category={category}&difficulty={difficulty}
+```
+
+- **使用场景**：获取文章列表，支持分页和多条件筛选
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认10）
+  - `title` - 文章标题搜索关键字（可选）
+  - `category` - 文章分类（可选）
+  - `difficulty` - 难度等级（可选）
+- **响应**：`ApiResponse<List<ArticleDTO>>`
+
+#### 获取文章详情
+
+```http
+GET /api/admin/articles/{articleId}
+```
+
+- **使用场景**：根据文章ID获取文章的详细信息
+- **路径参数**：`articleId` - 文章ID
+- **响应**：`ApiResponse<ArticleDTO>`
+
+#### 审核文章
+
+```http
+PUT /api/admin/articles/{articleId}/review?status={status}&reason={reason}
+```
+
+- **使用场景**：审核文章并设置审核状态
+- **路径参数**：`articleId` - 文章ID
+- **请求参数**：
+  - `status` - 审核状态（必填）
+  - `reason` - 审核原因（可选）
 - **响应**：`ApiResponse<Boolean>`
 
-### 5. 健康检查
+#### 更新文章分类
+
+```http
+PUT /api/admin/articles/{articleId}/category?category={category}
+```
+
+- **使用场景**：更新文章的分类信息
+- **路径参数**：`articleId` - 文章ID
+- **请求参数**：`category` - 新的分类（必填）
+- **响应**：`ApiResponse<Boolean>`
+
+#### 更新文章难度等级
+
+```http
+PUT /api/admin/articles/{articleId}/difficulty?difficulty={difficulty}
+```
+
+- **使用场景**：更新文章的难度等级
+- **路径参数**：`articleId` - 文章ID
+- **请求参数**：`difficulty` - 难度等级（必填）
+- **响应**：`ApiResponse<Boolean>`
+
+#### 标记精选文章
+
+```http
+PUT /api/admin/articles/{articleId}/featured?featured={featured}
+```
+
+- **使用场景**：标记或取消标记文章为精选
+- **路径参数**：`articleId` - 文章ID
+- **请求参数**：`featured` - 是否精选
+- **响应**：`ApiResponse<Boolean>`
+
+#### 删除文章
+
+```http
+DELETE /api/admin/articles/{articleId}
+```
+
+- **使用场景**：删除指定的文章
+- **路径参数**：`articleId` - 文章ID
+- **响应**：`ApiResponse<Boolean>`
+
+#### 发布文章
+
+```http
+PUT /api/admin/articles/{articleId}/publish
+```
+
+- **使用场景**：发布指定的文章
+- **路径参数**：`articleId` - 文章ID
+- **响应**：`ApiResponse<Boolean>`
+
+#### 获取文章分类列表
+
+```http
+GET /api/admin/articles/categories
+```
+
+- **使用场景**：获取所有文章分类
+- **响应**：`ApiResponse<List<String>>`
+
+### 9. 订阅管理
+
+> **使用场景**：后台管理系统对订阅计划和用户订阅的管理功能。
+
+#### 获取订阅计划列表
+
+```http
+GET /api/admin/subscriptions/plans
+```
+
+- **使用场景**：获取所有订阅计划
+- **响应**：`ApiResponse<List<Map<String, Object>>>`
+  
+  ```json
+  {
+    "code": 200,
+    "success": true,
+    "data": [
+      {
+        "id": 1,
+        "planType": "FREE",
+        "price": 0.0,
+        "currency": "CNY",
+        "maxArticlesPerMonth": 10,
+        "maxWordsPerArticle": 1000,
+        "aiFeaturesEnabled": false,
+        "prioritySupport": false
+      },
+      {
+        "id": 2,
+        "planType": "BASIC",
+        "price": 29.0,
+        "currency": "CNY",
+        "maxArticlesPerMonth": 100,
+        "maxWordsPerArticle": 5000,
+        "aiFeaturesEnabled": true,
+        "prioritySupport": false
+      }
+    ]
+  }
+  ```
+
+#### 创建订阅计划
+
+```http
+POST /api/admin/subscriptions/plans
+```
+
+- **使用场景**：创建新的订阅计划
+- **请求体**：`SubscriptionPlanCreateDTO`
+- **响应**：`ApiResponse<SubscriptionPlanDTO>`
+
+#### 更新订阅计划
+
+```http
+PUT /api/admin/subscriptions/plans/{planId}
+```
+
+- **使用场景**：更新现有订阅计划信息
+- **路径参数**：`planId` - 订阅计划ID
+- **请求体**：`SubscriptionPlanUpdateDTO`
+- **响应**：`ApiResponse<Boolean>`
+
+#### 删除订阅计划
+
+```http
+DELETE /api/admin/subscriptions/plans/{planId}
+```
+
+- **使用场景**：删除指定的订阅计划
+- **路径参数**：`planId` - 订阅计划ID
+- **响应**：`ApiResponse<Boolean>`
+
+#### 获取订阅列表
+
+```http
+GET /api/admin/subscriptions/list?page={page}&pageSize={pageSize}
+```
+
+- **使用场景**：获取所有用户订阅的分页列表
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认10）
+- **响应**：`ApiResponse<SubscriptionPageResult>`
+
+#### 获取用户订阅列表
+
+```http
+GET /api/admin/subscriptions/user?page={page}&pageSize={pageSize}&userId={userId}&planType={planType}&status={status}
+```
+
+- **使用场景**：获取所有用户订阅的分页列表，支持筛选
+- **请求参数**：
+  - `page` - 页码（默认1）
+  - `pageSize` - 每页大小（默认20）
+  - `userId` - 用户ID（可选筛选）
+  - `planType` - 计划类型（可选筛选）
+  - `status` - 状态（可选筛选）
+- **响应**：`ApiResponse<Map<String, Object>>`
+
+#### 获取指定用户订阅列表
+
+```http
+GET /api/admin/subscriptions/user/{userId}
+```
+
+- **使用场景**：获取指定用户的所有订阅信息
+- **路径参数**：`userId` - 用户ID
+- **响应**：`ApiResponse<List<UserSubscriptionDTO>>`
+
+#### 创建用户订阅
+
+```http
+POST /api/admin/subscriptions/user
+```
+
+- **使用场景**：为用户创建新的订阅
+- **请求体**：`UserSubscriptionCreateDTO`
+- **响应**：`ApiResponse<UserSubscriptionDTO>`
+
+#### 更新用户订阅状态
+
+```http
+PUT /api/admin/subscriptions/user/{subscriptionId}/status?status={status}
+```
+
+- **使用场景**：更新用户订阅的状态
+- **路径参数**：`subscriptionId` - 订阅ID
+- **请求参数**：`status` - 状态（必填）
+- **响应**：`ApiResponse<Boolean>`
+
+### 10. 健康检查
 
 ```http
 GET /api/admin/health

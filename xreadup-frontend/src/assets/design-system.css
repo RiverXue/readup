@@ -35,14 +35,14 @@
   --accent-warning: #f59e0b;
   --accent-error: #ef4444;
   --accent-info: #3b82f6;
-  
+
   /* Airbnb 风格温暖色 - 更精致的调色板 */
   --warm-orange: #ff6b35;
   --warm-coral: #ff8a80;
   --warm-peach: #ffb3ba;
   --warm-cream: #fff8e1;
-  
-  /* iOS 16 风格色彩增强 */
+
+  /* iOS 26 风格色彩增强 */
   --ios-blue: #007AFF;
   --ios-green: #34C759;
   --ios-orange: #FF9500;
@@ -52,23 +52,55 @@
   --ios-teal: #5AC8FA;
   --ios-indigo: #5856D6;
   
+  /* Liquid Glass 专用色彩 */
+  --glass-white: rgba(255, 255, 255, 0.1);
+  --glass-white-medium: rgba(255, 255, 255, 0.15);
+  --glass-white-strong: rgba(255, 255, 255, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-medium: rgba(255, 255, 255, 0.3);
+  --glass-shadow: rgba(0, 0, 0, 0.1);
+  --glass-shadow-medium: rgba(0, 0, 0, 0.15);
+  --glass-shadow-strong: rgba(0, 0, 0, 0.2);
+  
+  /* Airbnb 温暖色调增强 */
+  --airbnb-red: #FF5A5F;
+  --airbnb-pink: #FF8A80;
+  --airbnb-orange: #FF6B35;
+  --airbnb-yellow: #FFD700;
+  --airbnb-coral: #FF7F7F;
+  --airbnb-peach: #FFB3BA;
+
   /* 高级渐变色彩 */
   --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--ios-blue) 100%);
   --gradient-warm: linear-gradient(135deg, var(--warm-orange) 0%, var(--ios-orange) 100%);
   --gradient-success: linear-gradient(135deg, var(--ios-green) 0%, var(--accent-success) 100%);
   --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  
+  /* Liquid Glass 渐变效果 */
+  --gradient-liquid-glass: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 50%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  --gradient-liquid-primary: linear-gradient(135deg, 
+    rgba(0, 122, 255, 0.1) 0%, 
+    rgba(175, 82, 222, 0.1) 50%, 
+    rgba(255, 45, 146, 0.1) 100%);
+  --gradient-liquid-warm: linear-gradient(135deg, 
+    rgba(255, 90, 95, 0.1) 0%, 
+    rgba(255, 107, 53, 0.1) 50%, 
+    rgba(255, 215, 0, 0.1) 100%);
 
   /* 语义化颜色 */
   --text-primary: var(--neutral-900);
   --text-secondary: var(--neutral-600);
   --text-tertiary: var(--neutral-400);
   --text-inverse: #ffffff;
-  
+
   --bg-primary: #ffffff;
   --bg-secondary: var(--neutral-50);
   --bg-tertiary: var(--neutral-100);
   --bg-overlay: rgba(0, 0, 0, 0.5);
-  
+
   --border-light: var(--neutral-200);
   --border-medium: var(--neutral-300);
   --border-strong: var(--neutral-400);
@@ -79,7 +111,7 @@
   --font-family-primary: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
   --font-family-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Fira Code', monospace;
   --font-family-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  
+
   /* 字体大小 - 基于 16px 的模块化缩放 */
   --text-xs: 0.75rem;    /* 12px */
   --text-sm: 0.875rem;   /* 14px */
@@ -90,14 +122,14 @@
   --text-3xl: 1.875rem;  /* 30px */
   --text-4xl: 2.25rem;   /* 36px */
   --text-5xl: 3rem;      /* 48px */
-  
+
   /* 字重 */
   --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   /* 行高 */
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
@@ -139,7 +171,7 @@
   --radius-3xl: 1.5rem;   /* 24px */
   --radius-4xl: 2rem;     /* 32px */
   --radius-full: 9999px;
-  
+
   /* iOS 16 特殊圆角 */
   --radius-ios-small: 8px;
   --radius-ios-medium: 12px;
@@ -157,18 +189,18 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-  
+
   /* iOS 16 风格阴影 */
   --shadow-ios-light: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   --shadow-ios-medium: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
   --shadow-ios-heavy: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
-  
+
   /* 彩色阴影 - 品牌感增强 */
   --shadow-primary: 0 8px 25px -5px rgba(10, 139, 255, 0.25), 0 4px 10px -2px rgba(10, 139, 255, 0.1);
   --shadow-success: 0 8px 25px -5px rgba(16, 185, 129, 0.25), 0 4px 10px -2px rgba(16, 185, 129, 0.1);
   --shadow-warning: 0 8px 25px -5px rgba(245, 158, 11, 0.25), 0 4px 10px -2px rgba(245, 158, 11, 0.1);
   --shadow-error: 0 8px 25px -5px rgba(239, 68, 68, 0.25), 0 4px 10px -2px rgba(239, 68, 68, 0.1);
-  
+
   /* 玻璃态效果阴影 */
   --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   --shadow-glass-inset: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
@@ -181,12 +213,12 @@
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  
+
   /* iOS 16 风格动画曲线 */
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);
-  
+
   /* 特殊动画时长 */
   --duration-instant: 0ms;
   --duration-fast: 100ms;
@@ -488,19 +520,19 @@
   .modern-grid--4 {
     grid-template-columns: 1fr;
   }
-  
+
   .modern-container {
     padding: 0 var(--space-4);
   }
-  
+
   .modern-section {
     padding: var(--space-12) 0;
   }
-  
+
   .modern-heading--1 {
     font-size: var(--text-4xl);
   }
-  
+
   .modern-heading--2 {
     font-size: var(--text-3xl);
   }
@@ -513,11 +545,11 @@
     --text-secondary: #a3a3a3;
     --text-tertiary: #737373;
     --text-inverse: #171717;
-    
+
     --bg-primary: #171717;
     --bg-secondary: #262626;
     --bg-tertiary: #404040;
-    
+
     --border-light: #404040;
     --border-medium: #525252;
     --border-strong: #737373;
@@ -533,21 +565,199 @@
   }
 }
 
-/* 20. iOS 16 风格玻璃态效果 */
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: var(--shadow-glass);
+/* 20. iOS 26 Liquid Glass 效果系统 */
+.liquid-glass {
+  background: var(--glass-white);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 
+    0 8px 32px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all var(--transition-normal);
 }
 
-.glass-effect-dark {
-  background: rgba(0, 0, 0, 0.1);
+.liquid-glass-medium {
+  background: var(--glass-white-medium);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-glass);
+  border: 1px solid var(--glass-border-medium);
+  box-shadow: 
+    0 6px 24px var(--glass-shadow-medium),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.liquid-glass-strong {
+  background: var(--glass-white-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border-medium);
+  box-shadow: 
+    0 4px 16px var(--glass-shadow-strong),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.liquid-glass:hover {
+  background: var(--glass-white-medium);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px var(--glass-shadow-medium),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Liquid Glass 按钮 */
+.liquid-glass-button {
+  background: var(--glass-white);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.liquid-glass-button:hover::before {
+  left: 100%;
+}
+
+.liquid-glass-button:hover {
+  background: var(--glass-white-medium);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 24px var(--glass-shadow-medium),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.liquid-glass-button:active {
+  transform: translateY(0) scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Liquid Glass 卡片 */
+.liquid-glass-card {
+  background: var(--glass-white);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-ios-large);
+  box-shadow: 
+    0 8px 32px var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-liquid-glass);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.liquid-glass-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 16px 48px var(--glass-shadow-medium),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.liquid-glass-card:hover::before {
+  opacity: 1;
+}
+
+/* 动态背景纹理 */
+.liquid-background {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+  animation: liquidFlow 20s ease-in-out infinite;
+}
+
+@keyframes liquidFlow {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg); 
+    filter: hue-rotate(0deg);
+  }
+  50% { 
+    transform: scale(1.05) rotate(180deg); 
+    filter: hue-rotate(30deg);
+  }
+}
+
+/* 智能加载状态 */
+.smart-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.smart-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 触觉反馈按钮 */
+.tactile-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tactile-button:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+.tactile-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.tactile-button:active::after {
+  width: 300px;
+  height: 300px;
 }
 
 /* 21. Airbnb 风格浮动卡片 */
@@ -765,7 +975,7 @@
     box-shadow: none;
     border: 1px solid #000;
   }
-  
+
   .modern-button {
     background: transparent !important;
     color: #000 !important;
