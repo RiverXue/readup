@@ -172,58 +172,93 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
+@import '@/assets/design-system.css';
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--warm-cream) 100%);
+  padding: var(--space-6);
 }
 
 .login-form {
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary);
+  padding: var(--space-12);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-xl);
   width: 100%;
   max-width: 400px;
+  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-form::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 10px;
-  color: #303133;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--warm-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .subtitle {
   text-align: center;
-  color: #909399;
-  margin-bottom: 30px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
+  font-size: var(--text-base);
 }
 
 .switch-mode {
   text-align: center;
-  margin-top: 20px;
+  margin-top: var(--space-6);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.switch-mode a {
+  color: var(--primary-600);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-normal);
+}
+
+.switch-mode a:hover {
+  color: var(--primary-700);
 }
 
 .demo-tips {
-  margin-top: 30px;
+  margin-top: var(--space-8);
   text-align: center;
-  color: #909399;
-  font-size: 14px;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
 }
 
 .demo-tips p {
-  margin: 5px 0;
+  margin: var(--space-1) 0;
 }
 
 @media (max-width: 768px) {
   .login-container {
-    padding: 20px;
+    padding: var(--space-4);
   }
 
   .login-form {
-    padding: 30px 20px;
+    padding: var(--space-8) var(--space-6);
   }
 }
 </style>

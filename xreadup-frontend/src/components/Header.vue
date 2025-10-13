@@ -305,12 +305,15 @@ const handleUserCommand = async (command: string) => {
 </script>
 
 <style scoped>
+@import '@/assets/design-system.css';
+
 .header {
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
   position: sticky;
   top: 0;
   z-index: 1000;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .header-container {
@@ -319,27 +322,36 @@ const handleUserCommand = async (command: string) => {
   justify-content: space-between;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
-  height: 60px;
+  padding: 0 var(--space-6);
+  height: 64px;
 }
 
 .logo-container {
   cursor: pointer;
   display: flex;
   align-items: center;
+  transition: all var(--transition-normal);
+}
+
+.logo-container:hover {
+  transform: scale(1.02);
 }
 
 .logo-image {
-  width: 36px;
-  height: 36px;
-  margin-right: 8px;
+  width: 40px;
+  height: 40px;
+  margin-right: var(--space-2);
+  border-radius: var(--radius-lg);
 }
 
 .logo-text h1 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #409eff;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--warm-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .nav-menu ul {
@@ -350,26 +362,28 @@ const handleUserCommand = async (command: string) => {
 }
 
 .nav-item {
-  margin: 0 15px;
+  margin: 0 var(--space-4);
 }
 
 .nav-link {
   text-decoration: none;
-  color: #606266;
-  font-size: 14px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-normal);
+  font-weight: var(--font-weight-medium);
 }
 
 .nav-link:hover {
-  color: #409eff;
-  background-color: #ecf5ff;
+  color: var(--primary-600);
+  background-color: var(--primary-50);
 }
 
 .nav-link.router-link-active {
-  color: #409eff;
-  font-weight: 500;
+  color: var(--primary-600);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--primary-50);
 }
 
 .user-actions {
@@ -378,53 +392,60 @@ const handleUserCommand = async (command: string) => {
 }
 
 .btn {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
   text-decoration: none;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  margin-left: 10px;
+  font-size: var(--text-sm);
+  transition: all var(--transition-normal);
+  margin-left: var(--space-3);
+  font-weight: var(--font-weight-medium);
 }
 
 .btn-login {
-  color: #409eff;
-  border: 1px solid #dcdfe6;
-  background-color: #fff;
+  color: var(--primary-600);
+  border: 1px solid var(--border-medium);
+  background-color: var(--bg-primary);
 }
 
 .btn-login:hover {
-  border-color: #409eff;
-  background-color: #ecf5ff;
+  border-color: var(--primary-300);
+  background-color: var(--primary-50);
 }
 
 .btn-register {
-  color: #fff;
-  background-color: #409eff;
-  border: 1px solid #409eff;
+  color: var(--text-inverse);
+  background-color: var(--primary-600);
+  border: 1px solid var(--primary-600);
 }
 
 .btn-register:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
+  background-color: var(--primary-700);
+  border-color: var(--primary-700);
 }
 
 .user-info {
   display: flex;
   align-items: center;
+  gap: var(--space-3);
 }
 
 .user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #409eff;
-  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-500), var(--warm-orange));
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
   overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
 }
 
 .user-avatar img {
@@ -434,43 +455,42 @@ const handleUserCommand = async (command: string) => {
 }
 
 .user-details {
-  margin-left: 10px;
   text-align: right;
 }
 
 .checkin-button {
-  margin-right: 25px;
+  margin-right: var(--space-6);
 }
 
 .username {
-  font-size: 14px;
-  color: #303133;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
 }
 
 .user-level {
-  font-size: 12px;
-  color: #909399;
-  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-    .nav-menu {
-      display: none;
-    }
-
-    .header-container {
-      padding: 0 15px;
-    }
-
-    .logo-text h1 {
-      font-size: 20px;
-    }
-
-    .logo-image {
-      width: 30px;
-      height: 30px;
-    }
+  .nav-menu {
+    display: none;
   }
+
+  .header-container {
+    padding: 0 var(--space-4);
+  }
+
+  .logo-text h1 {
+    font-size: var(--text-xl);
+  }
+
+  .logo-image {
+    width: 32px;
+    height: 32px;
+  }
+}
 </style>

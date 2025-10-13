@@ -63,47 +63,49 @@ const goTo = (path: string) => {
 </script>
 
 <style scoped>
+@import '@/assets/design-system.css';
+
 .footer {
-  background-color: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-  margin-top: 40px;
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-light);
+  margin-top: var(--space-16);
 }
 
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px 20px;
+  padding: var(--space-12) var(--space-6) var(--space-6);
 }
 
 .footer-content {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  margin-bottom: 30px;
+  margin-bottom: var(--space-8);
 }
 
 .footer-section {
   flex: 1;
   min-width: 200px;
-  margin-bottom: 20px;
-  padding: 0 15px;
+  margin-bottom: var(--space-5);
+  padding: 0 var(--space-4);
 }
 
 .footer-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 15px;
-  border-bottom: 2px solid #409eff;
-  padding-bottom: 8px;
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+  border-bottom: 2px solid var(--primary-500);
+  padding-bottom: var(--space-2);
   display: inline-block;
 }
 
 .footer-section p {
-  font-size: 14px;
-  color: #606266;
-  line-height: 1.6;
-  margin: 0 0 10px 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+  margin: 0 0 var(--space-3) 0;
 }
 
 .footer-section ul {
@@ -113,45 +115,45 @@ const goTo = (path: string) => {
 }
 
 .footer-section li {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
 }
 
 .footer-section a {
   text-decoration: none;
-  color: #606266;
-  font-size: 14px;
-  transition: color 0.3s ease;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  transition: color var(--transition-normal);
 }
 
 .footer-section a:hover {
-  color: #409eff;
+  color: var(--primary-600);
 }
 
 .footer-bottom {
-  border-top: 1px solid #e9ecef;
-  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--space-5);
   text-align: center;
 }
 
 .footer-links {
-  margin-bottom: 15px;
+  margin-bottom: var(--space-4);
 }
 
 .footer-links a {
   text-decoration: none;
-  color: #606266;
-  font-size: 14px;
-  margin: 0 15px;
-  transition: color 0.3s ease;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin: 0 var(--space-4);
+  transition: color var(--transition-normal);
 }
 
 .footer-links a:hover {
-  color: #409eff;
+  color: var(--primary-600);
 }
 
 .copyright p {
-  font-size: 14px;
-  color: #909399;
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
   margin: 0;
 }
 
@@ -164,15 +166,15 @@ const goTo = (path: string) => {
   .footer-section {
     min-width: 100%;
     padding: 0;
-    margin-bottom: 30px;
+    margin-bottom: var(--space-8);
   }
   
   .footer-container {
-    padding: 30px 15px 20px;
+    padding: var(--space-8) var(--space-4) var(--space-6);
   }
   
   .footer-links a {
-    margin: 0 10px;
+    margin: 0 var(--space-3);
   }
 }
 </style>

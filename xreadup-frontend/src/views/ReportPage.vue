@@ -502,55 +502,131 @@ const handleResize = () => {
 </script>
 
 <style scoped>
+@import '@/assets/design-system.css';
+
 .report-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--space-6);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.report-container h2 {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-8);
+  text-align: center;
+  position: relative;
+}
+
+.report-container h2::after {
+  content: '';
+  position: absolute;
+  bottom: -var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  border-radius: var(--radius-sm);
 }
 
 .stats-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  padding: 20px;
+  padding: var(--space-6);
+  background: var(--bg-primary);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-200), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
 }
 
 .stat-icon {
-  margin-right: 15px;
+  margin-right: var(--space-4);
 }
 
 .stat-content h3 {
-  margin: 0 0 5px 0;
-  color: #606266;
+  margin: 0 0 var(--space-1) 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  margin: 5px 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  margin: var(--space-1) 0;
+  color: var(--primary-600);
 }
 
 .stat-desc {
   margin: 0;
-  color: #909399;
-  font-size: 14px;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
 }
 
 .charts-area {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
 }
 
 .chart-card {
-  padding: 20px;
+  padding: var(--space-6);
+  background: var(--bg-primary);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .chart-container {
@@ -559,29 +635,36 @@ const handleResize = () => {
 }
 
 .achievements h3 {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
 }
 
 .achievement-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: var(--space-4);
 }
 
 .achievement-item {
   display: flex;
   align-items: center;
-  padding: 15px;
-  transition: all 0.3s;
+  padding: var(--space-4);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
 }
 
 .achievement-item.achieved {
-  border-color: #67c23a;
-  background: #f0f9ff;
+  border-color: var(--accent-success);
+  background: rgba(16, 185, 129, 0.05);
 }
 
 .achievement-icon {
-  margin-right: 15px;
+  margin-right: var(--space-4);
 }
 
 .achievement-content h4 {

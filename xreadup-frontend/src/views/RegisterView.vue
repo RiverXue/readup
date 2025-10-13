@@ -133,68 +133,90 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
+@import '@/assets/design-system.css';
+
 .register-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--warm-cream) 100%);
+  padding: var(--space-6);
 }
 
 .register-box {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  padding: 60px 50px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-16) var(--space-12);
   width: 100%;
   max-width: 400px;
+  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.register-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
 }
 
 .register-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: var(--space-12);
 }
 
 .register-header h1 {
-  font-size: 32px;
-  color: #303133;
-  margin-bottom: 10px;
-  font-weight: 600;
+  font-size: var(--text-4xl);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-weight-semibold);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--warm-orange) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .register-header p {
-  color: #909399;
-  font-size: 16px;
+  color: var(--text-secondary);
+  font-size: var(--text-base);
 }
 
 .register-form {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-8);
 }
 
 .register-footer {
   text-align: center;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .register-footer a {
-  color: #409eff;
+  color: var(--primary-600);
   text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-normal);
 }
 
 .register-footer a:hover {
-  text-decoration: underline;
+  color: var(--primary-700);
 }
 
 :deep(.el-input__wrapper) {
-  box-shadow: 0 0 0 1px #dcdfe6;
+  box-shadow: 0 0 0 1px var(--border-light);
+  border-radius: var(--radius-xl);
 }
 
 :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #c0c4cc;
+  box-shadow: 0 0 0 1px var(--border-medium);
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #409eff;
+  box-shadow: 0 0 0 1px var(--primary-500);
 }
 </style>

@@ -58,21 +58,35 @@ onMounted(() => {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  padding: var(--space-8);
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-3xl);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-6);
   min-height: calc(100vh - 140px);
+  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
+}
+
+.main-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-200), transparent);
+  opacity: 0.6;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .main-content {
-    margin: 10px;
-    padding: 15px;
-    border-radius: 8px;
+    margin: var(--space-3);
+    padding: var(--space-6);
+    border-radius: var(--radius-2xl);
     min-height: calc(100vh - 120px);
   }
 }

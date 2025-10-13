@@ -1975,29 +1975,64 @@ const showDictationHint = () => {
 </script>
 
 <style scoped>
+@import '@/assets/design-system.css';
+
 .vocabulary-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--space-6);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vocabulary-container h2 {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-8);
+  text-align: center;
+  position: relative;
+}
+
+.vocabulary-container h2::after {
+  content: '';
+  position: absolute;
+  bottom: -var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  border-radius: var(--radius-sm);
 }
 
 .stats {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-12);
 }
 
 .stats-wrapper {
   display: flex;
   flex-direction: row;
-  background-color: #fff;
-  border: 1px solid #ebeef5;
-  border-radius: 12px;
-  padding: 30px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-3xl);
+  padding: var(--space-8);
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-lg);
   align-items: center;
   justify-content: space-between;
-  gap: 40px;
+  gap: var(--space-12);
   min-height: 380px;
 }
 
@@ -2005,7 +2040,7 @@ const showDictationHint = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--space-8);
   align-items: flex-start;
   justify-content: center;
 }
@@ -2013,70 +2048,70 @@ const showDictationHint = () => {
 .stat-overview {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 25px;
+  gap: var(--space-6);
   width: 100%;
   text-align: center;
 }
 
 .learning-modes-group {
   width: 100%;
-  padding: 25px;
-  background-color: #fff;
-  border: 4px solid #ebeef5;
-  border-radius: 12px;
+  padding: var(--space-6);
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-2xl);
   box-sizing: border-box;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--shadow-md);
 }
 
 .learning-mode-title {
-  margin: 0 0 20px 0;
-  color: #303133;
-  font-size: 18px;
-  font-weight: 600;
+  margin: 0 0 var(--space-5) 0;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .review-button-container {
   display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-4);
   justify-content: center;
   margin-top: 0;
 }
 
 .learning-mode-button {
   min-width: 160px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.3s ease;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-xl);
+  font-size: var(--text-base);
+  transition: all var(--transition-normal);
 }
 
 .learning-mode-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
 .learning-guide {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  font-size: 14px;
-  color: #606266;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
   flex-wrap: wrap;
 }
 
 .guide-text {
   margin: 0;
   max-width: 450px;
-  line-height: 1.6;
+  line-height: var(--line-height-normal);
 }
 
 .guide-button {
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-3xl);
+  font-size: var(--text-sm);
+  transition: all var(--transition-normal);
   white-space: nowrap;
 }
 
