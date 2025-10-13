@@ -169,6 +169,36 @@
 - 警告操作使用 `tactile-button--warning`
 - 特殊效果使用 `tactile-button--liquid-glass`
 
+## ⚠️ 重要注意事项
+
+### 避免类嵌套冲突
+**问题**: 组件同时使用多个设计系统类会导致样式冲突和嵌套问题。
+
+**错误示例**:
+```html
+<!-- ❌ 错误：同时使用卡片类和按钮类 -->
+<div class="airbnb-modern-card tactile-button" @click="handleClick">
+<div class="discovery-card tactile-button" @click="handleClick">
+```
+
+**正确做法**:
+```html
+<!-- ✅ 正确：每个组件使用独立的类 -->
+<div class="airbnb-modern-card" @click="handleClick">
+<div class="discovery-card" @click="handleClick">
+<button class="tactile-button tactile-button--primary">按钮</button>
+```
+
+### 设计系统类使用原则
+1. **单一职责**: 每个组件只使用一个主要设计系统类
+2. **避免混合**: 不要将不同系统的类混合使用
+3. **独立设计**: 每个组件保持自己的独立设计风格
+4. **功能分离**: 卡片组件负责展示，按钮组件负责交互
+
+### 已修复的组件
+- ✅ `ArticleCard.vue`: 移除 `tactile-button` 类，只使用 `airbnb-modern-card`
+- ✅ `DiscoveryArticleCard.vue`: 移除 `tactile-button` 类，只使用 `discovery-card`
+
 ## 🚀 未来扩展
 
 这些设计元素为未来的UI组件提供了坚实的基础：
