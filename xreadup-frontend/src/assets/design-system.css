@@ -227,38 +227,138 @@
   --duration-slower: 500ms;
 }
 
-/* 7. 现代卡片设计 - Airbnb 风格 */
-/* 注意：卡片背景应使用纯色，避免使用渐变背景 */
+/* 7. 现代卡片设计系统 - 玻璃态 + Airbnb 风格 */
+/* 基础现代卡片 */
 .modern-card {
-  background: var(--bg-primary);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
-  transition: all var(--transition-normal);
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%);
+  border-radius: 20px;
   overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
+/* 卡片悬停效果 */
 .modern-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--primary-200), transparent);
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 122, 255, 0.1) 0%, 
+    rgba(255, 119, 198, 0.1) 50%, 
+    rgba(120, 219, 255, 0.1) 100%);
+  border-radius: 20px;
   opacity: 0;
-  transition: opacity var(--transition-normal);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .modern-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-200);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .modern-card:hover::before {
   opacity: 1;
+}
+
+/* 卡片内容区域 */
+.modern-card-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 卡片标题 */
+.modern-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 卡片描述 */
+.modern-card-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(135deg, var(--text-secondary) 0%, rgba(0, 0, 0, 0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 卡片元信息容器 */
+.modern-card-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: auto;
+  justify-content: flex-end;
+}
+
+/* 响应式卡片 */
+@media (max-width: 768px) {
+  .modern-card { 
+    border-radius: 16px; 
+  }
+  .modern-card-content { 
+    padding: 20px; 
+    border-radius: 12px;
+  }
+  .modern-card-title { 
+    font-size: 16px; 
+  }
+  .modern-card-description { 
+    font-size: 13px; 
+  }
 }
 
 /* 8. 现代按钮系统 */
@@ -328,6 +428,164 @@
   color: var(--text-primary);
 }
 
+/* TactileButton 系统 - 现代触觉反馈按钮 */
+.tactile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 按钮涟漪效果 */
+.tactile-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.tactile-button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* TactileButton 变体 */
+.tactile-button--primary {
+  background: linear-gradient(135deg, var(--ios-green) 0%, #2dd4bf 100%);
+  color: white;
+  box-shadow: 
+    0 8px 25px rgba(52, 199, 89, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tactile-button--primary:hover:not(.tactile-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 35px rgba(52, 199, 89, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tactile-button--secondary {
+  background: var(--bg-primary);
+  color: var(--ios-blue);
+  border: 2px solid var(--ios-blue);
+}
+
+.tactile-button--secondary:hover:not(.tactile-button--disabled) {
+  background: rgba(0, 122, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.tactile-button--warning {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #ffffff;
+  box-shadow: 
+    0 8px 25px rgba(255, 243, 205, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.tactile-button--warning:hover:not(.tactile-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 35px rgba(255, 243, 205, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.tactile-button--liquid-glass {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.2) 0%, 
+    rgba(255, 255, 255, 0.1) 100%);
+  color: var(--text-primary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.tactile-button--liquid-glass:hover:not(.tactile-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* TactileButton 尺寸 */
+.tactile-button--sm {
+  padding: 8px 16px;
+  font-size: 12px;
+  border-radius: 12px;
+}
+
+.tactile-button--lg {
+  padding: 16px 32px;
+  font-size: 16px;
+  border-radius: 20px;
+}
+
+/* 禁用状态 */
+.tactile-button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 响应式 TactileButton */
+@media (max-width: 768px) {
+  .tactile-button {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  .tactile-button--sm {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
+  .tactile-button--lg {
+    padding: 14px 28px;
+    font-size: 15px;
+  }
+}
+
 /* 9. 现代输入框 */
 .modern-input {
   width: 100%;
@@ -374,6 +632,93 @@
 .modern-tag--error {
   background: rgba(239, 68, 68, 0.1);
   color: var(--accent-error);
+}
+
+/* 胶囊标签系统 - 现代玻璃态设计 */
+.capsule-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.capsule-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* 胶囊标签变体 */
+.capsule-tag--primary {
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.capsule-tag--success {
+  background: linear-gradient(135deg, #34C759 0%, #5AC8FA 100%);
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+}
+
+.capsule-tag--warning {
+  background: linear-gradient(135deg, #FF9500 0%, #FFCC00 100%);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+}
+
+.capsule-tag--error {
+  background: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+}
+
+.capsule-tag--info {
+  background: linear-gradient(135deg, #4ECDC4 0%, #7EDDD6 100%);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+.capsule-tag--time {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.capsule-tag--word-count {
+  background: linear-gradient(135deg, #4ECDC4 0%, #7EDDD6 100%);
+  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+/* 胶囊标签图标 */
+.capsule-tag--category::before {
+  content: '📂';
+  font-size: 10px;
+}
+
+.capsule-tag--difficulty::before {
+  content: '⭐';
+  font-size: 10px;
+}
+
+.capsule-tag--time::before {
+  content: '⏱️';
+  font-size: 10px;
+}
+
+.capsule-tag--word-count::before {
+  content: '📝';
+  font-size: 10px;
+}
+
+/* 响应式胶囊标签 */
+@media (max-width: 768px) {
+  .capsule-tag {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 16px;
+  }
 }
 
 /* 11. 现代进度条 */
