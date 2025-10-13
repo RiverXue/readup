@@ -653,13 +653,13 @@ onMounted(async () => {
 .hero-section {
   text-align: center;
   padding: var(--space-20) var(--space-6);
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--warm-orange) 100%);
+  background: var(--gradient-primary);
   color: var(--text-inverse);
-  border-radius: var(--radius-3xl);
+  border-radius: var(--radius-4xl);
   margin-bottom: var(--space-16);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-ios-heavy);
 }
 
 .hero-section::before {
@@ -687,6 +687,8 @@ onMounted(async () => {
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   position: relative;
   z-index: 2;
+  font-family: var(--font-family-display);
+  letter-spacing: -0.02em;
 }
 
 .info-part {
@@ -750,16 +752,18 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(10px);
-  padding: var(--space-3) var(--space-5);
-  border-radius: var(--radius-3xl);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-ios-large);
   font-size: var(--text-sm);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-ios-light);
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
+  font-family: var(--font-family-primary);
 }
 
 .summary-item::before {
@@ -778,9 +782,9 @@ onMounted(async () => {
 }
 
 .summary-item:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.35);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px) scale(1.02);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: var(--shadow-ios-medium);
 }
 
 .summary-icon {
@@ -910,10 +914,11 @@ onMounted(async () => {
   text-align: center;
   border: 1px solid var(--border-light);
   background: var(--bg-primary);
-  box-shadow: var(--shadow-md);
-  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-ios-light);
+  border-radius: var(--radius-ios-large);
   position: relative;
   overflow: hidden;
+  font-family: var(--font-family-primary);
 }
 
 .action-card::before,
@@ -935,9 +940,9 @@ onMounted(async () => {
 
 .action-card:hover,
 .article-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-200);
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: var(--shadow-ios-heavy);
+  border-color: var(--ios-blue);
 }
 
 .action-icon {

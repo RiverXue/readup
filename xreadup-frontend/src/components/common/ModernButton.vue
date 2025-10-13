@@ -116,7 +116,7 @@ const handleClick = (event: MouseEvent) => {
 
 /* 变体样式 */
 .modern-button--primary {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  background: var(--gradient-primary);
   color: var(--text-inverse);
   box-shadow: var(--shadow-primary);
 }
@@ -128,13 +128,14 @@ const handleClick = (event: MouseEvent) => {
 
 .modern-button--secondary {
   background: var(--bg-primary);
-  color: var(--primary-600);
-  border: 1px solid var(--primary-200);
+  color: var(--ios-blue);
+  border: 1px solid var(--ios-blue);
 }
 
 .modern-button--secondary:hover:not(.modern-button--disabled) {
-  background: var(--primary-50);
-  border-color: var(--primary-300);
+  background: rgba(0, 122, 255, 0.1);
+  border-color: var(--ios-blue);
+  transform: translateY(-1px);
 }
 
 .modern-button--ghost {
@@ -160,7 +161,7 @@ const handleClick = (event: MouseEvent) => {
 }
 
 .modern-button--success {
-  background: linear-gradient(135deg, var(--accent-success), #059669);
+  background: var(--gradient-success);
   color: var(--text-inverse);
   box-shadow: var(--shadow-success);
 }

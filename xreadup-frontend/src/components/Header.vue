@@ -308,12 +308,15 @@ const handleUserCommand = async (command: string) => {
 @import '@/assets/design-system.css';
 
 .header {
-  background-color: var(--bg-primary);
-  box-shadow: var(--shadow-lg);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-ios-light);
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-normal);
 }
 
 .header-container {
@@ -348,10 +351,12 @@ const handleUserCommand = async (command: string) => {
   margin: 0;
   font-size: var(--text-2xl);
   font-weight: var(--font-weight-bold);
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--warm-orange) 100%);
+  font-family: var(--font-family-display);
+  background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.02em;
 }
 
 .nav-menu ul {
@@ -369,21 +374,24 @@ const handleUserCommand = async (command: string) => {
   text-decoration: none;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-ios-medium);
   transition: all var(--transition-normal);
   font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-primary);
+  position: relative;
 }
 
 .nav-link:hover {
-  color: var(--primary-600);
-  background-color: var(--primary-50);
+  color: var(--ios-blue);
+  background-color: rgba(0, 122, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .nav-link.router-link-active {
-  color: var(--primary-600);
+  color: var(--ios-blue);
   font-weight: var(--font-weight-semibold);
-  background-color: var(--primary-50);
+  background-color: rgba(0, 122, 255, 0.1);
 }
 
 .user-actions {
@@ -392,35 +400,40 @@ const handleUserCommand = async (command: string) => {
 }
 
 .btn {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-ios-medium);
   text-decoration: none;
   font-size: var(--text-sm);
   transition: all var(--transition-normal);
   margin-left: var(--space-3);
   font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-primary);
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-login {
-  color: var(--primary-600);
-  border: 1px solid var(--border-medium);
+  color: var(--ios-blue);
+  border: 1px solid var(--ios-blue);
   background-color: var(--bg-primary);
 }
 
 .btn-login:hover {
-  border-color: var(--primary-300);
-  background-color: var(--primary-50);
+  background-color: rgba(0, 122, 255, 0.1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-ios-light);
 }
 
 .btn-register {
   color: var(--text-inverse);
-  background-color: var(--primary-600);
-  border: 1px solid var(--primary-600);
+  background: var(--gradient-primary);
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-primary);
 }
 
 .btn-register:hover {
-  background-color: var(--primary-700);
-  border-color: var(--primary-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg), var(--shadow-primary);
 }
 
 .user-info {
@@ -433,7 +446,7 @@ const handleUserCommand = async (command: string) => {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--primary-500), var(--warm-orange));
+  background: var(--gradient-primary);
   color: var(--text-inverse);
   display: flex;
   align-items: center;
@@ -442,10 +455,13 @@ const handleUserCommand = async (command: string) => {
   font-weight: var(--font-weight-semibold);
   overflow: hidden;
   transition: all var(--transition-normal);
+  box-shadow: var(--shadow-ios-light);
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .user-avatar:hover {
   transform: scale(1.05);
+  box-shadow: var(--shadow-ios-medium);
 }
 
 .user-avatar img {

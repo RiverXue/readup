@@ -1,6 +1,7 @@
 /* ============================================
    ReadUp AI - 现代设计系统
-   融合 iOS 26 + Airbnb 设计理念
+   融合 iOS 16 + Airbnb 设计理念
+   优化版本 - 更精致的视觉体验
    ============================================ */
 
 /* 1. 色彩系统 - 60-30-10 原则 */
@@ -35,11 +36,27 @@
   --accent-error: #ef4444;
   --accent-info: #3b82f6;
   
-  /* Airbnb 风格温暖色 */
+  /* Airbnb 风格温暖色 - 更精致的调色板 */
   --warm-orange: #ff6b35;
   --warm-coral: #ff8a80;
   --warm-peach: #ffb3ba;
   --warm-cream: #fff8e1;
+  
+  /* iOS 16 风格色彩增强 */
+  --ios-blue: #007AFF;
+  --ios-green: #34C759;
+  --ios-orange: #FF9500;
+  --ios-red: #FF3B30;
+  --ios-purple: #AF52DE;
+  --ios-pink: #FF2D92;
+  --ios-teal: #5AC8FA;
+  --ios-indigo: #5856D6;
+  
+  /* 高级渐变色彩 */
+  --gradient-primary: linear-gradient(135deg, var(--primary-500) 0%, var(--ios-blue) 100%);
+  --gradient-warm: linear-gradient(135deg, var(--warm-orange) 0%, var(--ios-orange) 100%);
+  --gradient-success: linear-gradient(135deg, var(--ios-green) 0%, var(--accent-success) 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
 
   /* 语义化颜色 */
   --text-primary: var(--neutral-900);
@@ -57,10 +74,11 @@
   --border-strong: var(--neutral-400);
 }
 
-/* 2. 字体系统 - iOS 风格 */
+/* 2. 字体系统 - iOS 16 风格增强 */
 :root {
-  --font-family-primary: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', sans-serif;
-  --font-family-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  --font-family-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Fira Code', monospace;
+  --font-family-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
   /* 字体大小 - 基于 16px 的模块化缩放 */
   --text-xs: 0.75rem;    /* 12px */
@@ -86,56 +104,95 @@
   --line-height-relaxed: 1.75;
 }
 
-/* 3. 间距系统 - 8px 网格 */
+/* 3. 间距系统 - Airbnb 8px 网格 + iOS 16 精确间距 */
 :root {
+  --space-0: 0;         /* 0px */
   --space-1: 0.25rem;   /* 4px */
   --space-2: 0.5rem;    /* 8px */
   --space-3: 0.75rem;   /* 12px */
   --space-4: 1rem;      /* 16px */
   --space-5: 1.25rem;   /* 20px */
   --space-6: 1.5rem;    /* 24px */
+  --space-7: 1.75rem;   /* 28px */
   --space-8: 2rem;      /* 32px */
+  --space-9: 2.25rem;   /* 36px */
   --space-10: 2.5rem;   /* 40px */
+  --space-11: 2.75rem;  /* 44px */
   --space-12: 3rem;     /* 48px */
+  --space-14: 3.5rem;   /* 56px */
   --space-16: 4rem;     /* 64px */
   --space-20: 5rem;     /* 80px */
   --space-24: 6rem;     /* 96px */
+  --space-28: 7rem;     /* 112px */
+  --space-32: 8rem;     /* 128px */
 }
 
-/* 4. 圆角系统 - Airbnb 风格 */
+/* 4. 圆角系统 - iOS 16 + Airbnb 风格 */
 :root {
   --radius-none: 0;
+  --radius-xs: 0.125rem;  /* 2px */
   --radius-sm: 0.25rem;   /* 4px */
   --radius-md: 0.375rem;  /* 6px */
   --radius-lg: 0.5rem;    /* 8px */
   --radius-xl: 0.75rem;   /* 12px */
   --radius-2xl: 1rem;     /* 16px */
   --radius-3xl: 1.5rem;   /* 24px */
+  --radius-4xl: 2rem;     /* 32px */
   --radius-full: 9999px;
+  
+  /* iOS 16 特殊圆角 */
+  --radius-ios-small: 8px;
+  --radius-ios-medium: 12px;
+  --radius-ios-large: 16px;
+  --radius-ios-xl: 20px;
 }
 
-/* 5. 阴影系统 - 层次感 */
+/* 5. 阴影系统 - iOS 16 风格层次感 */
 :root {
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  /* 基础阴影 */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
   
-  /* 彩色阴影 - 品牌感 */
-  --shadow-primary: 0 10px 25px -5px rgba(10, 139, 255, 0.2);
-  --shadow-success: 0 10px 25px -5px rgba(16, 185, 129, 0.2);
-  --shadow-warning: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
-  --shadow-error: 0 10px 25px -5px rgba(239, 68, 68, 0.2);
+  /* iOS 16 风格阴影 */
+  --shadow-ios-light: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-ios-medium: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  --shadow-ios-heavy: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  
+  /* 彩色阴影 - 品牌感增强 */
+  --shadow-primary: 0 8px 25px -5px rgba(10, 139, 255, 0.25), 0 4px 10px -2px rgba(10, 139, 255, 0.1);
+  --shadow-success: 0 8px 25px -5px rgba(16, 185, 129, 0.25), 0 4px 10px -2px rgba(16, 185, 129, 0.1);
+  --shadow-warning: 0 8px 25px -5px rgba(245, 158, 11, 0.25), 0 4px 10px -2px rgba(245, 158, 11, 0.1);
+  --shadow-error: 0 8px 25px -5px rgba(239, 68, 68, 0.25), 0 4px 10px -2px rgba(239, 68, 68, 0.1);
+  
+  /* 玻璃态效果阴影 */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-glass-inset: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
-/* 6. 动画系统 - 流畅的微交互 */
+/* 6. 动画系统 - iOS 16 流畅微交互 */
 :root {
-  --transition-fast: 150ms ease-out;
-  --transition-normal: 250ms ease-out;
-  --transition-slow: 350ms ease-out;
+  /* 基础过渡 */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* iOS 16 风格动画曲线 */
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);
+  
+  /* 特殊动画时长 */
+  --duration-instant: 0ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 500ms;
 }
 
 /* 7. 现代卡片设计 - Airbnb 风格 */
@@ -476,7 +533,233 @@
   }
 }
 
-/* 20. 打印样式 */
+/* 20. iOS 16 风格玻璃态效果 */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass-effect-dark {
+  background: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-glass);
+}
+
+/* 21. Airbnb 风格浮动卡片 */
+.floating-card {
+  background: var(--bg-primary);
+  border-radius: var(--radius-ios-large);
+  box-shadow: var(--shadow-ios-medium);
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.floating-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-primary);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.floating-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-ios-heavy);
+  border-color: var(--primary-200);
+}
+
+.floating-card:hover::before {
+  opacity: 1;
+}
+
+/* 22. iOS 16 风格按钮增强 */
+.ios-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-ios-medium);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-sm);
+  line-height: var(--line-height-tight);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-family-primary);
+}
+
+.ios-button--primary {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-primary);
+}
+
+.ios-button--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg), var(--shadow-primary);
+}
+
+.ios-button--secondary {
+  background: var(--bg-primary);
+  color: var(--ios-blue);
+  border: 1px solid var(--ios-blue);
+}
+
+.ios-button--secondary:hover {
+  background: rgba(0, 122, 255, 0.1);
+}
+
+/* 23. 现代输入框增强 */
+.modern-input-enhanced {
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-ios-medium);
+  font-size: var(--text-base);
+  background: var(--bg-primary);
+  transition: all var(--transition-normal);
+  font-family: var(--font-family-primary);
+}
+
+.modern-input-enhanced:focus {
+  outline: none;
+  border-color: var(--ios-blue);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+/* 24. 响应式网格系统增强 */
+.modern-grid-enhanced {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.modern-grid-enhanced--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.modern-grid-enhanced--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.modern-grid-enhanced--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.modern-grid-enhanced--auto {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* 25. 现代加载状态增强 */
+.modern-loading-enhanced {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  background: var(--bg-primary);
+  border-radius: var(--radius-ios-large);
+  box-shadow: var(--shadow-ios-light);
+}
+
+.modern-spinner-enhanced {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--border-light);
+  border-top: 3px solid var(--ios-blue);
+  border-radius: var(--radius-full);
+  animation: spin-enhanced 1s linear infinite;
+}
+
+@keyframes spin-enhanced {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 26. 现代标签系统增强 */
+.modern-tag-enhanced {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  transition: all var(--transition-normal);
+}
+
+.modern-tag-enhanced--primary {
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--ios-blue);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+.modern-tag-enhanced--success {
+  background: rgba(52, 199, 89, 0.1);
+  color: var(--ios-green);
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.modern-tag-enhanced--warning {
+  background: rgba(255, 149, 0, 0.1);
+  color: var(--ios-orange);
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+.modern-tag-enhanced--error {
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--ios-red);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+/* 27. 现代进度条增强 */
+.modern-progress-enhanced {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.modern-progress-enhanced__bar {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+  position: relative;
+}
+
+.modern-progress-enhanced__bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer-enhanced 2s infinite;
+}
+
+@keyframes shimmer-enhanced {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* 28. 打印样式 */
 @media print {
   .modern-card {
     box-shadow: none;

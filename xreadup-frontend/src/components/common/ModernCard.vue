@@ -39,8 +39,8 @@ const cardClass = computed(() => ({
 <style scoped>
 .modern-card {
   background: var(--bg-primary);
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-ios-large);
+  box-shadow: var(--shadow-ios-light);
   border: 1px solid var(--border-light);
   transition: all var(--transition-normal);
   overflow: hidden;
@@ -54,19 +54,20 @@ const cardClass = computed(() => ({
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--primary-200), transparent);
+  background: var(--gradient-primary);
   opacity: 0;
   transition: opacity var(--transition-normal);
 }
 
 /* 变体样式 */
 .modern-card--elevated {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-ios-medium);
 }
 
 .modern-card--outlined {
   box-shadow: none;
   border-width: 2px;
+  border-color: var(--ios-blue);
 }
 
 .modern-card--filled {
@@ -93,9 +94,9 @@ const cardClass = computed(() => ({
 }
 
 .modern-card--interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-200);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: var(--shadow-ios-heavy);
+  border-color: var(--ios-blue);
 }
 
 .modern-card--interactive:hover::before {
