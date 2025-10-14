@@ -841,17 +841,22 @@ const visibleStackWords = computed(() => {
   })
   
   const start = currentStackIndex.value
-  const end = Math.min(start + stackSize, sortedWords.length)
+  // 动态计算堆叠数量：当前张数 + 后续最多3张
+  const remainingWords = sortedWords.length - start
+  const dynamicStackSize = Math.min(remainingWords, 4) // 最多显示4张，包括当前张
+  const end = start + dynamicStackSize
   return sortedWords.slice(start, end)
 })
 
 // 叠层卡片样式
 const getStackCardStyle = (index: number) => {
+  const totalStackSize = visibleStackWords.value.length // 使用实际的堆叠数量
+  
   if (index === 0) {
     // 当前卡片：完全可见，无偏移，确保在最上层
     return {
       transform: 'translateY(0px) translateX(0px)',
-      zIndex: stackSize + 10, // 确保在最上层
+      zIndex: totalStackSize + 10, // 根据实际堆叠数量调整z-index
       opacity: 1,
       position: 'absolute' as const,
       top: 0,
@@ -865,7 +870,7 @@ const getStackCardStyle = (index: number) => {
   // 叠层卡片：进一步增强不整齐感，模拟真实卡片堆叠
   const horizontalOffset = index % 2 === 1 ? 35 : -25 // 进一步增强左右偏移量
   const verticalOffset = index * 12 // 增加垂直偏移，模拟更厚的卡片
-  const zIndex = stackSize - index
+  const zIndex = totalStackSize - index // 根据实际堆叠数量调整z-index
   
   // 进一步增强旋转角度，让卡片看起来更自然和不整齐
   const rotation = index % 2 === 1 ? 4.2 : -3.1 // 进一步增强旋转角度
