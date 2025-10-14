@@ -335,6 +335,11 @@ const canFetchCategory = computed(() => {
   return true
 })
 
+const canFetchCustomTopic = computed(() => {
+  // 只有PRO和ENTERPRISE会员可以使用自定义主题搜索
+  return isProOrEnterpriseUser.value
+})
+
 // 获取当前发现类型
 const getDiscoveryType = () => {
   if (resultTitle.value.includes('热点')) return 'trending'
