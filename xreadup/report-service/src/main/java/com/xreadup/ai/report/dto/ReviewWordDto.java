@@ -7,6 +7,7 @@ public class ReviewWordDto {
     private Long wordId;
     private String word;
     private String meaning;
+    private String phonetic;
     private String example;
     private String difficulty;
     private String dueDate;
@@ -16,10 +17,11 @@ public class ReviewWordDto {
 
     public ReviewWordDto() {}
 
-    public ReviewWordDto(Long wordId, String word, String meaning, String example, String difficulty, String dueDate) {
+    public ReviewWordDto(Long wordId, String word, String meaning, String phonetic, String example, String difficulty, String dueDate) {
         this.wordId = wordId;
         this.word = word;
         this.meaning = meaning;
+        this.phonetic = phonetic;
         this.example = example;
         this.difficulty = difficulty;
         this.dueDate = dueDate;
@@ -48,6 +50,14 @@ public class ReviewWordDto {
 
     public void setMeaning(String meaning) {
         this.meaning = meaning;
+    }
+
+    public String getPhonetic() {
+        return phonetic;
+    }
+
+    public void setPhonetic(String phonetic) {
+        this.phonetic = phonetic;
     }
 
     public String getExample() {
@@ -104,6 +114,7 @@ public class ReviewWordDto {
                 "wordId=" + wordId +
                 ", word='" + word + '\'' +
                 ", meaning='" + meaning + '\'' +
+                ", phonetic='" + phonetic + '\'' +
                 ", example='" + example + '\'' +
                 ", difficulty='" + difficulty + '\'' +
                 ", dueDate='" + dueDate + '\'' +

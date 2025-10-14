@@ -406,10 +406,10 @@ public class VocabularyServiceImpl implements VocabularyService {
         updateWord.setReviewStatus(reviewStatus);
         updateWord.setLastReviewedAt(LocalDateTime.now());
         
-        // 根据复习状态设置下次复习时间
+        // 根据复习状态设置下次复习时间（统一艾宾浩斯记忆曲线）
         if ("mastered".equals(reviewStatus)) {
-            // 掌握的单词，下次复习时间设置为一周后
-            updateWord.setNextReviewAt(LocalDateTime.now().plusDays(7));
+            // 掌握的单词，下次复习时间设置为3天后
+            updateWord.setNextReviewAt(LocalDateTime.now().plusDays(3));
         } else if ("learning".equals(reviewStatus)) {
             // 学习中的单词，下次复习时间设置为明天
             updateWord.setNextReviewAt(LocalDateTime.now().plusDays(1));

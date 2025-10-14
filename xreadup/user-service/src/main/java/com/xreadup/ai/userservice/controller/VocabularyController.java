@@ -115,25 +115,23 @@ public class VocabularyController {
     }
     
     /**
-     * 复习单词
+     * 复习单词 - 重定向到 report-service
+     * @deprecated 此接口已重定向到 report-service，请使用 /api/report/review/{wordId} 接口
      */
     @PostMapping("/review")
-    @Operation(summary = "复习单词", description = "更新单词的复习状态")
+    @Operation(summary = "复习单词", description = "更新单词的复习状态（已重定向到report-service）")
+    @Deprecated
     public ResponseEntity<?> reviewWord(@RequestBody ReviewWordRequest request) {
-        try {
-            boolean success = vocabularyService.reviewWord(
-                request.getWordId(),
-                request.getUserId(),
-                request.getReviewStatus()
-            );
-            if (success) {
-                return ResponseEntity.ok(new ApiResponse(200, "复习成功", null));
-            } else {
-                return ResponseEntity.ok(new ApiResponse(404, "单词不存在或不属于当前用户", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse(400, e.getMessage(), null));
-        }
+        // 重定向到 report-service
+        // 将 reviewStatus 转换为 isRemembered 布尔值
+        boolean isRemembered = "mastered".equals(request.getReviewStatus());
+        
+        // 返回重定向信息，建议前端使用新的API
+        return ResponseEntity.ok(new ApiResponse(301, 
+            "此接口已重定向到 report-service，请使用 /api/report/review/" + request.getWordId() + 
+            "?userId=" + request.getUserId() + "&remembered=" + isRemembered, 
+            Map.of("redirectUrl", "/api/report/review/" + request.getWordId() + 
+                   "?userId=" + request.getUserId() + "&remembered=" + isRemembered)));
     }
     
     /**

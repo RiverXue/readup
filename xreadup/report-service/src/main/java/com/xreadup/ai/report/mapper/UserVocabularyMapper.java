@@ -27,14 +27,14 @@ public interface UserVocabularyMapper extends BaseMapper<UserVocabulary> {
     @Select("SELECT review_status as difficulty, COALESCE(COUNT(*), 0) as count FROM word WHERE user_ids LIKE CONCAT('%', #{userId}, '%') GROUP BY review_status")
     List<Map<String, Object>> getDifficultyDistribution(@Param("userId") Long userId);
 
-    @Select("SELECT w.id as wordId, w.word, w.meaning, '' as example, w.review_status as difficulty, w.next_review_at as dueDate FROM word w WHERE w.user_ids LIKE CONCAT('%', #{userId}, '%') AND w.next_review_at <= CURDATE() ORDER BY w.next_review_at")
+    @Select("SELECT w.id as wordId, w.word, w.meaning, w.phonetic, w.example, w.review_status as difficulty, w.next_review_at as dueDate FROM word w WHERE w.user_ids LIKE CONCAT('%', #{userId}, '%') AND w.next_review_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY) ORDER BY w.next_review_at")
     List<ReviewWordDto> getWordsForReview(@Param("userId") Long userId);
 
-    @Select("SELECT COALESCE(COUNT(*), 0) FROM word WHERE user_ids LIKE CONCAT('%', #{userId}, '%') AND next_review_at <= CURDATE()")
+    @Select("SELECT COALESCE(COUNT(*), 0) FROM word WHERE user_ids LIKE CONCAT('%', #{userId}, '%') AND next_review_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)")
     Integer countWordsForReview(@Param("userId") Long userId);
 
     // 新增方法：获取待复习单词的数量（仅包括未掌握的单词）
-    @Select("SELECT COALESCE(COUNT(*), 0) FROM word WHERE user_ids LIKE CONCAT('%', #{userId}, '%') AND next_review_at <= CURDATE() AND review_status != 'mastered'")
+    @Select("SELECT COALESCE(COUNT(*), 0) FROM word WHERE user_ids LIKE CONCAT('%', #{userId}, '%') AND next_review_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND review_status != 'mastered'")
     Integer countPendingReviewWords(@Param("userId") Long userId);
 
     @Select("SELECT COALESCE(COUNT(*), 0) FROM word WHERE user_ids LIKE CONCAT('%', #{userId}, '%') AND last_reviewed_at IS NOT NULL")

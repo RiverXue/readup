@@ -280,6 +280,17 @@
           >
             ← 上一张
           </TactileButton>
+          <TactileButton 
+            @click="exitSpeedReview" 
+            variant="danger" 
+            size="sm"
+            class="speed-nav-btn exit-btn"
+          >
+            <template #icon>
+              <el-icon><Close /></el-icon>
+            </template>
+            退出
+          </TactileButton>
         </div>
         <el-button 
           v-else
@@ -293,7 +304,7 @@
       </div>
       
       <!-- 单词堆叠区域 -->
-      <div class="word-stack">
+      <div class="word-stack" :class="{ 'is-speed-review': isSpeedReviewMode }">
         <div 
           v-for="(word, index) in visibleStackWords" 
           :key="word.id"
@@ -837,11 +848,20 @@ const filteredWords = computed(() => {
   return result
 })
 
-// 判断单词是否应该进入速刷 - 完全参考闪卡式复习逻辑
+// 判断单词是否应该进入速刷 - 与后端时间筛选逻辑保持一致
 const shouldReviewWord = (word: WordItem) => {
-  // 检查nextReviewTime字段，与闪卡式复习逻辑完全一致
+  // 如果已设置为不再巩固，则不需要复习
+  if (word.noLongerReview) {
+    return false
+  }
+  
+  // 检查nextReviewTime字段，与后端 DATE_ADD(CURDATE(), INTERVAL 1 DAY) 逻辑一致
   if (word.nextReviewTime) {
-    return new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+    // 使用明天的开始时间进行比较，与后端 <= DATE_ADD(CURDATE(), INTERVAL 1 DAY) 一致
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setHours(0, 0, 0, 0)
+    return new Date(word.nextReviewTime) < tomorrow
   }
   
   // 如果没有nextReviewTime，根据reviewStatus判断
@@ -850,12 +870,9 @@ const shouldReviewWord = (word: WordItem) => {
 
 // 获取需要速刷的单词数量 - 与闪卡式复习和批量听写保持一致
 const speedReviewWordsCount = computed(() => {
-  // 使用与loadStats相同的逻辑，确保与统计显示一致
+  // 使用统一的shouldReviewWord逻辑
   if (words.value.length > 0) {
-    const locallyNeedingReview = words.value.filter((word: WordItem) =>
-      word.nextReviewTime &&
-      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
-    ).length
+    const locallyNeedingReview = words.value.filter((word: WordItem) => shouldReviewWord(word)).length
     
     if (locallyNeedingReview > 0) {
       return locallyNeedingReview
@@ -1077,7 +1094,15 @@ const startWordSpeedReview = async () => {
     if (todayReviews.length === 0 && words.value.length > 0) {
       const localReviewWords = words.value.filter((word: WordItem) =>
         word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+        (() => {
+          if (word.nextReviewTime) {
+            const tomorrow = new Date()
+            tomorrow.setDate(tomorrow.getDate() + 1)
+            tomorrow.setHours(0, 0, 0, 0)
+            return new Date(word.nextReviewTime) <= tomorrow
+          }
+          return false
+        })()
       )
 
       // 如果本地有需要复习的单词
@@ -1096,16 +1121,28 @@ const startWordSpeedReview = async () => {
       id: word.id || word.wordId || 0,
       word: word.word || '',
       meaning: word.meaning || word.definition || '暂无释义',
-      phonetic: word.phonetic || word.pronunciation || '',
-      example: word.example || '',
-      reviewStatus: word.reviewStatus || 'unreviewed',
+      translation: word.meaning || word.definition || '暂无释义', // 添加translation字段
+      phonetic: word.phonetic || word.pronunciation || '', // 使用后端返回的phonetic字段
+      example: word.example || '', // 使用后端返回的example字段
+      // 后端API返回的review_status映射为difficulty字段
+      reviewStatus: mapBackendStatusToFrontend(word.difficulty || word.reviewStatus || 'new') as 'unreviewed' | 'reviewing' | 'mastered' | 'overdue',
+      reviewCount: word.reviewCount || 0, // 添加reviewCount字段
       createdAt: word.createdAt || new Date().toISOString(),
-      nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
-      reviewCount: word.reviewCount || 0,
+      // 后端API返回的next_review_at映射为dueDate字段
+      nextReviewTime: word.dueDate || word.nextReviewTime || undefined,
       masteryLevel: word.masteryLevel || 0,
-      needsReview: true,
+      needsReview: true, // 速刷模式中的单词都是需要复习的
       noLongerReview: false
-    })).filter(word => word.word.trim() !== '') // 过滤掉空单词
+    }))
+    .filter(word => word.word.trim() !== '') // 过滤掉空单词
+    .filter(word => {
+      // 只保留确有下次复习时间且已到期的单词
+      if (!word.nextReviewTime) return false;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return new Date(word.nextReviewTime) <= tomorrow;
+    });
 
     // 调试日志：显示映射后的数量
     console.log('映射后的速刷单词数量:', wordsToReview.length)
@@ -1162,11 +1199,15 @@ const startWordSpeedReview = async () => {
   } catch (error) {
     // 发生错误时，也尝试从本地获取复习单词作为备选
     if (words.value.length > 0) {
-      const localReviewWords = words.value.filter((word: WordItem) =>
-        word.reviewStatus === 'reviewing' &&
-        word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date()
-      )
+      const localReviewWords = words.value.filter((word: WordItem) => {
+        if (word.nextReviewTime) {
+          const tomorrow = new Date()
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          tomorrow.setHours(0, 0, 0, 0)
+          return new Date(word.nextReviewTime) <= tomorrow
+        }
+        return false
+      })
 
       if (localReviewWords.length > 0) {
         // 使用本地找到的单词作为速刷内容
@@ -1219,14 +1260,19 @@ const markSpeedReviewAsMastered = async () => {
   }
   
   try {
-    // 更新单词状态为已掌握
-    await vocabularyApi.reviewWord(String(userId), Number(currentWord.id), 'mastered')
+    // 更新单词状态为已掌握 - 使用统一的API
+    await learningApi.recordReviewResult(String(userId), Number(currentWord.id), true)
     
     // 更新统计
     speedReviewStats.value.mastered++
+    // 立即减少待复习数量（跳过不算，但已掌握算）
+    if (stats.value.reviewWords > 0) {
+      stats.value.reviewWords = stats.value.reviewWords - 1
+    }
     
-    // 刷新单词列表
+    // 刷新单词列表和统计
     await loadWords()
+    await loadStats()
     
     // 切换到下一张
     nextSpeedReviewCard()
@@ -1247,14 +1293,15 @@ const skipSpeedReviewWord = async () => {
   }
   
   try {
-    // 跳过单词，标记为学习中
-    await vocabularyApi.reviewWord(String(userId), Number(currentWord.id), 'learning')
+    // 跳过单词，标记为学习中 - 使用统一的API
+    await learningApi.recordReviewResult(String(userId), Number(currentWord.id), false)
     
     // 更新统计
     speedReviewStats.value.skipped++
     
-    // 刷新单词列表
+    // 刷新单词列表和统计
     await loadWords()
+    await loadStats()
     
     // 切换到下一张
     nextSpeedReviewCard()
@@ -1279,6 +1326,15 @@ const previousSpeedReviewCard = () => {
     currentSpeedReviewIndex.value--
     currentStackIndex.value--
   }
+}
+
+const exitSpeedReview = () => {
+  // 退出速刷模式并复位
+  isSpeedReviewMode.value = false
+  currentSpeedReviewIndex.value = 0
+  speedReviewWords.value = []
+  viewMode.value = 'grid' // 返回网格视图
+  ElMessage.info('已退出单词速刷')
 }
 
 const finishSpeedReview = () => {
@@ -1553,8 +1609,18 @@ const loadWords = async () => {
 
         // 计算是否需要复习（基于状态和时间）
         // 待复习定义：不晚于今日晚24点，包括未复习(unreviewed)、复习中(reviewing)和已掌握(mastered)的单词
-        const needsReview = !noLongerReview && nextReviewTime &&
-          new Date(nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999));
+        const needsReview = !noLongerReview && (
+          (nextReviewTime && (() => {
+            if (nextReviewTime) {
+              const tomorrow = new Date()
+              tomorrow.setDate(tomorrow.getDate() + 1)
+              tomorrow.setHours(0, 0, 0, 0)
+              return new Date(nextReviewTime) <= tomorrow
+            }
+            return false
+          })()) ||
+          (!nextReviewTime && (frontendStatus === 'unreviewed' || frontendStatus === 'overdue' || frontendStatus === 'reviewing'))
+        );
 
         return {
           id: word.id || 0,
@@ -1626,10 +1692,7 @@ const loadStats = async () => {
 
     // 如果API返回0个待复习单词，尝试从本地单词列表计算实际需要复习的单词数
     if (reviewWordsCount === 0 && words.value.length > 0) {
-      const locallyNeedingReview = words.value.filter((word: WordItem) =>
-        word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
-      ).length
+      const locallyNeedingReview = words.value.filter((word: WordItem) => shouldReviewWord(word)).length
 
       // 如果本地计算有需要复习的单词，则使用本地计算结果
       if (locallyNeedingReview > 0) {
@@ -1648,10 +1711,7 @@ const loadStats = async () => {
   } catch (error) {
     // 如果发生错误，尝试从本地单词列表计算待复习单词数作为备选
     if (words.value.length > 0) {
-      const locallyNeedingReview = words.value.filter(word =>
-        word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
-      ).length
+      const locallyNeedingReview = words.value.filter((word: WordItem) => shouldReviewWord(word)).length
 
       if (locallyNeedingReview > 0) {
         stats.value.reviewWords = locallyNeedingReview
@@ -1695,7 +1755,7 @@ const deleteWord = async (word: WordItem) => {
     }
 
     // 调用实际API删除单词
-    await vocabularyApi.deleteWord(String(userId), word.id)
+    await vocabularyApi.deleteWord(String(userId), Number(word.id))
 
     // 更新本地数据
     words.value = words.value.filter((w: WordItem) => w.id !== word.id)
@@ -1965,7 +2025,15 @@ const startTodayReview = async () => {
     if (todayReviews.length === 0 && words.value.length > 0) {
       const localReviewWords = words.value.filter((word: WordItem) =>
         word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+        (() => {
+          if (word.nextReviewTime) {
+            const tomorrow = new Date()
+            tomorrow.setDate(tomorrow.getDate() + 1)
+            tomorrow.setHours(0, 0, 0, 0)
+            return new Date(word.nextReviewTime) <= tomorrow
+          }
+          return false
+        })()
       )
 
       // 如果本地有需要复习的单词
@@ -1980,15 +2048,25 @@ const startTodayReview = async () => {
 
     // 规范化复习单词数据，确保每个单词都有必要的字段
     reviewWords.value = todayReviews.map((word: any) => ({
-      id: word.id || word.wordId || 0,
+      id: Number(word.id || word.wordId || 0), // 确保id是number类型
       word: word.word || '',
       definition: word.meaning || word.definition || '暂无释义',
       partOfSpeech: word.partOfSpeech || '',
       pronunciation: word.phonetic || word.pronunciation || '',
       reviewCount: word.reviewCount || 0,
-      nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
+      // 后端API返回的next_review_at映射为dueDate字段
+      nextReviewTime: word.dueDate || word.nextReviewTime || undefined,
       difficultyLevel: word.difficultyLevel || 1
-    })).filter(word => word.word.trim() !== '') // 过滤掉空单词
+    }))
+    .filter(word => word.word.trim() !== '') // 过滤掉空单词
+    .filter(word => {
+      // 只保留确有下次复习时间且已到期的单词（防御性，后端已筛选）
+      if (!word.nextReviewTime) return false;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return new Date(word.nextReviewTime) <= tomorrow;
+    });
 
     if (reviewWords.value.length === 0) {
       ElMessage.info('今日没有有效的复习单词')
@@ -2000,16 +2078,20 @@ const startTodayReview = async () => {
   } catch (error) {
     // 发生错误时，也尝试从本地获取复习单词作为备选
     if (words.value.length > 0) {
-      const localReviewWords = words.value.filter((word: WordItem) =>
-        word.reviewStatus === 'reviewing' &&
-        word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date()
-      )
+      const localReviewWords = words.value.filter((word: WordItem) => {
+        if (word.nextReviewTime) {
+          const tomorrow = new Date()
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          tomorrow.setHours(0, 0, 0, 0)
+          return new Date(word.nextReviewTime) <= tomorrow
+        }
+        return false
+      })
 
       if (localReviewWords.length > 0) {
         // 使用本地找到的单词作为复习内容
         reviewWords.value = localReviewWords.map((word: WordItem) => ({
-          id: word.id,
+          id: Number(word.id), // 确保id是number类型
           word: word.word,
           definition: word.meaning,
           pronunciation: word.phonetic || '',
@@ -2052,18 +2134,25 @@ const recordReviewResult = async (isRemembered: boolean) => {
 
   isReviewLoading.value = true
   try {
-    // 将布尔值映射为后端期望的状态字符串
-    const reviewStatus = isRemembered ? 'mastered' : 'learning';
-    // 调用API记录复习结果
-    await vocabularyApi.reviewWord(
+    // 直接调用 report-service 的复习结果记录API
+    await learningApi.recordReviewResult(
       String(userId),
       currentReviewWord.value.id,
-      reviewStatus
+      isRemembered
     )
+
+    // 记住了则立即减少待复习数量（与速刷一致，跳过/没记住不减少）
+    if (isRemembered && stats.value.reviewWords > 0) {
+      stats.value.reviewWords = stats.value.reviewWords - 1
+    }
 
     // 移动到下一个单词
     currentReviewIndex.value++
     showDefinition.value = false
+
+    // 立即刷新数据，更新单词状态
+    await loadWords()
+    await loadStats()
 
     // 如果复习完所有单词，显示完成提示
     if (currentReviewIndex.value >= reviewWords.value.length) {
@@ -2071,9 +2160,6 @@ const recordReviewResult = async (isRemembered: boolean) => {
       setTimeout(() => {
         ElMessage.success('今日复习已完成！')
       }, 0)
-      // 刷新数据
-      await loadWords()
-      await loadStats()
       // 退出复习模式
       setTimeout(() => {
         exitReviewMode()
@@ -2110,8 +2196,8 @@ const setWordAsNoLongerReview = async (word: WordItem) => {
     )
 
     // 设置加载状态
-    isReviewing.value = true
-    reviewingWordId.value = word.id
+    const isReviewing = ref(true)
+    const reviewingWordId = ref(word.id)
 
     // 设置nextReviewTime为100年后，这样单词就不会再进入复习流程
     const farFutureDate = new Date()
@@ -2122,8 +2208,8 @@ const setWordAsNoLongerReview = async (word: WordItem) => {
     if (wordIndex !== -1) {
       words.value[wordIndex].nextReviewTime = farFutureDate.toISOString()
       words.value[wordIndex].noLongerReview = true
-      // 移除不存在的属性赋值
-      // words.value[wordIndex].needsReview = false
+      // 更新needsReview状态
+      words.value[wordIndex].needsReview = false
     }
 
     // 持久化存储'不再巩固'状态到localStorage - 直接实现功能
@@ -2139,8 +2225,8 @@ const setWordAsNoLongerReview = async (word: WordItem) => {
     }
 
     try {
-      // 调用后端API设置单词为不再巩固
-      const response = await reportApi.setWordAsNoLongerReview(word.id)
+    // 调用后端API设置单词为不再巩固
+    const response = await learningApi.setWordAsNoLongerReview(Number(word.id))
       console.log('setWordAsNoLongerReview response:', response)
 
       ElMessage.success('已设置为不再巩固')
@@ -2162,8 +2248,8 @@ const setWordAsNoLongerReview = async (word: WordItem) => {
     }
   } finally {
     // 重置复习状态
-    isReviewing.value = false
-    reviewingWordId.value = null
+    // isReviewing.value = false
+    // reviewingWordId.value = null
   }
 }
 
@@ -2247,7 +2333,15 @@ const startBatchDictation = async () => {
     if (dictationWords.length === 0 && words.value.length > 0) {
       const localDictationWords = words.value.filter((word: WordItem) =>
         word.nextReviewTime &&
-        new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+        (() => {
+          if (word.nextReviewTime) {
+            const tomorrow = new Date()
+            tomorrow.setDate(tomorrow.getDate() + 1)
+            tomorrow.setHours(0, 0, 0, 0)
+            return new Date(word.nextReviewTime) <= tomorrow
+          }
+          return false
+        })()
       )
 
       // 如果本地有需要复习的单词
@@ -2269,12 +2363,26 @@ const startBatchDictation = async () => {
       translation: word.meaning || word.definition || '暂无释义',
       phonetic: word.phonetic || '',
       example: word.example || '暂无例句',
-      reviewStatus: word.reviewStatus || 'unreviewed',
+      // 后端API返回的review_status映射为difficulty字段
+      reviewStatus: mapBackendStatusToFrontend(word.difficulty || word.reviewStatus || 'new') as 'unreviewed' | 'reviewing' | 'mastered' | 'overdue',
+      reviewCount: word.reviewCount || 0, // 添加reviewCount字段
       createdAt: word.createdAt || new Date().toISOString(),
-      nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
+      // 后端API返回的next_review_at映射为dueDate字段
+      nextReviewTime: word.dueDate || word.nextReviewTime || undefined,
       // 必须提供noLongerReview属性，DictationModal.vue的WordItem接口要求
-      noLongerReview: false
-    })).filter((word: WordItem) => word.word.trim() !== '') // 过滤掉空单词
+      noLongerReview: false,
+      // 添加needsReview字段
+      needsReview: true
+    }))
+    .filter((word: WordItem) => word.word.trim() !== '') // 过滤掉空单词
+    .filter(word => {
+      // 只保留确有下次复习时间且已到期的单词
+      if (!word.nextReviewTime) return false;
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return new Date(word.nextReviewTime) <= tomorrow;
+    })
 
     if (batchDictationWords.value.length === 0) {
       ElMessage.info('今日没有有效的听写单词')
@@ -2343,14 +2451,17 @@ const recordDictationResult = async (isRemembered: boolean) => {
 
   isDictationLoading.value = true
   try {
-    // 将布尔值映射为后端期望的状态字符串
-    const reviewStatus = isRemembered ? 'mastered' : 'learning';
-    // 调用API记录听写结果（使用复习API，因为逻辑相似）
-    await vocabularyApi.reviewWord(
+    // 直接调用统一的复习结果记录API
+    await learningApi.recordReviewResult(
       String(userId),
-      batchDictationWords.value[currentDictationIndex.value].id,
-      reviewStatus
+      Number(batchDictationWords.value[currentDictationIndex.value].id),
+      isRemembered
     )
+
+    // 记住了则立即减少待复习数量（与速刷一致）
+    if (isRemembered && stats.value.reviewWords > 0) {
+      stats.value.reviewWords = stats.value.reviewWords - 1
+    }
 
     // 移动到下一个单词
     currentDictationIndex.value++
@@ -3214,6 +3325,17 @@ const showDictationHint = () => {
   padding: 8px 12px;
 }
 
+.speed-nav-btn.exit-btn {
+  background: rgba(255, 77, 79, 0.1) !important;
+  border: 1px solid rgba(255, 77, 79, 0.3) !important;
+  color: #ff4d4f !important;
+}
+
+.speed-nav-btn.exit-btn:hover {
+  background: rgba(255, 77, 79, 0.2) !important;
+  border-color: rgba(255, 77, 79, 0.5) !important;
+}
+
 .word-stack {
   position: relative;
   width: 100%;
@@ -3232,10 +3354,20 @@ const showDictationHint = () => {
   overflow: hidden;
 }
 
+/* 取消单词速刷卡片的悬停效果 */
 .word-card-stack:hover {
-  /* 悬停时稍微抬起，增强交互感 */
+  /* 悬停时稍微抬起，增强交互感 - 但速刷模式除外 */
   transform: translateY(-2px) !important;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 速刷模式下取消悬停效果（使用类标记，避免 :has 兼容性问题） */
+.word-stack.is-speed-review .word-card-stack:hover,
+.word-stack.is-speed-review .word-card.el-card:hover,
+.word-stack.is-speed-review .word-card.el-card:hover::before {
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
 }
 
 /* 当前卡片：完全不透明，完全遮挡下面的卡片 */

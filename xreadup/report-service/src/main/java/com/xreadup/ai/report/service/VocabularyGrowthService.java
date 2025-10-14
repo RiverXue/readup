@@ -326,7 +326,7 @@ public class VocabularyGrowthService {
             // 学习中：1天后复习
             return today.plusDays(1);
         } else if ("mastered".equals(newStatus)) {
-            // 已掌握：3天后复习
+            // 已掌握：3天后复习（统一使用3天，与user-service保持一致）
             return today.plusDays(3);
         }
         

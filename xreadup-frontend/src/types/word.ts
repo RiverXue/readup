@@ -43,6 +43,9 @@ export interface WordItem {
   /** 是否不再复习 */
   noLongerReview: boolean;
   
+  /** 是否需要复习（基于状态和时间计算） */
+  needsReview: boolean;
+  
   /** 创建时间 */
   createdAt?: string;
   

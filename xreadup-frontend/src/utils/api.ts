@@ -297,13 +297,11 @@ export const vocabularyApi = {
   // 获取用户所有单词（根据API文档添加）
   getUserWords: (userId: string) => api.get(`/api/user/vocabulary/my-words?userId=${userId}`),
 
-  // 复习单词 - 调用真实的后端API
+  // 复习单词 - 重定向到 report-service
   reviewWord: (userId: string, wordId: number, reviewStatus: string) => {
-    return api.post('/api/vocabulary/review', {
-      wordId,
-      userId: parseInt(userId),
-      reviewStatus
-    });
+    // 将布尔值转换为后端期望的格式
+    const isRemembered = reviewStatus === 'mastered';
+    return api.post(`/api/report/review/${wordId}?userId=${userId}&remembered=${isRemembered}`);
   },
 
   // 删除单词 - 调用真实的后端API
@@ -348,6 +346,16 @@ export const learningApi = {
 
   // 获取今日复习词汇
   getTodayReviewWords: (userId: string) => api.get(`/api/report/review-today?userId=${userId}`),
+
+  // 记录复习结果 - 统一到 report-service
+  recordReviewResult: (userId: string, wordId: number, isRemembered: boolean) => {
+    return api.post(`/api/report/review/${wordId}?userId=${userId}&remembered=${isRemembered}`);
+  },
+
+  // 设置单词为不再巩固 - 统一到 report-service
+  setWordAsNoLongerReview: (wordId: number) => {
+    return api.post(`/api/report/no-longer-review/${wordId}`);
+  },
 
   // 获取学习周报
   getWeeklyInsights: (userId: string) => api.get(`/api/report/weekly/insights?userId=${userId}`),
