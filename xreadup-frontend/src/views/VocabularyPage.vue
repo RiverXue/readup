@@ -867,14 +867,31 @@ const getStackCardStyle = (index: number) => {
     }
   }
   
-  // 叠层卡片：交替左右偏移，模拟真实卡片堆叠
-  // 下一张左边，下下一张右边，交替进行
-  const horizontalOffset = index % 2 === 1 ? -30 : 30 // 交替左右偏移
+  // 叠层卡片：左右展开更多张卡片，模拟真实卡片堆叠
+  // 计算左右展开的卡片数量
+  const leftCards = Math.min(Math.floor(totalStackSize / 2), 4) // 左侧最多4张
+  const rightCards = Math.min(Math.floor((totalStackSize - 1) / 2), 4) // 右侧最多4张
+  
+  // 根据卡片位置计算偏移
+  let horizontalOffset = 0
+  if (index <= leftCards) {
+    // 左侧卡片：向左偏移，偏移量递增
+    horizontalOffset = -25 - (leftCards - index) * 20
+  } else if (index >= totalStackSize - rightCards) {
+    // 右侧卡片：向右偏移，偏移量递增
+    horizontalOffset = 25 + (index - (totalStackSize - rightCards)) * 20
+  } else {
+    // 中间卡片：轻微交替偏移
+    horizontalOffset = index % 2 === 1 ? -15 : 15
+  }
+  
   const verticalOffset = index * 12 // 增加垂直偏移，模拟更厚的卡片
   const zIndex = totalStackSize - index // 根据实际堆叠数量调整z-index
   
   // 根据偏移方向调整旋转角度
-  const rotation = horizontalOffset > 0 ? 3.0 : -3.0 // 左右交替旋转
+  const rotation = horizontalOffset > 0 ? 2.5 + (horizontalOffset - 25) * 0.05 : 
+                   horizontalOffset < 0 ? -2.5 + (horizontalOffset + 25) * 0.05 : 
+                   index % 2 === 1 ? 1.5 : -1.5
   
   // 优化阴影计算，避免张数过多时阴影过重
   const maxShadowOffset = 60 // 最大阴影偏移量
