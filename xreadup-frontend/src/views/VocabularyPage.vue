@@ -863,6 +863,13 @@ const speedReviewWordsCount = computed(() => {
     console.log('reviewing单词时间:', new Date('2025-10-15 09:44:48'))
     console.log('是否在今日内:', new Date('2025-10-15 09:44:48') <= new Date(new Date().setHours(23, 59, 59, 999)))
     
+    console.log('基于时间的单词数量:', wordsByTime.length)
+    console.log('基于时间的单词状态分布:', wordsByTime.reduce((acc, w) => {
+      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
+      return acc
+    }, {} as Record<string, number>))
+    console.log('基于时间的mastered单词数:', wordsByTime.filter(w => w.reviewStatus === 'mastered').length)
+    
     const wordsByStatus = words.value.filter((word: WordItem) =>
       !word.nextReviewTime &&
       (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
