@@ -925,6 +925,34 @@ const speedReviewWordsCount = computed(() => {
       timeDiff: new Date(w.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime()
     })))
     
+    // 检查是否有其他可能被API包含的单词
+    const allWordsForReview = words.value.filter((word: WordItem) => 
+      !word.noLongerReview && // 排除不再巩固的单词
+      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing' || word.reviewStatus === 'mastered')
+    )
+    
+    console.log('所有可能复习的单词数(排除不再巩固):', allWordsForReview.length)
+    console.log('所有可能复习的单词状态分布:', allWordsForReview.reduce((acc, w) => {
+      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
+      return acc
+    }, {} as Record<string, number>))
+    
+    // 检查是否有时间在今日内的mastered单词
+    const masteredWordsInToday = words.value.filter((word: WordItem) =>
+      word.nextReviewTime &&
+      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999)) &&
+      word.reviewStatus === 'mastered' &&
+      !word.noLongerReview
+    )
+    
+    console.log('今日内的mastered单词数:', masteredWordsInToday.length)
+    console.log('今日内的mastered单词详情:', masteredWordsInToday.map(w => ({
+      id: w.id,
+      word: w.word,
+      reviewStatus: w.reviewStatus,
+      nextReviewTime: w.nextReviewTime
+    })))
+    
     console.log('特殊处理的单词数:', specialWords.length)
     console.log('特殊处理单词状态分布:', specialWords.reduce((acc, w) => {
       acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
