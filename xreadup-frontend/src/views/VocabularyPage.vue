@@ -879,7 +879,14 @@ const visibleStackWords = computed(() => {
     const remainingWords = speedReviewWords.value.length - start
     const dynamicStackSize = Math.min(remainingWords, 8)
     const end = start + dynamicStackSize
-    return speedReviewWords.value.slice(start, end)
+    const result = speedReviewWords.value.slice(start, end)
+    
+    // 调试日志：显示可见堆叠单词数量
+    console.log('visibleStackWords数量:', result.length)
+    console.log('speedReviewWords总数量:', speedReviewWords.value.length)
+    console.log('currentSpeedReviewIndex:', currentSpeedReviewIndex.value)
+    
+    return result
   }
   
   // 普通模式按状态优先级排序
@@ -1090,6 +1097,22 @@ const startWordSpeedReview = async () => {
       noLongerReview: false
     })).filter(word => word.word.trim() !== '') // 过滤掉空单词
 
+    // 调试日志：显示映射后的数量
+    console.log('映射后的速刷单词数量:', wordsToReview.length)
+    console.log('映射前的API数据数量:', todayReviews.length)
+    
+    // 检查是否有重复的单词ID
+    const uniqueIds = new Set(wordsToReview.map(w => w.id))
+    console.log('唯一ID数量:', uniqueIds.size)
+    console.log('总单词数量:', wordsToReview.length)
+    if (uniqueIds.size !== wordsToReview.length) {
+      console.warn('发现重复的单词ID！')
+      const duplicateIds = wordsToReview.filter((word, index) => 
+        wordsToReview.findIndex(w => w.id === word.id) !== index
+      )
+      console.log('重复的单词:', duplicateIds)
+    }
+
     if (wordsToReview.length === 0) {
       ElMessage.info('暂无需要速刷的单词')
       return
@@ -1097,6 +1120,7 @@ const startWordSpeedReview = async () => {
     
     // 初始化速刷状态
     speedReviewWords.value = wordsToReview
+    console.log('最终speedReviewWords数量:', speedReviewWords.value.length)
     currentSpeedReviewIndex.value = 0
     speedReviewStats.value = {
       total: wordsToReview.length,
