@@ -845,36 +845,20 @@ const filteredWords = computed(() => {
   return result
 })
 
-// 判断单词是否应该进入速刷 - 参考闪卡式复习逻辑
+// 判断单词是否应该进入速刷 - 完全参考闪卡式复习逻辑
 const shouldReviewWord = (word: WordItem) => {
-  // 1. 未复习的单词必须复习
-  if (word.reviewStatus === 'unreviewed') return true
-  
-  // 2. 已逾期必须复习
-  if (word.reviewStatus === 'overdue') return true
-  
-  // 3. 复习中的单词 - 检查nextReviewTime
-  if (word.reviewStatus === 'reviewing') {
-    if (word.nextReviewTime) {
-      return new Date(word.nextReviewTime) <= new Date()
-    }
-    return true // 如果没有nextReviewTime，默认需要复习
+  // 检查nextReviewTime字段，与闪卡式复习逻辑完全一致
+  if (word.nextReviewTime) {
+    return new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
   }
   
-  // 4. 已掌握的单词（可选巩固）- 检查nextReviewTime
-  if (word.reviewStatus === 'mastered' && !word.noLongerReview) {
-    if (word.nextReviewTime) {
-      return new Date(word.nextReviewTime) <= new Date()
-    }
-    return false // 如果没有nextReviewTime，默认不需要复习
-  }
-  
-  return false
+  // 如果没有nextReviewTime，根据reviewStatus判断
+  return word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing'
 }
 
-// 获取需要速刷的单词
+// 获取需要速刷的单词 - 使用所有单词而不是筛选后的单词
 const speedReviewWordsCount = computed(() => {
-  return filteredWords.value.filter(shouldReviewWord).length
+  return words.value.filter(shouldReviewWord).length
 })
 
 // 分页后的数据
@@ -1054,8 +1038,8 @@ const startWordSpeedReview = async () => {
   try {
     isSpeedReviewLoading.value = true
     
-    // 获取需要速刷的单词
-    const wordsToReview = filteredWords.value.filter(shouldReviewWord)
+    // 获取需要速刷的单词 - 使用所有单词而不是筛选后的单词
+    const wordsToReview = words.value.filter(shouldReviewWord)
     
     if (wordsToReview.length === 0) {
       ElMessage.info('暂无需要速刷的单词')
@@ -1081,9 +1065,12 @@ const startWordSpeedReview = async () => {
     await nextTick()
     const stackContainer = document.querySelector('.word-stack-container')
     if (stackContainer) {
-      stackContainer.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
+      // 使用更精确的滚动位置，避免多滚动
+      const rect = stackContainer.getBoundingClientRect()
+      const scrollTop = window.pageYOffset + rect.top - 100 // 减去100px避免过度滚动
+      window.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
       })
     }
     
