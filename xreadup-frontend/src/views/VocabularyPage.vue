@@ -87,8 +87,30 @@
     </div>
 
 
-    <!-- 单词卡片列表 -->
-    <div class="word-cards">
+    <!-- 视图切换按钮 -->
+    <div class="view-toggle">
+      <el-button-group>
+        <el-button 
+          :type="viewMode === 'grid' ? 'primary' : ''" 
+          @click="viewMode = 'grid'"
+          size="small"
+        >
+          <el-icon><Grid /></el-icon>
+          网格视图
+        </el-button>
+        <el-button 
+          :type="viewMode === 'stack' ? 'primary' : ''" 
+          @click="viewMode = 'stack'"
+          size="small"
+        >
+          <el-icon><Collection /></el-icon>
+          叠层视图
+        </el-button>
+      </el-button-group>
+    </div>
+
+    <!-- 网格视图 -->
+    <div v-if="viewMode === 'grid'" class="word-cards">
       <el-card
         v-for="word in paginatedWords"
         :key="word.id"
@@ -257,6 +279,185 @@
           </TactileButton>
         </div>
       </el-card>
+    </div>
+
+    <!-- 叠层视图 -->
+    <div v-if="viewMode === 'stack'" class="word-stack-container">
+      <div class="word-stack">
+        <div 
+          v-for="(word, index) in visibleStackWords" 
+          :key="word.id"
+          class="word-card-stack"
+          :style="getStackCardStyle(index)"
+          @click="handleStackCardClick(index)"
+        >
+          <el-card
+            class="word-card"
+            :body-style="{ padding: '16px' }"
+            :data-status="word.reviewStatus"
+          >
+            <!-- 状态指示区域 -->
+            <div class="word-status">
+              <!-- 复习中状态：显示状态指示器和进度条 -->
+              <div class="review-progress" v-if="word.reviewStatus === 'reviewing' && !word.noLongerReview">
+                <div class="aligned-progress-container">
+                  <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
+                    <div style="display: flex; align-items: center;">
+                      <div class="status-indicator reviewing" style="margin-right: 8px; margin-bottom: 0;">
+                        <span class="status-icon">•</span>
+                        <span>复习中</span>
+                      </div>
+                    </div>
+                    <span>{{ word.nextReviewTime ? formatNextReviewTime(word.nextReviewTime) : '-' }}</span>
+                  </div>
+                  <div class="new-progress-bar">
+                    <div
+                      class="progress-fill"
+                      :style="{
+                        width: `calc(${(function() {
+                          try {
+                            if (word.nextReviewTime) {
+                              const progress = calculateReviewProgress(word.nextReviewTime)
+                              return isNaN(progress) ? 50 : Math.max(0, Math.min(100, progress))
+                            }
+                            return 50
+                          } catch (e) {
+                            console.log(`单词ID:${word.id}进度条计算错误:`, e)
+                            return 50
+                          }
+                        })()}%)`
+                      }"
+                    ></div>
+                    <div class="progress-checkmark">
+                      {{ word.nextReviewTime && formatNextReviewTime(word.nextReviewTime).includes('逾期') ? '!' : '✓' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 复习中但已不再巩固状态：仅显示状态指示器 -->
+              <div class="status-indicator reviewing" v-else-if="word.reviewStatus === 'reviewing' && word.noLongerReview">
+                <span class="status-icon">•</span>
+                <span>复习中</span>
+              </div>
+              <!-- 未复习状态：显示状态指示器 -->
+              <div class="status-indicator unreviewed" v-else-if="word.reviewStatus === 'unreviewed'">
+                <span class="status-icon">•</span>
+                <span>未复习</span>
+              </div>
+              <!-- 已掌握状态：显示状态指示器和进度条 -->
+              <div v-else-if="word.reviewStatus === 'mastered' && !word.noLongerReview" class="review-progress">
+                <div class="aligned-progress-container">
+                  <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
+                    <div style="display: flex; align-items: center;">
+                      <div class="status-indicator mastered" style="margin-right: 8px; margin-bottom: 0;">
+                        <span class="status-icon">✓</span>
+                        <span>已掌握·巩固中</span>
+                      </div>
+                    </div>
+                    <span>{{ word.nextReviewTime ? formatNextReviewTime(word.nextReviewTime).replace('复习', '巩固') : '-' }}</span>
+                  </div>
+                  <div class="new-progress-bar">
+                    <div
+                      class="progress-fill"
+                      :style="{
+                        width: `calc(${(function() {
+                          try {
+                            if (word.nextReviewTime) {
+                              const progress = calculateReviewProgress(word.nextReviewTime)
+                              return isNaN(progress) ? 50 : Math.max(0, Math.min(100, progress))
+                            }
+                            return 50
+                          } catch (e) {
+                            console.log(`单词ID:${word.id}进度条计算错误:`, e)
+                            return 50
+                          }
+                        })()}%)`
+                      }"
+                    ></div>
+                    <div class="progress-checkmark">
+                      {{ word.nextReviewTime && formatNextReviewTime(word.nextReviewTime).includes('逾期') ? '!' : '✓' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 已掌握且已不再巩固状态：显示融合状态指示器 -->
+              <div v-else-if="word.reviewStatus === 'mastered' && word.noLongerReview">
+                <div class="status-indicator mastered-no-review">
+                  <span class="status-icon">✓</span>
+                  <span>已掌握·不再巩固</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 单词内容 -->
+            <div class="word-content">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h3 class="word-text">{{ word.word }}</h3>
+                <el-button
+                  @click="handleSpeakWord(word.word)"
+                  size="default"
+                  type="text"
+                  title="发音"
+                  class="pronunciation-button"
+                >
+                  🔊
+                </el-button>
+              </div>
+              <p class="word-phonetic" v-if="word.phonetic">{{ word.phonetic }}</p>
+              <p class="word-meaning">{{ word.meaning }}</p>
+              <p class="word-example" v-if="word.example">
+                <strong>例句：</strong>{{ word.example }}
+              </p>
+              <p class="word-date" v-if="word.createdAt">添加时间：{{ formatCreatedTime(word.createdAt) }}</p>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="word-actions">
+              <TactileButton
+                @click="reviewWord(word)"
+                variant="primary"
+                size="sm"
+                :loading="isReviewing && reviewingWordId === word.id"
+                :disabled="isReviewing && reviewingWordId === word.id"
+              >
+                复习
+              </TactileButton>
+              <TactileButton
+                @click="handleDictateWord(word)"
+                variant="secondary"
+                size="sm"
+                :disabled="isReviewing && reviewingWordId === word.id"
+              >
+                听写
+              </TactileButton>
+              <TactileButton
+                v-if="word.reviewStatus === 'mastered' && !word.noLongerReview"
+                @click="setWordAsNoLongerReview(word)"
+                variant="warning"
+                size="sm"
+              >
+                不巩固
+              </TactileButton>
+              <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
+                删除
+              </TactileButton>
+            </div>
+          </el-card>
+        </div>
+      </div>
+      
+      <!-- 叠层视图控制 -->
+      <div class="stack-controls">
+        <el-button @click="previousStackCard" :disabled="currentStackIndex === 0">
+          <el-icon><ArrowLeft /></el-icon>
+          上一张
+        </el-button>
+        <span class="stack-progress">{{ currentStackIndex + 1 }} / {{ filteredWords.length }}</span>
+        <el-button @click="nextStackCard" :disabled="currentStackIndex >= filteredWords.length - 1">
+          下一张
+          <el-icon><ArrowRight /></el-icon>
+        </el-button>
+      </div>
     </div>
 
     <!-- 分页 -->
@@ -539,6 +740,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, ElLoading, ElDialog, ElInput } from 'element-plus'
+import { Grid, Collection, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { vocabularyApi, learningApi, reportApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import type { ReviewWordDto } from '@/types/report'
@@ -551,6 +753,11 @@ const userStore = useUserStore()
 const words = ref<WordItem[]>([])
 const searchQuery = ref('')
 const statusFilter = ref('')
+
+// 视图模式
+const viewMode = ref<'grid' | 'stack'>('grid')
+const currentStackIndex = ref(0)
+const stackSize = 4 // 叠层显示数量
 const currentPage = ref(1)
 const pageSize = ref(10)
 const totalWords = ref(0)
@@ -607,6 +814,52 @@ const paginatedWords = computed(() => {
   const end = start + pageSize.value
   return filteredWords.value.slice(start, end)
 })
+
+// 叠层视图数据
+const visibleStackWords = computed(() => {
+  const start = currentStackIndex.value
+  const end = Math.min(start + stackSize, filteredWords.value.length)
+  return filteredWords.value.slice(start, end)
+})
+
+// 叠层卡片样式
+const getStackCardStyle = (index: number) => {
+  const offset = index * 8 // 每层偏移8px
+  const scale = 1 - index * 0.05 // 每层缩小5%
+  const zIndex = stackSize - index
+  const opacity = index === 0 ? 1 : 0.8 - index * 0.1
+  
+  return {
+    transform: `translateY(${offset}px) scale(${scale})`,
+    zIndex: zIndex,
+    opacity: Math.max(opacity, 0.3),
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    cursor: index === 0 ? 'default' : 'pointer',
+    transition: 'all 0.3s ease'
+  }
+}
+
+// 叠层视图控制方法
+const nextStackCard = () => {
+  if (currentStackIndex.value < filteredWords.value.length - 1) {
+    currentStackIndex.value++
+  }
+}
+
+const previousStackCard = () => {
+  if (currentStackIndex.value > 0) {
+    currentStackIndex.value--
+  }
+}
+
+const handleStackCardClick = (index: number) => {
+  if (index > 0) {
+    currentStackIndex.value += index
+  }
+}
 
 // 当前复习单词
 const currentReviewWord = computed(() => {
@@ -2621,6 +2874,58 @@ const showDictationHint = () => {
   gap: 4px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* 叠层视图容器 */
+.word-stack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.word-stack {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  height: 500px;
+  margin-bottom: 20px;
+}
+
+.word-card-stack {
+  width: 100%;
+  height: 100%;
+}
+
+.word-card-stack:hover {
+  transform: translateY(var(--offset, 0px)) scale(var(--scale, 1)) !important;
+}
+
+/* 叠层视图控制 */
+.stack-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.stack-progress {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
+  text-align: center;
 }
 
 /* 分页样式 */
