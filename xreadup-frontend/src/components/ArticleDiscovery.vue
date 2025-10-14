@@ -9,19 +9,19 @@
     <!-- 操作按钮区 -->
     <div class="action-buttons">
       <!-- 热点文章按钮 -->
-      <el-button
-        :type="isPremiumUser ? 'primary' : 'default'"
+      <TactileButton
+        :variant="isPremiumUser ? 'primary' : 'secondary'"
         :loading="isLoadingTrending"
         :disabled="!canFetchTrending || isLoadingTrending"
         @click="fetchTrendingArticles"
         class="discovery-button"
-        size="large"
+        size="lg"
       >
         <template #icon>
           <TrendChartsIcon />
         </template>
         获取热点文章
-      </el-button>
+      </TactileButton>
 
       <!-- 主题文章选择器和按钮 -->
       <div class="category-selector">
@@ -42,13 +42,13 @@
           <el-option label="旅行" value="travel" />
           <el-option label="美食" value="food" />
         </el-select>
-        <el-button
-          :type="userStore.userTier === 'basic' ? 'primary' : (isPremiumUser ? 'primary' : 'default')"
+        <TactileButton
+          :variant="userStore.userTier === 'basic' ? 'primary' : (isPremiumUser ? 'primary' : 'secondary')"
           :loading="isLoadingCategory"
           :disabled="!selectedCategory || !canFetchCategory || isLoadingCategory"
           @click="fetchCategoryArticles"
           class="discovery-button"
-          size="large"
+          size="lg"
         >
           <template #icon>
           <MagicStickIcon />
@@ -56,7 +56,7 @@
           获取主题文章
           <!-- 为所有用户显示基础会员标签 -->
           <span class="basic-badge">基础会员</span>
-        </el-button>
+        </TactileButton>
         <!-- 为非基础会员显示提示 -->
         <el-tooltip
           v-if="userStore.userTier === 'free'"
@@ -79,20 +79,20 @@
           :disabled="isLoadingCustomTopic || !isProOrEnterpriseUser"
           :tooltip="!isProOrEnterpriseUser ? '升级高级会员解锁此功能' : ''"
         />
-        <el-button
-          type="primary"
+        <TactileButton
+          variant="primary"
           :loading="isLoadingCustomTopic"
           :disabled="!customTopic || !canFetchCustomTopic || isLoadingCustomTopic"
           @click="fetchCustomTopicArticles"
           class="discovery-button"
-          size="large"
+          size="lg"
         >
           <template #icon>
             <SearchIcon />
           </template>
           搜索主题
           <span class="premium-badge">高级会员</span>
-        </el-button>
+        </TactileButton>
         <!-- 为非高级会员显示提示 -->
         <el-tooltip
           v-if="!isProOrEnterpriseUser"
@@ -256,6 +256,7 @@ import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { watch } from 'vue'
 import DiscoveryArticleCard from '@/components/DiscoveryArticleCard.vue'
+import TactileButton from '@/components/common/TactileButton.vue'
 
 // 重命名图标组件以避免命名冲突
 const TrendChartsIcon = TrendCharts

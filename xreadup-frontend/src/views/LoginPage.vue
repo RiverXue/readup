@@ -48,22 +48,22 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
+          <TactileButton
+            variant="primary"
+            size="lg"
             style="width: 100%"
             :loading="loading"
             @click="handleSubmit"
           >
             {{ isRegister ? '注册' : '登录' }}
-          </el-button>
+          </TactileButton>
         </el-form-item>
       </el-form>
 
       <div class="switch-mode">
-        <el-button type="text" @click="toggleMode">
+        <TactileButton variant="ghost" @click="toggleMode">
           {{ isRegister ? '已有账号？立即登录' : '没有账号？立即注册' }}
-        </el-button>
+        </TactileButton>
       </div>
 
       <!-- 演示账号提示 -->
@@ -81,6 +81,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import TactileButton from '@/components/common/TactileButton.vue'
 
 const router = useRouter()
 const userStore = useUserStore()

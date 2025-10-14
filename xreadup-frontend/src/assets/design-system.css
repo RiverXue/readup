@@ -1297,6 +1297,231 @@
   transform: translateY(-2px);
 }
 
+/* 全局Element Plus卡片样式覆盖 */
+.el-card {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  overflow: hidden !important;
+}
+
+.el-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.el-card__header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 20px 24px !important;
+}
+
+.el-card__body {
+  background: transparent !important;
+  padding: 24px !important;
+}
+
+/* 全局Element Plus对话框样式覆盖 */
+.el-dialog {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(255, 255, 255, 0.9) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+.el-dialog__header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 24px 24px 16px !important;
+}
+
+.el-dialog__title {
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+}
+
+.el-dialog__body {
+  background: transparent !important;
+  padding: 20px 24px !important;
+}
+
+.el-dialog__footer {
+  background: transparent !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 16px 24px 24px !important;
+}
+
+/* 全局Element Plus表格样式覆盖 */
+.el-table {
+  background: transparent !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.el-table__header {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.el-table__body {
+  background: transparent !important;
+}
+
+.el-table th {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+}
+
+.el-table td {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-primary) !important;
+}
+
+.el-table tr:hover td {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 全局Element Plus分页样式覆盖 */
+.el-pagination {
+  background: transparent !important;
+}
+
+.el-pagination .el-pager li {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease !important;
+}
+
+.el-pagination .el-pager li:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.el-pagination .el-pager li.is-active {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3) !important;
+}
+
+.el-pagination .btn-prev,
+.el-pagination .btn-next {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  transition: all 0.3s ease !important;
+}
+
+.el-pagination .btn-prev:hover,
+.el-pagination .btn-next:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 全局Element Plus标签样式覆盖 */
+.el-tag {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+}
+
+.el-tag--success {
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.2) 0%, rgba(52, 199, 89, 0.1) 100%) !important;
+  color: var(--ios-green) !important;
+  border-color: rgba(52, 199, 89, 0.3) !important;
+}
+
+.el-tag--warning {
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 149, 0, 0.1) 100%) !important;
+  color: var(--ios-orange) !important;
+  border-color: rgba(255, 149, 0, 0.3) !important;
+}
+
+.el-tag--danger {
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.2) 0%, rgba(255, 59, 48, 0.1) 100%) !important;
+  color: var(--ios-red) !important;
+  border-color: rgba(255, 59, 48, 0.3) !important;
+}
+
+/* 全局Element Plus进度条样式覆盖 */
+.el-progress {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.el-progress-bar__outer {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+.el-progress-bar__inner {
+  background: linear-gradient(90deg, var(--ios-blue) 0%, #5AC8FA 100%) !important;
+  border-radius: 8px !important;
+}
+
+/* 全局Element Plus分割线样式覆盖 */
+.el-divider {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.el-divider__text {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-radius: 12px !important;
+  padding: 8px 16px !important;
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+}
+
 /* 24. 响应式网格系统增强 */
 .modern-grid-enhanced {
   display: grid;

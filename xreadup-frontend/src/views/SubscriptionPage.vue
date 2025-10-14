@@ -135,15 +135,15 @@
           </div>
 
           <div class="plan-action">
-            <el-button
-              type="primary"
+            <TactileButton
+              variant="primary"
               :disabled="isCurrentPlan(plan.type)"
               @click="selectPlan(plan)"
               class="unified-button"
               block
             >
               {{ isCurrentPlan(plan.type) ? '当前套餐' : '选择套餐' }}
-            </el-button>
+            </TactileButton>
           </div>
         </el-card>
       </div>
@@ -250,15 +250,15 @@
       </div>
 
       <template #footer>
-        <el-button @click="showPaymentDialog = false">取消</el-button>
-        <el-button
-          type="primary"
+        <TactileButton variant="ghost" @click="showPaymentDialog = false">取消</TactileButton>
+        <TactileButton
+          variant="primary"
           :disabled="!selectedPaymentMethod"
           :loading="paymentLoading"
           @click="confirmPayment"
         >
           确认支付
-        </el-button>
+        </TactileButton>
       </template>
     </el-dialog>
 
@@ -298,6 +298,7 @@ import { useUserStore } from '@/stores/user'
 import { subscriptionApi, reportApi } from '@/utils/api'
 import type { Subscription, SubscriptionPlan, UsageQuota, PaymentMethod } from '@/types/subscription'
 import type { ApiResponse } from '@/types/apiResponse'
+import TactileButton from '@/components/common/TactileButton.vue'
 
 const userStore = useUserStore()
 
