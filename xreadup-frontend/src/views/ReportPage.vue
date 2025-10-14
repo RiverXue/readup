@@ -509,6 +509,10 @@ const handleResize = () => {
   margin: 0 auto;
   padding: var(--space-6);
   animation: fadeInUp 0.8s ease-out;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-2xl);
+  position: relative;
+  min-height: 100vh;
 }
 
 @keyframes fadeInUp {
@@ -529,6 +533,17 @@ const handleResize = () => {
   margin-bottom: var(--space-8);
   text-align: center;
   position: relative;
+  padding: var(--space-8) var(--space-6);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-3xl);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal);
 }
 
 .report-container h2::after {
@@ -539,8 +554,17 @@ const handleResize = () => {
   transform: translateX(-50%);
   width: 80px;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  background: var(--ios-blue);
   border-radius: var(--radius-sm);
+}
+
+.report-container h2:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .stats-cards {
@@ -555,9 +579,16 @@ const handleResize = () => {
   align-items: center;
   padding: var(--space-6);
   background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   transition: all var(--transition-normal);
   overflow: hidden;
   position: relative;
@@ -567,21 +598,26 @@ const handleResize = () => {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--primary-200), transparent);
-  opacity: 0;
-  transition: opacity var(--transition-normal);
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
 }
 
 .stat-card:hover::before {
-  opacity: 1;
+  left: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
 }
 
 .stat-icon {
@@ -618,15 +654,53 @@ const handleResize = () => {
 .chart-card {
   padding: var(--space-6);
   background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
+  pointer-events: none;
+  animation: liquidFlow 30s ease-in-out infinite;
 }
 
 .chart-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+@keyframes liquidFlow {
+  0%, 100% { 
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.2;
+    transform: scale(1.02);
+  }
 }
 
 .chart-container {
@@ -635,10 +709,44 @@ const handleResize = () => {
 }
 
 .achievements h3 {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-8);
   font-size: var(--text-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
+  padding: var(--space-6) var(--space-8);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  text-align: center;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.achievements h3::after {
+  content: '';
+  position: absolute;
+  bottom: -var(--space-2);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: var(--ios-blue);
+  border-radius: var(--radius-sm);
+}
+
+.achievements h3:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .achievement-list {
@@ -650,17 +758,68 @@ const handleResize = () => {
 .achievement-item {
   display: flex;
   align-items: center;
-  padding: var(--space-4);
+  padding: var(--space-6);
   background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.achievement-item:hover::before {
+  left: 100%;
+}
+
+.achievement-item:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 
+    0 10px 36px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
 }
 
 .achievement-item.achieved {
-  border-color: var(--accent-success);
-  background: rgba(16, 185, 129, 0.05);
+  border-color: var(--ios-green);
+  background: rgba(52, 199, 89, 0.1);
+  box-shadow: 
+    0 6px 24px rgba(52, 199, 89, 0.2),
+    0 2px 8px rgba(52, 199, 89, 0.1),
+    0 1px 4px rgba(52, 199, 89, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(52, 199, 89, 0.1);
+}
+
+.achievement-item.achieved:hover {
+  border-color: var(--ios-green);
+  box-shadow: 
+    0 10px 36px rgba(52, 199, 89, 0.3),
+    0 4px 12px rgba(52, 199, 89, 0.15),
+    0 2px 6px rgba(52, 199, 89, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(52, 199, 89, 0.15);
 }
 
 .achievement-icon {

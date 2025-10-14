@@ -2632,6 +2632,10 @@ const showDictationHint = () => {
   margin: 0 auto;
   padding: var(--space-6);
   animation: fadeInUp 0.8s ease-out;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-2xl);
+  position: relative;
+  min-height: 100vh;
 }
 
 @keyframes fadeInUp {
@@ -2652,6 +2656,30 @@ const showDictationHint = () => {
   margin-bottom: var(--space-8);
   text-align: center;
   position: relative;
+  padding: var(--space-8) var(--space-6);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-3xl);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal);
+  overflow: hidden;
+}
+
+.vocabulary-container h2::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(90, 200, 250, 0.02) 50%, rgba(0, 122, 255, 0.03) 100%);
+  pointer-events: none;
+  animation: liquidFlow 25s ease-in-out infinite;
 }
 
 .vocabulary-container h2::after {
@@ -2662,8 +2690,28 @@ const showDictationHint = () => {
   transform: translateX(-50%);
   width: 80px;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  background: var(--ios-blue);
   border-radius: var(--radius-sm);
+}
+
+.vocabulary-container h2:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
+}
+
+@keyframes liquidFlow {
+  0%, 100% { 
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.2;
+    transform: scale(1.02);
+  }
 }
 
 .stats {
@@ -2673,17 +2721,50 @@ const showDictationHint = () => {
 .stats-wrapper {
   display: flex;
   flex-direction: row;
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   border-radius: var(--radius-3xl);
   padding: var(--space-8);
   width: 100%;
   box-sizing: border-box;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
   align-items: center;
   justify-content: space-between;
   gap: var(--space-12);
   min-height: 380px;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.02) 0%, rgba(90, 200, 250, 0.01) 50%, rgba(0, 122, 255, 0.02) 100%);
+  pointer-events: none;
+  animation: liquidFlow 30s ease-in-out infinite;
+}
+
+.stats-wrapper:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
 }
 
 .stats-content {
@@ -2806,22 +2887,44 @@ const showDictationHint = () => {
 
 /* 现代玻璃态筛选器 */
 .filters {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-8);
   display: flex;
-  gap: 15px;
+  gap: var(--space-4);
   align-items: center;
-  padding: 16px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: var(--space-6);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-2xl);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 6px 24px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.filters::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
+  pointer-events: none;
+  animation: liquidFlow 35s ease-in-out infinite;
+}
+
+.filters:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 /* 筛选器输入框样式 */
@@ -3474,17 +3577,52 @@ const showDictationHint = () => {
 /* 听写模式样式 */
 .dictation-card {
   text-align: center;
-  padding: 40px 20px;
-  background-color: #f5f7fa;
-  border-radius: 8px;
+  padding: var(--space-12) var(--space-8);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.dictation-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
+  pointer-events: none;
+  animation: liquidFlow 25s ease-in-out infinite;
+}
+
+.dictation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .dictation-input-section {
-  margin: 30px 0;
+  margin: var(--space-8) 0;
+  position: relative;
+  z-index: 2;
 }
 
 .dictation-feedback {
-  margin: 20px 0;
+  margin: var(--space-6) 0;
+  position: relative;
+  z-index: 2;
 }
 
 .dictation-feedback.success {
@@ -3507,42 +3645,124 @@ const showDictationHint = () => {
 
 /* 复习模式样式 */
 .review-mode {
-  padding: 20px;
+  padding: var(--space-8);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.review-mode::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.02) 0%, rgba(90, 200, 250, 0.01) 50%, rgba(0, 122, 255, 0.02) 100%);
+  pointer-events: none;
+  animation: liquidFlow 30s ease-in-out infinite;
 }
 
 .review-progress-total {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 2;
 }
 
 .review-card {
   text-align: center;
-  padding: 40px 20px;
-  background-color: #f5f7fa;
-  border-radius: 8px;
+  padding: var(--space-12) var(--space-8);
+  background: var(--bg-secondary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-2xl);
+  box-shadow: 
+    0 6px 24px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.review-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
+  pointer-events: none;
+  animation: liquidFlow 25s ease-in-out infinite;
+}
+
+.review-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .review-word {
   font-size: 36px;
   font-weight: bold;
-  margin-bottom: 15px;
-  color: #303133;
+  margin-bottom: var(--space-4);
+  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 .review-phonetic {
   font-size: 18px;
-  color: #909399;
-  margin-bottom: 30px;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
   font-style: italic;
+  position: relative;
+  z-index: 2;
 }
 
 .review-definition {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  margin-top: 20px;
+  background: var(--bg-primary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  margin-top: var(--space-6);
   text-align: center;
   line-height: 1.8;
   font-size: 20px;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 2;
+  transition: all var(--transition-normal);
+}
+
+.review-definition:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 20px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .review-definition p {
@@ -3561,17 +3781,86 @@ const showDictationHint = () => {
 .review-result-buttons {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  position: relative;
+  z-index: 2;
 }
 
 .review-navigation {
-  margin-top: 30px;
+  margin-top: var(--space-8);
   text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 .no-review-words {
-  padding: 60px 20px;
+  padding: var(--space-16) var(--space-8);
   text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* 全局弹出框样式优化 */
+:deep(.el-dialog) {
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-3xl);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  overflow: hidden;
+}
+
+:deep(.el-dialog::before) {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.02) 0%, rgba(90, 200, 250, 0.01) 50%, rgba(0, 122, 255, 0.02) 100%);
+  pointer-events: none;
+  animation: liquidFlow 30s ease-in-out infinite;
+}
+
+:deep(.el-dialog__header) {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  padding: var(--space-6) var(--space-8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 2;
+}
+
+:deep(.el-dialog__title) {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-xl);
+}
+
+:deep(.el-dialog__body) {
+  padding: 0;
+  position: relative;
+  z-index: 2;
+}
+
+:deep(.el-dialog__footer) {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+  padding: var(--space-6) var(--space-8);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 2;
 }
 
 /* 响应式设计 */

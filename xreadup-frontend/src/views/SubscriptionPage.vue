@@ -101,9 +101,13 @@
         <el-card
           v-for="plan in mergedSubscriptionPlans"
           :key="plan.type"
-          :class="['plan-card', { 'recommended': plan.recommended }]"
+          :class="['plan-card', {
+            'recommended': plan.recommended,
+            'current-plan': isCurrentPlan(plan.type)
+          }]"
         >
           <div v-if="plan.recommended" class="recommended-badge">推荐</div>
+          <div v-if="isCurrentPlan(plan.type)" class="current-plan-badge">当前套餐</div>
 
           <div class="plan-header">
             <h3>{{ plan.name }}</h3>
@@ -838,6 +842,10 @@ onMounted(() => {
   margin: 0 auto;
   padding: var(--space-6);
   animation: fadeInUp 0.8s ease-out;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-2xl);
+  position: relative;
+  min-height: 100vh;
 }
 
 @keyframes fadeInUp {
@@ -855,19 +863,51 @@ onMounted(() => {
   text-align: center;
   margin-bottom: var(--space-16);
   position: relative;
+  padding: var(--space-8) var(--space-6);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-3xl);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal);
+  overflow: hidden;
 }
 
 .page-header::before {
   content: '';
   position: absolute;
-  top: -20px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(90, 200, 250, 0.02) 50%, rgba(0, 122, 255, 0.03) 100%);
+  pointer-events: none;
+  animation: liquidFlow 25s ease-in-out infinite;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -var(--space-3);
   left: 50%;
   transform: translateX(-50%);
-  width: 60px;
+  width: 80px;
   height: 3px;
-  background: var(--primary-500);
+  background: var(--ios-blue);
   border-radius: var(--radius-sm);
-  opacity: 0.6;
+}
+
+.page-header:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .page-header h1 {
@@ -877,6 +917,8 @@ onMounted(() => {
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 .page-header p {
@@ -885,6 +927,19 @@ onMounted(() => {
   max-width: 600px;
   margin: 0 auto;
   line-height: var(--line-height-relaxed);
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes liquidFlow {
+  0%, 100% {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.02);
+  }
 }
 
 .current-subscription {
@@ -892,15 +947,17 @@ onMounted(() => {
 }
 
 .subscription-card {
-  background: var(--glass-white);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-3xl);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 1px solid var(--glass-border);
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   transition: all var(--transition-normal);
   overflow: hidden;
   position: relative;
@@ -912,17 +969,35 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: var(--primary-500);
-  opacity: 0.8;
+  height: 4px;
+  background: var(--ios-blue);
+  opacity: 0.9;
+}
+
+.subscription-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.subscription-card:hover::after {
+  left: 100%;
 }
 
 .subscription-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-6px) scale(1.01);
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.15),
-    0 4px 16px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    0 16px 48px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
 }
 
 .subscription-card .card-header {
@@ -1022,17 +1097,38 @@ onMounted(() => {
 
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: var(--space-8);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-6);
   margin-top: var(--space-12);
+}
+
+@media (max-width: 1200px) {
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
 }
 
 .plan-card {
   position: relative;
   background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-3xl);
-  box-shadow: var(--shadow-md);
-  border: 2px solid var(--border-light);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   transition: all var(--transition-normal);
   overflow: hidden;
   cursor: pointer;
@@ -1044,16 +1140,36 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: var(--primary-500);
+  height: 4px;
+  background: var(--ios-blue);
   opacity: 0;
   transition: opacity var(--transition-normal);
 }
 
+.plan-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.plan-card:hover::after {
+  left: 100%;
+}
+
 .plan-card:hover {
   transform: translateY(-8px) scale(1.02);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--primary-200);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
 }
 
 .plan-card:hover::before {
@@ -1061,32 +1177,116 @@ onMounted(() => {
 }
 
 .plan-card.recommended {
-  border-color: var(--primary-500);
-  box-shadow: var(--shadow-primary);
+  border-color: var(--ios-blue);
+  box-shadow:
+    0 8px 32px rgba(0, 122, 255, 0.2),
+    0 2px 8px rgba(0, 122, 255, 0.1),
+    0 1px 4px rgba(0, 122, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 122, 255, 0.1);
 }
 
 .plan-card.recommended::before {
   opacity: 1;
 }
 
+.plan-card.current-plan {
+  border-color: var(--ios-blue);
+  box-shadow:
+    0 8px 32px rgba(0, 122, 255, 0.25),
+    0 2px 8px rgba(0, 122, 255, 0.15),
+    0 1px 4px rgba(0, 122, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 122, 255, 0.2);
+  position: relative;
+}
+
+
+
+.plan-card.current-plan::after {
+  background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.3), transparent);
+}
+
+.plan-card.current-plan:hover {
+  border-color: var(--ios-blue);
+  box-shadow:
+    0 16px 48px rgba(0, 122, 255, 0.3),
+    0 4px 16px rgba(0, 122, 255, 0.2),
+    0 2px 8px rgba(0, 122, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 122, 255, 0.25);
+}
+
 .recommended-badge {
   position: absolute;
   top: var(--space-4);
   right: var(--space-4);
-  background: var(--primary-500);
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
   color: var(--text-inverse);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   font-weight: var(--font-weight-semibold);
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    0 4px 12px rgba(0, 122, 255, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   z-index: 2;
+  transition: all var(--transition-normal);
+}
+
+.recommended-badge:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 16px rgba(0, 122, 255, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.current-plan-badge {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  background: linear-gradient(135deg, var(--ios-green) 0%, #34C759 100%);
+  color: var(--text-inverse);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-semibold);
+  box-shadow:
+    0 4px 12px rgba(52, 199, 89, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  z-index: 2;
+  transition: all var(--transition-normal);
+}
+
+.current-plan-badge:hover {
+  transform: scale(1.05);
+  box-shadow:
+    0 6px 16px rgba(52, 199, 89, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .plan-header {
   text-align: center;
   padding: var(--space-8) var(--space-6) var(--space-6);
   background: var(--bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.plan-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.02) 0%, rgba(90, 200, 250, 0.01) 50%, rgba(0, 122, 255, 0.02) 100%);
+  pointer-events: none;
+  animation: liquidFlow 35s ease-in-out infinite;
 }
 
 .plan-header h3 {
@@ -1094,6 +1294,8 @@ onMounted(() => {
   font-size: var(--text-2xl);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
+  position: relative;
+  z-index: 2;
 }
 
 .plan-price {
@@ -1101,12 +1303,15 @@ onMounted(() => {
   align-items: baseline;
   justify-content: center;
   gap: var(--space-1);
+  position: relative;
+  z-index: 2;
 }
 
 .plan-price .price {
   font-size: var(--text-4xl);
   font-weight: var(--font-weight-bold);
-  color: var(--primary-600);
+  color: var(--ios-blue);
+  text-shadow: 0 2px 4px rgba(0, 122, 255, 0.2);
 }
 
 .plan-price .duration {
@@ -1145,18 +1350,59 @@ onMounted(() => {
 
 .usage-section,
 .history-section {
-  margin-bottom: 30px;
+  margin-bottom: var(--space-8);
+}
+
+.usage-section .el-card {
+  background: var(--bg-primary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.usage-section .el-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
+  pointer-events: none;
+  animation: liquidFlow 40s ease-in-out infinite;
+}
+
+.usage-section .el-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
 .usage-stats .stat-item {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-6);
+  position: relative;
+  z-index: 2;
 }
 
 .stat-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-weight: bold;
+  margin-bottom: var(--space-3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
 }
 
 .payment-dialog .selected-plan {
