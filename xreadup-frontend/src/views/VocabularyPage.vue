@@ -2558,8 +2558,8 @@ const showDictationHint = () => {
   margin-bottom: 12px;
   letter-spacing: 0.5px;
   line-height: 1.2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 50%, #718096 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
