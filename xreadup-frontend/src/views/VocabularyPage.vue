@@ -825,10 +825,10 @@ const visibleStackWords = computed(() => {
 // 叠层卡片样式
 const getStackCardStyle = (index: number) => {
   if (index === 0) {
-    // 当前卡片：完全可见，无偏移
+    // 当前卡片：完全可见，无偏移，确保在最上层
     return {
       transform: 'translateY(0px) translateX(0px)',
-      zIndex: stackSize,
+      zIndex: stackSize + 10, // 确保在最上层
       opacity: 1,
       position: 'absolute' as const,
       top: 0,
@@ -2934,7 +2934,19 @@ const showDictationHint = () => {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* 为叠层卡片添加厚度边框效果 */
+/* 当前卡片：完全不透明，完全遮挡下面的卡片 */
+.word-card-stack:first-child .word-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 叠层卡片：保持玻璃感但降低透明度 */
 .word-card-stack:not(:first-child) .word-card {
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 
