@@ -103,7 +103,7 @@
             <!-- 新的进度条实现 - 与对勾对齐 -->
             <div class="aligned-progress-container">
               <!-- 状态指示器和进度条标题 -->
-              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
+              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 600; font-size: 11px; color: #909399;">
                 <div style="display: flex; align-items: center;">
                   <div class="status-indicator reviewing" style="margin-right: 8px; margin-bottom: 0;">
                     <span class="status-icon">•</span>
@@ -156,7 +156,7 @@
           <div v-else-if="word.reviewStatus === 'mastered' && !word.noLongerReview" class="review-progress">
             <div class="aligned-progress-container">
               <!-- 状态指示器和进度条标题 -->
-              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
+              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 600; font-size: 11px; color: #909399;">
                 <div style="display: flex; align-items: center;">
                   <div class="status-indicator mastered" style="margin-right: 8px; margin-bottom: 0;">
                     <span class="status-icon">✓</span>
@@ -2413,14 +2413,14 @@ const showDictationHint = () => {
   display: inline-flex;
   align-items: center;
   margin-bottom: 0;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 4px 8px;
+  border-radius: 16px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
@@ -2461,11 +2461,11 @@ const showDictationHint = () => {
 /* 现代化进度条设计 */
 .new-progress-bar {
   position: relative;
-  height: 6px;
+  height: 4px;
   background: linear-gradient(90deg, 
     rgba(0, 0, 0, 0.05) 0%, 
     rgba(0, 0, 0, 0.08) 100%);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: visible;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -2547,48 +2547,51 @@ const showDictationHint = () => {
 
 /* 单词内容样式 */
 .word-content {
-  margin-top: 20px;
+  margin-top: 16px;
+  padding: 0 4px;
 }
 
 /* 主要信息：单词本身 - 最大最醒目 */
 .word-text {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #303133;
-  letter-spacing: 0.3px;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #1a202c;
+  letter-spacing: 0.5px;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* 次要信息：音标 - 中等大小，辅助阅读 */
 .word-phonetic {
-  color: #909399;
-  margin-bottom: 10px;
+  color: #6b7280;
+  margin-bottom: 12px;
   font-style: italic;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 /* 核心信息：释义 - 重要但略小于单词 */
 .word-meaning {
-  color: #606266;
-  margin-bottom: 8px;
-  line-height: 1.4;
-  font-size: 14px;
-  font-weight: 500;
+  color: #374151;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 /* 辅助信息：例句 - 较小字体，背景区分 */
 .word-example {
-  color: #909399;
-  font-size: 13px;
-  margin-bottom: 8px;
-  line-height: 1.3;
-  background: rgba(0, 0, 0, 0.02);
-  padding: 6px 8px;
-  border-radius: 4px;
-  border-left: 2px solid var(--color-primary);
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--color-primary);
+  font-weight: 500;
 }
 
 /* 元信息：添加时间 - 最小字体，最淡颜色 */
@@ -2764,19 +2767,19 @@ const showDictationHint = () => {
   }
 
   .word-text {
-    font-size: 20px;
+    font-size: 24px;
   }
   
   .word-phonetic {
-    font-size: 12px;
+    font-size: 14px;
   }
   
   .word-meaning {
-    font-size: 12px;
+    font-size: 14px;
   }
   
   .word-example {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .review-word {
