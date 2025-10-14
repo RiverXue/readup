@@ -477,8 +477,8 @@
       </div>
     </div>
 
-    <!-- 分页 -->
-    <div class="pagination">
+    <!-- 分页 - 只在网格视图显示 -->
+    <div v-if="viewMode === 'grid'" class="pagination">
       <el-pagination
         v-model:current-page="currentPage"
         :page-size="pageSize"
@@ -776,7 +776,7 @@ const viewMode = ref<'grid' | 'stack'>('grid')
 const currentStackIndex = ref(0)
 const stackSize = 4 // 叠层显示数量
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(9)
 const totalWords = ref(0)
 const loading = ref(false)
 const isReviewing = ref(false)
@@ -832,11 +832,17 @@ const paginatedWords = computed(() => {
   return filteredWords.value.slice(start, end)
 })
 
-// 叠层视图数据
+// 叠层视图数据 - 按状态排序：未复习 → 复习中 → 已掌握
 const visibleStackWords = computed(() => {
+  // 按状态优先级排序
+  const sortedWords = [...filteredWords.value].sort((a, b) => {
+    const statusOrder = { 'unreviewed': 0, 'reviewing': 1, 'mastered': 2, 'overdue': 0 }
+    return statusOrder[a.reviewStatus] - statusOrder[b.reviewStatus]
+  })
+  
   const start = currentStackIndex.value
-  const end = Math.min(start + stackSize, filteredWords.value.length)
-  return filteredWords.value.slice(start, end)
+  const end = Math.min(start + stackSize, sortedWords.length)
+  return sortedWords.slice(start, end)
 })
 
 // 叠层卡片样式
@@ -856,13 +862,13 @@ const getStackCardStyle = (index: number) => {
     }
   }
   
-  // 叠层卡片：增强不整齐感，模拟真实卡片堆叠
-  const horizontalOffset = index % 2 === 1 ? 25 : -18 // 增加左右偏移量
-  const verticalOffset = index * 10 // 增加垂直偏移，模拟更厚的卡片
+  // 叠层卡片：进一步增强不整齐感，模拟真实卡片堆叠
+  const horizontalOffset = index % 2 === 1 ? 35 : -25 // 进一步增强左右偏移量
+  const verticalOffset = index * 12 // 增加垂直偏移，模拟更厚的卡片
   const zIndex = stackSize - index
   
-  // 增强旋转角度，让卡片看起来更自然和不整齐
-  const rotation = index % 2 === 1 ? 2.5 : -1.8 // 增加旋转角度
+  // 进一步增强旋转角度，让卡片看起来更自然和不整齐
+  const rotation = index % 2 === 1 ? 4.2 : -3.1 // 进一步增强旋转角度
   
   return {
     transform: `translateY(${verticalOffset}px) translateX(${horizontalOffset}px) rotate(${rotation}deg)`,
@@ -3050,6 +3056,9 @@ const showDictationHint = () => {
 .pagination {
   margin-top: 20px;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* 听写模式样式 */
