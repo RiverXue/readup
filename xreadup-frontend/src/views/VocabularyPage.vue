@@ -2437,15 +2437,8 @@ const showDictationHint = () => {
 
 .status-indicator.mastered {
   color: white;
-  background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
-  background-image: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 4px,
-    rgba(255, 255, 255, 0.1) 4px,
-    rgba(255, 255, 255, 0.1) 8px
-  );
-  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+  background: linear-gradient(135deg, #52D16A 0%, #4EDB6A 100%);
+  box-shadow: 0 4px 12px rgba(82, 209, 106, 0.3);
 }
 
 .status-indicator.mastered-no-review {
