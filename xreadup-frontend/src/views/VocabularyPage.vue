@@ -875,6 +875,12 @@ const getStackCardStyle = (index: number) => {
   // 进一步增强旋转角度，让卡片看起来更自然和不整齐
   const rotation = index % 2 === 1 ? 4.2 : -3.1 // 进一步增强旋转角度
   
+  // 优化阴影计算，避免张数过多时阴影过重
+  const maxShadowOffset = 60 // 最大阴影偏移量
+  const shadowOffset = Math.min(verticalOffset, maxShadowOffset)
+  const shadowBlur = Math.min(verticalOffset * 1.2, 80) // 限制阴影模糊范围
+  const shadowOpacity = Math.max(0.05, 0.15 - index * 0.02) // 随层级递减阴影透明度
+  
   return {
     transform: `translateY(${verticalOffset}px) translateX(${horizontalOffset}px) rotate(${rotation}deg)`,
     zIndex: zIndex,
@@ -885,8 +891,8 @@ const getStackCardStyle = (index: number) => {
     right: 0,
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    // 添加更真实的卡片厚度阴影
-    boxShadow: `0 ${verticalOffset}px ${verticalOffset * 1.5}px rgba(0, 0, 0, 0.15), 0 ${verticalOffset * 0.5}px ${verticalOffset}px rgba(0, 0, 0, 0.1)`
+    // 优化后的卡片厚度阴影，避免过重
+    boxShadow: `0 ${shadowOffset}px ${shadowBlur}px rgba(0, 0, 0, ${shadowOpacity}), 0 ${shadowOffset * 0.3}px ${shadowOffset * 0.6}px rgba(0, 0, 0, ${shadowOpacity * 0.6})`
   }
 }
 
