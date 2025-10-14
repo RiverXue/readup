@@ -857,6 +857,10 @@ const speedReviewWordsCount = computed(() => {
       new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
     )
     
+    console.log('今日结束时间:', new Date(new Date().setHours(23, 59, 59, 999)))
+    console.log('reviewing单词时间:', new Date('2025-10-15 09:44:48'))
+    console.log('是否在今日内:', new Date('2025-10-15 09:44:48') <= new Date(new Date().setHours(23, 59, 59, 999)))
+    
     const wordsByStatus = words.value.filter((word: WordItem) =>
       !word.nextReviewTime &&
       (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
@@ -908,7 +912,16 @@ const speedReviewWordsCount = computed(() => {
     }, {} as Record<string, number>))
     console.log('其他特殊单词数(mastered但时间超过):', otherSpecialWords.length)
     
+    // 确保不重复计算：特殊处理的单词已经包含了被排除的reviewing单词
+    // 所以总计算应该是：基于时间的单词 + 基于状态的单词 + 特殊处理的单词
     const totalNeedingReview = wordsByTime.length + wordsByStatus.length + specialWords.length + otherSpecialWords.length
+    
+    console.log('计算详情:')
+    console.log('- 基于时间的单词:', wordsByTime.length)
+    console.log('- 基于状态的单词:', wordsByStatus.length) 
+    console.log('- 特殊处理的单词:', specialWords.length)
+    console.log('- 其他特殊单词:', otherSpecialWords.length)
+    console.log('- 总计:', totalNeedingReview)
     
     if (totalNeedingReview > 0) {
       return totalNeedingReview
