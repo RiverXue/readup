@@ -2556,34 +2556,44 @@ const showDictationHint = () => {
   font-size: 28px;
   font-weight: 800;
   margin-bottom: 12px;
-  color: #1a202c;
   letter-spacing: 0.5px;
   line-height: 1.2;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* 次要信息：音标 - 中等大小，辅助阅读 */
 .word-phonetic {
-  color: #6b7280;
   margin-bottom: 12px;
   font-style: italic;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #6b7280 0%, #9ca3af 50%, #d1d5db 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* 核心信息：释义 - 重要但略小于单词 */
 .word-meaning {
-  color: #374151;
   margin-bottom: 12px;
   line-height: 1.5;
   font-size: 16px;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #374151 0%, #4b5563 50%, #6b7280 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* 辅助信息：例句 - 较小字体，背景区分 */
 .word-example {
-  color: #6b7280;
   font-size: 14px;
   margin-bottom: 10px;
   line-height: 1.4;
@@ -2592,6 +2602,9 @@ const showDictationHint = () => {
   border-radius: 6px;
   border-left: 3px solid var(--color-primary);
   font-weight: 500;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.05) 100%);
+  color: #6b7280;
 }
 
 /* 元信息：添加时间 - 最小字体，最淡颜色 */
