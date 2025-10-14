@@ -25,39 +25,40 @@
           <div class="learning-modes-group">
             <h4 class="learning-mode-title">系统性学习</h4>
             <div class="review-button-container">
-              <el-button
+              <TactileButton
                 @click="startTodayReview"
-                type="primary"
-                size="large"
+                variant="primary"
+                size="lg"
                 :loading="isReviewLoading"
                 :disabled="!userStore.isLoggedIn"
                 class="learning-mode-button"
               >
                 闪卡式批量复习
-              </el-button>
-              <el-button
+              </TactileButton>
+              <TactileButton
                 @click="startBatchDictation"
-                type="info"
-                size="large"
+                variant="secondary"
+                size="lg"
                 :loading="isDictationLoading"
                 :disabled="!userStore.isLoggedIn"
                 class="learning-mode-button"
               >
                 批量听写
-              </el-button>
+              </TactileButton>
             </div>
             <div class="learning-guide">
               <p class="guide-text">根据艾宾浩斯记忆曲线，科学安排学习进度，提高记忆效率。</p>
-              <el-button
+              <TactileButton
                 @click="showLearningModesGuide"
-                type="primary"
-                plain
-                size="small"
+                variant="ghost"
+                size="sm"
                 class="guide-button"
               >
-                <el-icon><help-filled /></el-icon>
+                <template #icon>
+                  <el-icon><help-filled /></el-icon>
+                </template>
                 了解学习模式
-              </el-button>
+              </TactileButton>
             </div>
           </div>
         </div>
@@ -226,36 +227,37 @@
 
         <!-- 操作按钮 -->
         <div class="word-actions">
-          <el-button
+          <TactileButton
             @click="reviewWord(word)"
-            size="small"
-            type="primary"
+            variant="primary"
+            size="sm"
             :loading="isReviewing && reviewingWordId === word.id"
             :disabled="isReviewing && reviewingWordId === word.id"
           >
             复习
-          </el-button>
-          <el-button
+          </TactileButton>
+          <TactileButton
             @click="handleDictateWord(word)"
-            size="small"
-            type="info"
+            variant="secondary"
+            size="sm"
             :disabled="isReviewing && reviewingWordId === word.id"
-          >听写
-          </el-button>
-          <el-button
+          >
+            听写
+          </TactileButton>
+          <TactileButton
             v-if="word.reviewStatus === 'mastered' && !word.noLongerReview"
             @click="setWordAsNoLongerReview(word)"
-            size="small"
-            type="warning"
+            variant="warning"
+            size="sm"
           >
             不再巩固
-          </el-button>
+          </TactileButton>
           <div v-if="word.noLongerReview" class="no-longer-review-badge">
             已不再巩固
           </div>
-          <el-button @click="deleteWord(word)" size="small" type="danger">
+          <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
             删除
-          </el-button>
+          </TactileButton>
         </div>
       </el-card>
     </div>
@@ -320,37 +322,42 @@
           </p>
           <div class="review-actions">
             <div v-if="!showDefinition">
-              <el-button
+              <TactileButton
                 @click="showWordDefinition"
-                size="large"
+                variant="primary"
+                size="lg"
                 style="margin-bottom: 20px"
               >
                 查看释义
-              </el-button>
+              </TactileButton>
             </div>
 
             <div v-if="showDefinition" class="review-definition">
               <p>{{ currentReviewWord.definition }}</p>
               <p v-if="currentReviewWord.partOfSpeech"><strong>词性：</strong>{{ currentReviewWord.partOfSpeech }}</p>
               <div class="review-result-buttons">
-                <el-button
+                <TactileButton
                   @click="recordReviewResult(true)"
-                  type="success"
-                  size="large"
-                  icon="Check"
+                  variant="success"
+                  size="lg"
                   style="margin-right: 10px"
                 >
+                  <template #icon>
+                    <el-icon><Check /></el-icon>
+                  </template>
                   记住了
-                </el-button>
-                <el-button
+                </TactileButton>
+                <TactileButton
                   @click="recordReviewResult(false)"
-                  type="danger"
-                  size="large"
-                  icon="Close"
+                  variant="danger"
+                  size="lg"
                   style="margin-left: 10px"
                 >
+                  <template #icon>
+                    <el-icon><Close /></el-icon>
+                  </template>
                   没记住
-                </el-button>
+                </TactileButton>
               </div>
             </div>
           </div>
@@ -361,22 +368,22 @@
         </div>
 
         <div class="review-navigation">
-          <el-button
+          <TactileButton
             @click="exitReviewMode"
-            type="default"
-            size="large"
+            variant="ghost"
+            size="lg"
           >
             退出复习
-          </el-button>
+          </TactileButton>
         </div>
       </div>
 
       <div v-else class="no-review-words">
         <div class="empty-state">
           <el-empty description="今日没有需要复习的单词" />
-          <el-button @click="exitReviewMode" type="primary" style="margin-top: 20px">
+          <TactileButton @click="exitReviewMode" variant="primary" size="md" style="margin-top: 20px">
             返回生词本
-          </el-button>
+          </TactileButton>
         </div>
       </div>
     </el-dialog>
@@ -508,22 +515,22 @@
         </div>
 
         <div class="review-navigation">
-          <el-button
+          <TactileButton
             @click="exitDictationMode"
-            type="default"
-            size="large"
+            variant="ghost"
+            size="lg"
           >
             退出听写
-          </el-button>
+          </TactileButton>
         </div>
       </div>
 
       <div v-else class="no-review-words">
         <div class="empty-state">
           <el-empty description="今日没有需要听写的单词" />
-          <el-button @click="exitDictationMode" type="primary" style="margin-top: 20px">
+          <TactileButton @click="exitDictationMode" variant="primary" size="md" style="margin-top: 20px">
             返回生词本
-          </el-button>
+          </TactileButton>
         </div>
       </div>
     </el-dialog>
@@ -541,6 +548,7 @@ import type { ReviewWordDto } from '@/types/report'
 import type { WordItem } from '@/types/word'
 import * as echarts from 'echarts'
 import { tts } from '@/utils/tts'
+import TactileButton from '@/components/common/TactileButton.vue'
 
 const userStore = useUserStore()
 const words = ref<WordItem[]>([])
@@ -2154,11 +2162,76 @@ const showDictationHint = () => {
   color: #67c23a;
 }
 
+/* 现代玻璃态筛选器 */
 .filters {
   margin-bottom: 20px;
   display: flex;
   gap: 15px;
   align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 筛选器输入框样式 */
+.filters .el-input {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.filters .el-input__wrapper {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+.filters .el-input__inner {
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 12px;
+}
+
+.filters .el-input__inner::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 筛选器下拉框样式 */
+.filters .el-select {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.filters .el-select .el-input__wrapper {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+.filters .el-select .el-input__inner {
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 12px;
+}
+
+.filters .el-select .el-input__inner::placeholder {
+  color: var(--text-tertiary);
 }
 
 /* 单词卡片样式 */
@@ -2189,90 +2262,147 @@ const showDictationHint = () => {
   font-size: 12px;
 }
 
-/* 呼吸式状态光晕效果 - 增强版实现 */
+/* 现代玻璃态单词卡片 - 保持三色配色和边缘效果 */
 .word-card {
   position: relative;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 24px;
   margin-bottom: 20px;
-  background-color: #ffffff;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   /* 移除默认阴影，由状态光晕接管 */
   box-shadow: none;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-/* 基础状态光晕 - 使用 box-shadow */
+/* 现代状态光晕 - 保持三色配色，增强玻璃态效果 */
 .word-card[data-status="unreviewed"] {
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.05), /* 基础阴影，保持立体感 */
-    0 0 0 0 rgba(64, 158, 255, 0); /* 初始化光晕，透明度为0，用于动画 */
-  animation: glow-in-blue 0.3s ease-out forwards;
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 0 0 0 rgba(64, 158, 255, 0),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: glow-in-blue 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .word-card[data-status="reviewing"] {
   box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 0 rgba(230, 162, 60, 0);
-  animation: glow-in-orange 0.3s ease-out forwards, glow-pulse 2s ease-in-out infinite;
+    0 0 0 0 rgba(230, 162, 60, 0),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: glow-in-orange 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, glow-pulse 2s ease-in-out infinite;
 }
 
 .word-card[data-status="mastered"] {
   box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 0 rgba(103, 194, 58, 0);
-  animation: glow-in-green 0.3s ease-out forwards;
+    0 0 0 0 rgba(103, 194, 58, 0),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: glow-in-green 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* 进入动画：让光晕优雅地浮现，而不是突兀出现 */
+/* 现代进入动画：保持三色配色，增强玻璃态效果 */
 @keyframes glow-in-blue {
-  to { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 0 8px 2px rgba(64, 158, 255, 0.2); }
+  to { 
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 2px 8px rgba(0, 0, 0, 0.05), 
+      0 0 12px 4px rgba(64, 158, 255, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
 }
 
 @keyframes glow-in-orange {
-  to { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 0 8px 2px rgba(230, 162, 60, 0.2); }
+  to { 
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 2px 8px rgba(0, 0, 0, 0.05), 
+      0 0 12px 4px rgba(230, 162, 60, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
 }
 
 @keyframes glow-in-green {
-  to { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05), 0 0 8px 2px rgba(103, 194, 58, 0.2); }
+  to { 
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      0 2px 8px rgba(0, 0, 0, 0.05), 
+      0 0 12px 4px rgba(103, 194, 58, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
 }
 
-/* “待复习”状态的呼吸动画 - 更柔和、更优雅 */
+/* 现代"待复习"状态呼吸动画 - 保持橙色配色，增强玻璃态效果 */
 @keyframes glow-pulse {
   0%, 100% {
     box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05),
-      0 0 8px 2px rgba(230, 162, 60, 0.2);
+      0 0 12px 4px rgba(230, 162, 60, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
   50% {
     box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05),
-      0 0 12px 4px rgba(230, 162, 60, 0.3); /* 在50%时，光晕更强、范围更大 */
+      0 0 16px 6px rgba(230, 162, 60, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
   }
 }
 
-/* 悬停效果：当用户鼠标悬停时，稍微增强光晕，提供微妙的反馈 */
+/* 现代悬停效果：保持三色配色，增强玻璃态反馈 */
 .word-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .word-card[data-status="unreviewed"]:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 12px 4px rgba(64, 158, 255, 0.3);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1), 
+    0 0 16px 6px rgba(64, 158, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .word-card[data-status="reviewing"]:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 16px 6px rgba(230, 162, 60, 0.4);
-  animation: glow-pulse-hover 1.5s ease-in-out infinite; /* 悬停时脉冲更快 */
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1), 
+    0 0 20px 8px rgba(230, 162, 60, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation: glow-pulse-hover 1.5s ease-in-out infinite;
 }
 
 .word-card[data-status="mastered"]:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 12px 4px rgba(103, 194, 58, 0.3);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1), 
+    0 0 16px 6px rgba(103, 194, 58, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* 悬停时的脉冲动画 */
+/* 现代悬停脉冲动画 - 保持橙色配色 */
 @keyframes glow-pulse-hover {
-  0%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 16px 6px rgba(230, 162, 60, 0.4); }
-  50% { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 20px 8px rgba(230, 162, 60, 0.5); }
+  0%, 100% { 
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.1), 
+      0 0 20px 8px rgba(230, 162, 60, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  50% { 
+    box-shadow: 
+      0 16px 48px rgba(0, 0, 0, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.1), 
+      0 0 24px 10px rgba(230, 162, 60, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
 }
 
 /* 状态区域样式 */

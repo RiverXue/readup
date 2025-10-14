@@ -1178,23 +1178,123 @@
   background: rgba(0, 122, 255, 0.1);
 }
 
-/* 23. 现代输入框增强 */
+/* 23. 现代输入框增强 - 全局玻璃态输入框 */
 .modern-input-enhanced {
   width: 100%;
   padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-ios-medium);
   font-size: var(--text-base);
-  background: var(--bg-primary);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: all var(--transition-normal);
   font-family: var(--font-family-primary);
+  color: var(--text-primary);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .modern-input-enhanced:focus {
   outline: none;
   border-color: var(--ios-blue);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 
+    0 0 0 3px rgba(0, 122, 255, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15) 0%, 
+    rgba(255, 255, 255, 0.1) 100%);
+}
+
+.modern-input-enhanced::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 全局Element Plus输入框样式覆盖 */
+.el-input {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-normal);
+}
+
+.el-input__wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 12px;
+}
+
+.el-input__inner {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px;
+}
+
+.el-input__inner::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+.el-input:focus-within {
+  border-color: var(--ios-blue) !important;
+  box-shadow: 
+    0 0 0 3px rgba(0, 122, 255, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
+}
+
+/* 全局Element Plus下拉框样式覆盖 */
+.el-select {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-normal);
+}
+
+.el-select .el-input__wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 12px;
+}
+
+.el-select .el-input__inner {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border-radius: 12px;
+}
+
+.el-select .el-input__inner::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+.el-select:focus-within {
+  border-color: var(--ios-blue) !important;
+  box-shadow: 
+    0 0 0 3px rgba(0, 122, 255, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
 }
 
 /* 24. 响应式网格系统增强 */
