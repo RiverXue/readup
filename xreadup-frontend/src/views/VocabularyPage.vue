@@ -2246,18 +2246,19 @@ const showDictationHint = () => {
 .no-longer-review-badge {
   display: inline-flex;
   align-items: center;
-  margin-right: 10px;
-  padding: 6px 12px;
+  margin-right: 4px;
+  padding: 4px 8px;
   background: linear-gradient(135deg, #ff9500 0%, #ffcc02 100%);
   color: white;
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: 16px;
+  font-size: 11px;
   font-weight: 600;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .no-longer-review-badge:hover {
@@ -2619,7 +2620,9 @@ const showDictationHint = () => {
 .word-actions {
   margin-top: 12px;
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* 分页样式 */
