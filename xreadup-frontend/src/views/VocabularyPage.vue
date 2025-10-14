@@ -869,7 +869,22 @@ const speedReviewWordsCount = computed(() => {
       (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
     )
     
-    const totalNeedingReview = wordsByTime.length + wordsByStatus.length + specialWords.length
+    // 检查是否还有其他需要复习的单词（包括mastered状态）
+    const otherSpecialWords = words.value.filter((word: WordItem) =>
+      word.nextReviewTime &&
+      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
+      word.reviewStatus === 'mastered' &&
+      !word.noLongerReview // 排除不再巩固的单词
+    )
+    
+    console.log('特殊处理的单词数:', specialWords.length)
+    console.log('特殊处理单词状态分布:', specialWords.reduce((acc, w) => {
+      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
+      return acc
+    }, {} as Record<string, number>))
+    console.log('其他特殊单词数(mastered但时间超过):', otherSpecialWords.length)
+    
+    const totalNeedingReview = wordsByTime.length + wordsByStatus.length + specialWords.length + otherSpecialWords.length
     
     if (totalNeedingReview > 0) {
       return totalNeedingReview
