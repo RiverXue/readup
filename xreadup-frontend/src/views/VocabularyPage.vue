@@ -283,6 +283,19 @@
 
     <!-- 叠层视图 -->
     <div v-if="viewMode === 'stack'" class="word-stack-container">
+      <!-- 左侧导航按钮 -->
+      <div class="stack-nav-left">
+        <el-button 
+          @click="previousStackCard" 
+          :disabled="currentStackIndex === 0"
+          class="stack-nav-btn"
+          circle
+        >
+          <el-icon><ArrowLeft /></el-icon>
+        </el-button>
+      </div>
+      
+      <!-- 单词堆叠区域 -->
       <div class="word-stack">
         <div 
           v-for="(word, index) in visibleStackWords" 
@@ -446,17 +459,21 @@
         </div>
       </div>
       
-      <!-- 叠层视图控制 -->
-      <div class="stack-controls">
-        <el-button @click="previousStackCard" :disabled="currentStackIndex === 0">
-          <el-icon><ArrowLeft /></el-icon>
-          上一张
-        </el-button>
-        <span class="stack-progress">{{ currentStackIndex + 1 }} / {{ filteredWords.length }}</span>
-        <el-button @click="nextStackCard" :disabled="currentStackIndex >= filteredWords.length - 1">
-          下一张
+      <!-- 右侧导航按钮 -->
+      <div class="stack-nav-right">
+        <el-button 
+          @click="nextStackCard" 
+          :disabled="currentStackIndex >= filteredWords.length - 1"
+          class="stack-nav-btn"
+          circle
+        >
           <el-icon><ArrowRight /></el-icon>
         </el-button>
+      </div>
+      
+      <!-- 底部进度显示 -->
+      <div class="stack-progress-bottom">
+        <span class="stack-progress">{{ currentStackIndex + 1 }} / {{ filteredWords.length }}</span>
       </div>
     </div>
 
@@ -839,13 +856,13 @@ const getStackCardStyle = (index: number) => {
     }
   }
   
-  // 叠层卡片：左右偏移，模拟卡片厚度
-  const horizontalOffset = index % 2 === 1 ? 15 : -10 // 左右交替偏移，增加偏移量
-  const verticalOffset = index * 8 // 垂直偏移，模拟卡片厚度
+  // 叠层卡片：增强不整齐感，模拟真实卡片堆叠
+  const horizontalOffset = index % 2 === 1 ? 25 : -18 // 增加左右偏移量
+  const verticalOffset = index * 10 // 增加垂直偏移，模拟更厚的卡片
   const zIndex = stackSize - index
   
-  // 添加轻微的旋转，让卡片看起来更自然
-  const rotation = index % 2 === 1 ? 1 : -0.5 // 左右交替轻微旋转
+  // 增强旋转角度，让卡片看起来更自然和不整齐
+  const rotation = index % 2 === 1 ? 2.5 : -1.8 // 增加旋转角度
   
   return {
     transform: `translateY(${verticalOffset}px) translateX(${horizontalOffset}px) rotate(${rotation}deg)`,
@@ -2905,9 +2922,12 @@ const showDictationHint = () => {
 /* 叠层视图容器 */
 .word-stack-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   margin-bottom: 20px;
+  position: relative;
+  min-height: 500px;
 }
 
 .word-stack {
@@ -2965,23 +2985,63 @@ const showDictationHint = () => {
   background: transparent;
 }
 
-/* 叠层视图控制 */
-.stack-controls {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%);
-  border-radius: 16px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+/* 左右导航按钮 */
+.stack-nav-left, .stack-nav-right {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+.stack-nav-left {
+  left: 20px;
+}
+
+.stack-nav-right {
+  right: 20px;
+}
+
+.stack-nav-btn {
+  width: 60px !important;
+  height: 60px !important;
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s ease !important;
+}
+
+.stack-nav-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.stack-nav-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* 底部进度显示 */
+.stack-progress-bottom {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
 }
 
 .stack-progress {
   font-weight: 600;
   color: var(--text-primary);
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   min-width: 80px;
   text-align: center;
 }
