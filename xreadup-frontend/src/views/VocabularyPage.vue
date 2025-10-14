@@ -36,6 +36,19 @@
                 闪卡式批量复习
               </TactileButton>
               <TactileButton
+                @click="startWordSpeedReview"
+                variant="success"
+                size="lg"
+                :loading="isSpeedReviewLoading"
+                :disabled="!userStore.isLoggedIn || speedReviewWordsCount === 0"
+                class="learning-mode-button"
+              >
+                <template #icon>
+                  <el-icon><Collection /></el-icon>
+                </template>
+                单词速刷
+              </TactileButton>
+              <TactileButton
                 @click="startBatchDictation"
                 variant="secondary"
                 size="lg"
@@ -104,7 +117,7 @@
           size="small"
         >
           <el-icon><Collection /></el-icon>
-          单词速刷
+          叠层视图
         </el-button>
       </el-button-group>
     </div>
@@ -281,33 +294,40 @@
       </el-card>
     </div>
 
-    <!-- 单词速刷模式 -->
+    <!-- 叠层视图 -->
     <div v-if="viewMode === 'stack'" class="word-stack-container">
-      <!-- 速刷模式指示器 -->
-      <div class="quick-review-header">
-        <div class="mode-indicator">
-          <el-icon><Collection /></el-icon>
-          <span>单词速刷模式</span>
+      <!-- 速刷模式头部 -->
+      <div v-if="isSpeedReviewMode" class="speed-review-header">
+        <div class="speed-review-info">
+          <h3>🚀 单词速刷模式</h3>
+          <div class="speed-progress">
+            <span>{{ currentSpeedReviewIndex + 1 }} / {{ speedReviewStats.total }}</span>
+            <div class="progress-bar">
+              <div 
+                class="progress-fill" 
+                :style="{ width: `${((currentSpeedReviewIndex + 1) / speedReviewStats.total) * 100}%` }"
+              ></div>
+            </div>
+          </div>
         </div>
-        <div class="quick-actions">
+        <div class="speed-actions">
           <TactileButton 
-            @click="markCurrentAsMastered" 
+            @click="markSpeedReviewAsMastered" 
             variant="success" 
             size="sm"
-            :disabled="!currentWord"
           >
             ✓ 已掌握
           </TactileButton>
           <TactileButton 
-            @click="skipCurrentWord" 
+            @click="skipSpeedReviewWord" 
             variant="warning" 
             size="sm"
-            :disabled="!currentWord"
           >
             ⏭ 跳过
           </TactileButton>
         </div>
       </div>
+      
       <!-- 左侧导航按钮 -->
       <div class="stack-nav-left">
         <el-button 
@@ -833,6 +853,18 @@ const dictationFeedback = ref<{type: string, message: string, details?: string} 
 const dictationShowHint = ref(false)
 const dictationHintLength = ref(1)
 
+// 单词速刷模式相关状态
+const isSpeedReviewMode = ref(false)
+const isSpeedReviewLoading = ref(false)
+const speedReviewWords = ref<WordItem[]>([])
+const currentSpeedReviewIndex = ref(0)
+const speedReviewStats = ref({
+  total: 0,
+  mastered: 0,
+  skipped: 0,
+  startTime: null as Date | null
+})
+
 const filteredWords = computed(() => {
   let result = words.value
 
@@ -850,6 +882,46 @@ const filteredWords = computed(() => {
   return result
 })
 
+// 判断单词是否需要复习
+const isTimeToReview = (word: WordItem) => {
+  const now = new Date()
+  const lastReview = new Date(word.lastReviewTime || word.createdAt)
+  const daysSinceLastReview = (now.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24)
+  
+  // 根据复习次数确定间隔（艾宾浩斯记忆曲线）
+  const intervals = [1, 2, 4, 7, 15, 30] // 天
+  const reviewCount = word.reviewCount || 0
+  const nextInterval = intervals[Math.min(reviewCount, intervals.length - 1)]
+  
+  return daysSinceLastReview >= nextInterval
+}
+
+// 判断单词是否应该进入速刷
+const shouldReviewWord = (word: WordItem) => {
+  // 1. 未复习的单词必须复习
+  if (word.reviewStatus === 'unreviewed') return true
+  
+  // 2. 已逾期必须复习
+  if (word.reviewStatus === 'overdue') return true
+  
+  // 3. 复习中的单词按时间间隔判断
+  if (word.reviewStatus === 'reviewing') {
+    return isTimeToReview(word)
+  }
+  
+  // 4. 已掌握的单词（可选巩固）
+  if (word.reviewStatus === 'mastered' && !word.noLongerReview) {
+    return isTimeToReview(word)
+  }
+  
+  return false
+}
+
+// 获取需要速刷的单词
+const speedReviewWordsCount = computed(() => {
+  return filteredWords.value.filter(shouldReviewWord).length
+})
+
 // 分页后的数据
 const paginatedWords = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -859,7 +931,16 @@ const paginatedWords = computed(() => {
 
 // 叠层视图数据 - 按状态排序：未复习 → 复习中 → 已掌握
 const visibleStackWords = computed(() => {
-  // 按状态优先级排序
+  // 速刷模式使用速刷单词列表
+  if (isSpeedReviewMode.value) {
+    const start = currentSpeedReviewIndex.value
+    const remainingWords = speedReviewWords.value.length - start
+    const dynamicStackSize = Math.min(remainingWords, 8)
+    const end = start + dynamicStackSize
+    return speedReviewWords.value.slice(start, end)
+  }
+  
+  // 普通模式按状态优先级排序
   const sortedWords = [...filteredWords.value].sort((a, b) => {
     const statusOrder = { 'unreviewed': 0, 'reviewing': 1, 'mastered': 2, 'overdue': 0 }
     return statusOrder[a.reviewStatus] - statusOrder[b.reviewStatus]
@@ -988,31 +1069,6 @@ const handleStackCardClick = (index: number) => {
   }
 }
 
-// 速刷模式快捷操作
-const markCurrentAsMastered = async () => {
-  if (currentWord.value) {
-    try {
-      // 使用现有的单词更新方法
-      await vocabularyApi.updateWord(currentWord.value.id, {
-        ...currentWord.value,
-        reviewStatus: 'mastered'
-      })
-      ElMessage.success('已标记为掌握')
-      // 刷新单词列表
-      await loadWords()
-      // 自动切换到下一张
-      nextStackCard()
-    } catch (error) {
-      ElMessage.error('操作失败')
-    }
-  }
-}
-
-const skipCurrentWord = () => {
-  // 直接跳过当前单词
-  nextStackCard()
-}
-
 // 重置卡片动画状态
 const resetCardAnimation = () => {
   // 重置所有卡片的动画状态
@@ -1038,18 +1094,111 @@ const resetCardAnimation = () => {
   })
 }
 
+// 单词速刷相关方法
+const startWordSpeedReview = async () => {
+  try {
+    isSpeedReviewLoading.value = true
+    
+    // 获取需要速刷的单词
+    const wordsToReview = filteredWords.value.filter(shouldReviewWord)
+    
+    if (wordsToReview.length === 0) {
+      ElMessage.info('暂无需要速刷的单词')
+      return
+    }
+    
+    // 初始化速刷状态
+    speedReviewWords.value = wordsToReview
+    currentSpeedReviewIndex.value = 0
+    speedReviewStats.value = {
+      total: wordsToReview.length,
+      mastered: 0,
+      skipped: 0,
+      startTime: new Date()
+    }
+    
+    // 切换到叠层视图
+    viewMode.value = 'stack'
+    currentStackIndex.value = 0
+    isSpeedReviewMode.value = true
+    
+    ElMessage.success(`开始单词速刷，共 ${wordsToReview.length} 个单词`)
+    
+  } catch (error) {
+    ElMessage.error('启动速刷失败')
+  } finally {
+    isSpeedReviewLoading.value = false
+  }
+}
+
+const markSpeedReviewAsMastered = async () => {
+  const currentWord = speedReviewWords.value[currentSpeedReviewIndex.value]
+  if (!currentWord) return
+  
+  try {
+    // 更新单词状态
+    await vocabularyApi.updateWordStatus(currentWord.id, {
+      reviewStatus: 'mastered',
+      reviewCount: (currentWord.reviewCount || 0) + 1,
+      lastReviewTime: new Date().toISOString()
+    })
+    
+    // 更新统计
+    speedReviewStats.value.mastered++
+    
+    // 刷新单词列表
+    await loadWords()
+    
+    // 切换到下一张
+    nextSpeedReviewCard()
+    
+  } catch (error) {
+    ElMessage.error('标记失败')
+  }
+}
+
+const skipSpeedReviewWord = () => {
+  // 更新统计
+  speedReviewStats.value.skipped++
+  
+  // 切换到下一张
+  nextSpeedReviewCard()
+}
+
+const nextSpeedReviewCard = () => {
+  if (currentSpeedReviewIndex.value < speedReviewWords.value.length - 1) {
+    currentSpeedReviewIndex.value++
+    currentStackIndex.value++
+  } else {
+    // 速刷完成
+    finishSpeedReview()
+  }
+}
+
+const finishSpeedReview = () => {
+  const duration = speedReviewStats.value.startTime 
+    ? Math.round((new Date().getTime() - speedReviewStats.value.startTime.getTime()) / 1000 / 60)
+    : 0
+  
+  ElMessageBox.alert(
+    `速刷完成！\n\n总单词数: ${speedReviewStats.value.total}\n已掌握: ${speedReviewStats.value.mastered}\n跳过: ${speedReviewStats.value.skipped}\n用时: ${duration} 分钟`,
+    '速刷完成',
+    {
+      confirmButtonText: '确定',
+      type: 'success'
+    }
+  )
+  
+  // 退出速刷模式
+  isSpeedReviewMode.value = false
+  viewMode.value = 'grid'
+  currentStackIndex.value = 0
+}
+
 // 当前复习单词
 const currentReviewWord = computed(() => {
   if (reviewWords.value.length > 0 && currentReviewIndex.value < reviewWords.value.length) {
     return reviewWords.value[currentReviewIndex.value]
-  }
-  return null
-})
-
-// 当前速刷单词
-const currentWord = computed(() => {
-  if (visibleStackWords.value.length > 0) {
-    return visibleStackWords.value[0]
   }
   return null
 })
@@ -3067,11 +3216,24 @@ const showDictationHint = () => {
   text-align: center;
 }
 
+/* 叠层视图容器 */
+.word-stack-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+  min-height: 500px;
+}
+
 /* 速刷模式头部 */
-.quick-review-header {
+.speed-review-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  max-width: 600px;
   margin-bottom: 20px;
   padding: 16px 24px;
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.9) 100%);
@@ -3082,35 +3244,45 @@ const showDictationHint = () => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.mode-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.speed-review-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
-  font-size: 16px;
 }
 
-.mode-indicator .el-icon {
-  font-size: 20px;
-  color: var(--color-primary);
-}
-
-.quick-actions {
+.speed-progress {
   display: flex;
+  align-items: center;
   gap: 12px;
-  align-items: center;
 }
 
-/* 叠层视图容器 */
-.word-stack-container {
+.speed-progress span {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  min-width: 60px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #67c23a 0%, #85ce61 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.speed-actions {
   display: flex;
-  flex-direction: row;
+  gap: 8px;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  position: relative;
-  min-height: 500px;
 }
 
 .word-stack {
