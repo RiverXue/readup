@@ -905,6 +905,26 @@ const speedReviewWordsCount = computed(() => {
     // 让我们先不包含这些单词，看看是否能匹配API
     const otherSpecialWords: WordItem[] = []
     
+    // 检查API是否包含了某些mastered状态的单词
+    // 让我们尝试包含一些mastered状态的单词，看看是否能匹配API
+    const masteredWordsForAPI = words.value.filter((word: WordItem) =>
+      word.nextReviewTime &&
+      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
+      word.reviewStatus === 'mastered' &&
+      !word.noLongerReview &&
+      // 只包含时间差异较小的mastered单词（比如明天到期的）
+      new Date(word.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime() <= 24 * 60 * 60 * 1000 // 24小时内
+    )
+    
+    console.log('可能被API包含的mastered单词数:', masteredWordsForAPI.length)
+    console.log('可能被API包含的mastered单词详情:', masteredWordsForAPI.map(w => ({
+      id: w.id,
+      word: w.word,
+      reviewStatus: w.reviewStatus,
+      nextReviewTime: w.nextReviewTime,
+      timeDiff: new Date(w.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime()
+    })))
+    
     console.log('特殊处理的单词数:', specialWords.length)
     console.log('特殊处理单词状态分布:', specialWords.reduce((acc, w) => {
       acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
