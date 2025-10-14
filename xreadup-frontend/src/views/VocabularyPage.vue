@@ -100,27 +100,6 @@
     </div>
 
 
-    <!-- 视图切换按钮 -->
-    <div class="view-toggle">
-      <el-button-group>
-        <el-button 
-          :type="viewMode === 'grid' ? 'primary' : ''" 
-          @click="viewMode = 'grid'"
-          size="small"
-        >
-          <el-icon><Grid /></el-icon>
-          网格视图
-        </el-button>
-        <el-button 
-          :type="viewMode === 'stack' ? 'primary' : ''" 
-          @click="viewMode = 'stack'"
-          size="small"
-        >
-          <el-icon><Collection /></el-icon>
-          叠层视图
-        </el-button>
-      </el-button-group>
-    </div>
 
     <!-- 网格视图 -->
     <div v-if="viewMode === 'grid'" class="word-cards">
@@ -263,15 +242,6 @@
         <!-- 操作按钮 -->
         <div class="word-actions">
           <TactileButton
-            @click="reviewWord(word)"
-            variant="primary"
-            size="sm"
-            :loading="isReviewing && reviewingWordId === word.id"
-            :disabled="isReviewing && reviewingWordId === word.id"
-          >
-            复习
-          </TactileButton>
-          <TactileButton
             @click="handleDictateWord(word)"
             variant="secondary"
             size="sm"
@@ -310,27 +280,23 @@
             </div>
           </div>
         </div>
-        <div class="speed-actions">
-          <TactileButton 
-            @click="markSpeedReviewAsMastered" 
-            variant="success" 
-            size="sm"
-          >
-            ✓ 已掌握
-          </TactileButton>
-          <TactileButton 
-            @click="skipSpeedReviewWord" 
-            variant="warning" 
-            size="sm"
-          >
-            ⏭ 跳过
-          </TactileButton>
-        </div>
       </div>
       
       <!-- 左侧导航按钮 -->
       <div class="stack-nav-left">
+        <div v-if="isSpeedReviewMode" class="speed-nav-buttons">
+          <TactileButton 
+            @click="previousSpeedReviewCard" 
+            :disabled="currentSpeedReviewIndex === 0"
+            variant="secondary" 
+            size="sm"
+            class="speed-nav-btn"
+          >
+            ← 上一张
+          </TactileButton>
+        </div>
         <el-button 
+          v-else
           @click="previousStackCard" 
           :disabled="currentStackIndex === 0"
           class="stack-nav-btn"
@@ -338,7 +304,7 @@
         >
           <el-icon><ArrowLeft /></el-icon>
           </el-button>
-          </div>
+      </div>
       
       <!-- 单词堆叠区域 -->
       <div class="word-stack">
@@ -451,7 +417,7 @@
             <div class="word-content">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <h3 class="word-text">{{ word.word }}</h3>
-                <el-button
+          <el-button
                   @click="handleSpeakWord(word.word)"
                   size="default"
                   type="text"
@@ -472,25 +438,16 @@
             <!-- 操作按钮 -->
             <div class="word-actions">
               <TactileButton
-                @click="reviewWord(word)"
-                variant="primary"
-                size="sm"
-                :loading="isReviewing && reviewingWordId === word.id"
-                :disabled="isReviewing && reviewingWordId === word.id"
-              >
-                复习
-              </TactileButton>
-              <TactileButton
-                @click="handleDictateWord(word)"
+            @click="handleDictateWord(word)"
                 variant="secondary"
                 size="sm"
-                :disabled="isReviewing && reviewingWordId === word.id"
+            :disabled="isReviewing && reviewingWordId === word.id"
               >
                 听写
               </TactileButton>
               <TactileButton
-                v-if="word.reviewStatus === 'mastered' && !word.noLongerReview"
-                @click="setWordAsNoLongerReview(word)"
+            v-if="word.reviewStatus === 'mastered' && !word.noLongerReview"
+            @click="setWordAsNoLongerReview(word)"
                 variant="warning"
                 size="sm"
               >
@@ -506,7 +463,26 @@
 
       <!-- 右侧导航按钮 -->
       <div class="stack-nav-right">
+        <div v-if="isSpeedReviewMode" class="speed-nav-buttons">
+          <TactileButton 
+            @click="markSpeedReviewAsMastered" 
+            variant="success" 
+            size="sm"
+            class="speed-nav-btn"
+          >
+            ✓ 已掌握
+          </TactileButton>
+          <TactileButton 
+            @click="skipSpeedReviewWord" 
+            variant="warning" 
+            size="sm"
+            class="speed-nav-btn"
+          >
+            ⏭ 跳过
+          </TactileButton>
+        </div>
         <el-button 
+          v-else
           @click="nextStackCard" 
           :disabled="currentStackIndex >= filteredWords.length - 1"
           class="stack-nav-btn"
@@ -1122,6 +1098,16 @@ const startWordSpeedReview = async () => {
     currentStackIndex.value = 0
     isSpeedReviewMode.value = true
     
+    // 自动滚动到堆叠视图
+    await nextTick()
+    const stackContainer = document.querySelector('.word-stack-container')
+    if (stackContainer) {
+      stackContainer.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      })
+    }
+    
     ElMessage.success(`开始单词速刷，共 ${wordsToReview.length} 个单词`)
     
   } catch (error) {
@@ -1172,6 +1158,13 @@ const nextSpeedReviewCard = () => {
   } else {
     // 速刷完成
     finishSpeedReview()
+  }
+}
+
+const previousSpeedReviewCard = () => {
+  if (currentSpeedReviewIndex.value > 0) {
+    currentSpeedReviewIndex.value--
+    currentStackIndex.value--
   }
 }
 
@@ -3283,6 +3276,20 @@ const showDictationHint = () => {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* 速刷导航按钮 */
+.speed-nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.speed-nav-btn {
+  min-width: 80px;
+  font-size: 12px;
+  padding: 8px 12px;
 }
 
 .word-stack {
