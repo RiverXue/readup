@@ -31,7 +31,7 @@
           size="large"
           style="width: 180px; margin-right: 10px;"
           :disabled="!canFetchCategory || isLoadingCategory"
-          :tooltip="!canFetchCategory ? '升级基础会员解锁此功能' : ''"
+          :tooltip="!canFetchCategory ? '升级基础会员及以上解锁此功能' : ''"
         >
           <el-option label="科技" value="technology" />
           <el-option label="健康" value="health" />
@@ -42,26 +42,28 @@
           <el-option label="旅行" value="travel" />
           <el-option label="美食" value="food" />
         </el-select>
-        <TactileButton
-          :variant="userStore.userTier === 'basic' ? 'primary' : (isPremiumUser ? 'primary' : 'secondary')"
-          :loading="isLoadingCategory"
-          :disabled="!selectedCategory || !canFetchCategory || isLoadingCategory"
-          @click="fetchCategoryArticles"
-          class="discovery-button"
-          size="lg"
-        >
-          <template #icon>
-          <MagicStickIcon />
-        </template>
-          获取主题文章
-          <!-- 为所有用户显示基础会员标签 -->
-          <span class="basic-badge">基础会员</span>
-        </TactileButton>
+        <div class="button-with-tag">
+          <TactileButton
+            :variant="userStore.userTier === 'basic' ? 'primary' : (isPremiumUser ? 'primary' : 'secondary')"
+            :loading="isLoadingCategory"
+            :disabled="!selectedCategory || !canFetchCategory || isLoadingCategory"
+            @click="fetchCategoryArticles"
+            class="discovery-button"
+            size="lg"
+          >
+            <template #icon>
+            <MagicStickIcon />
+          </template>
+            获取主题文章
+          </TactileButton>
+          <!-- 会员等级标签 -->
+          <span class="membership-tag basic">基础会员+</span>
+        </div>
         <!-- 为非基础会员显示提示 -->
         <el-tooltip
           v-if="userStore.userTier === 'free'"
           effect="dark"
-          content="升级到基础会员解锁固定主题探索功能"
+          content="升级到基础会员及以上解锁固定主题探索功能"
           placement="top"
         >
           <div class="pro-feature-tag">基础会员功能</div>
@@ -77,30 +79,33 @@
           size="large"
           style="width: 220px; margin-right: 10px;"
           :disabled="isLoadingCustomTopic || !isProOrEnterpriseUser"
-          :tooltip="!isProOrEnterpriseUser ? '升级高级会员解锁此功能' : ''"
+          :tooltip="!isProOrEnterpriseUser ? '升级专业会员及以上解锁此功能' : ''"
         />
-        <TactileButton
-          variant="primary"
-          :loading="isLoadingCustomTopic"
-          :disabled="!customTopic || !canFetchCustomTopic || isLoadingCustomTopic"
-          @click="fetchCustomTopicArticles"
-          class="discovery-button"
-          size="lg"
-        >
-          <template #icon>
-            <SearchIcon />
-          </template>
-          搜索主题
-          <span class="premium-badge">高级会员</span>
-        </TactileButton>
+        <div class="button-with-tag">
+          <TactileButton
+            variant="primary"
+            :loading="isLoadingCustomTopic"
+            :disabled="!customTopic || !canFetchCustomTopic || isLoadingCustomTopic"
+            @click="fetchCustomTopicArticles"
+            class="discovery-button"
+            size="lg"
+          >
+            <template #icon>
+              <SearchIcon />
+            </template>
+            搜索主题
+          </TactileButton>
+          <!-- 会员等级标签 -->
+          <span class="membership-tag pro">专业会员+</span>
+        </div>
         <!-- 为非高级会员显示提示 -->
         <el-tooltip
           v-if="!isProOrEnterpriseUser"
           effect="dark"
-          content="升级到高级会员解锁自定义主题搜索功能"
+          content="升级到专业会员及以上解锁自定义主题搜索功能"
           placement="top"
         >
-          <div class="pro-feature-tag">高级会员功能</div>
+          <div class="pro-feature-tag">专业会员功能</div>
         </el-tooltip>
       </div>
     </div>
@@ -115,7 +120,7 @@
           class="upgrade-button"
           @click="navigateToSubscription"
         >
-          {{ userStore.userTier === 'free' ? '升级基础会员' : '升级高级会员' }}
+          {{ userStore.userTier === 'free' ? '升级基础会员+' : '升级专业会员+' }}
         </el-button>
       </div>
 
@@ -648,22 +653,44 @@ const fetchCustomTopicArticles = async () => {
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
-/* 优化标签样式和位置 */
-.premium-badge, .basic-badge {
+/* 按钮和标签容器 */
+.button-with-tag {
+  position: relative;
+  display: inline-block;
+}
+
+/* 会员等级标签样式 */
+.membership-tag {
   position: absolute;
   top: -8px;
   right: -8px;
-  background: #ff6700;
-  color: #fff;
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
   padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 500;
   border-radius: 12px;
-  font-weight: normal;
   white-space: nowrap;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.basic-badge {
+.membership-tag.basic {
   background: #409eff;
+  color: #fff;
+  border: 1px solid #409eff;
+}
+
+.membership-tag.pro {
+  background: #ff6700;
+  color: #fff;
+  border: 1px solid #ff6700;
+}
+
+.membership-tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .basic-feature-tag {
@@ -1075,7 +1102,7 @@ const fetchCustomTopicArticles = async () => {
     font-size: 13px;
   }
 
-  .premium-badge, .basic-badge {
+  .membership-tag {
     font-size: 9px;
     padding: 2px 6px;
     top: -6px;

@@ -84,7 +84,7 @@ XReadUp 设计系统是一个基于 Vue 3 + TypeScript 的现代化 UI 设计系
 
 #### 字体族
 ```css
-:root {
+  :root {
   --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
@@ -563,7 +563,7 @@ import { SmartLoading } from '@/components/common/SmartLoading.vue'
       <div class="card__header">
         <h2 class="card__title">学习进度</h2>
         <span class="capsule-tag capsule-tag--success">已完成</span>
-      </div>
+  </div>
       
       <div class="card__content">
         <p class="text-secondary">今日学习单词：<span class="text-primary font-semibold">25</span></p>
