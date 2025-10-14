@@ -2237,7 +2237,7 @@ const showDictationHint = () => {
 /* 单词卡片样式 */
 .word-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 18px;
   margin-bottom: 20px;
 }
