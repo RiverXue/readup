@@ -242,14 +242,6 @@
         <!-- 操作按钮 -->
         <div class="word-actions">
           <TactileButton
-            @click="handleDictateWord(word)"
-            variant="secondary"
-            size="sm"
-            :disabled="isReviewing && reviewingWordId === word.id"
-          >
-            听写
-          </TactileButton>
-          <TactileButton
             v-if="word.reviewStatus === 'mastered' && !word.noLongerReview"
             @click="setWordAsNoLongerReview(word)"
             variant="warning"
@@ -257,9 +249,18 @@
           >
             不巩固
           </TactileButton>
-          <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
-            删除
-          </TactileButton>
+        </div>
+        
+        <!-- 删除按钮 - 右下角垃圾桶图标 -->
+        <div class="word-delete-btn">
+          <el-button
+            @click="deleteWord(word)"
+            type="danger"
+            :icon="Delete"
+            circle
+            size="small"
+            class="delete-icon-btn"
+          />
         </div>
       </el-card>
     </div>
@@ -438,14 +439,6 @@
             <!-- 操作按钮 -->
             <div class="word-actions">
               <TactileButton
-            @click="handleDictateWord(word)"
-                variant="secondary"
-                size="sm"
-            :disabled="isReviewing && reviewingWordId === word.id"
-              >
-                听写
-              </TactileButton>
-              <TactileButton
             v-if="word.reviewStatus === 'mastered' && !word.noLongerReview"
             @click="setWordAsNoLongerReview(word)"
                 variant="warning"
@@ -453,10 +446,19 @@
               >
                 不巩固
               </TactileButton>
-              <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
-                删除
-              </TactileButton>
-        </div>
+            </div>
+            
+            <!-- 删除按钮 - 右下角垃圾桶图标 -->
+            <div class="word-delete-btn">
+              <el-button
+                @click="deleteWord(word)"
+                type="danger"
+                :icon="Delete"
+                circle
+                size="small"
+                class="delete-icon-btn"
+              />
+            </div>
       </el-card>
         </div>
     </div>
@@ -778,7 +780,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, ElLoading, ElDialog, ElInput } from 'element-plus'
-import { Grid, Collection, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { Grid, Collection, ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue'
 import { vocabularyApi, learningApi, reportApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import type { ReviewWordDto } from '@/types/report'
@@ -1123,11 +1125,7 @@ const markSpeedReviewAsMastered = async () => {
   
   try {
     // 更新单词状态
-    await vocabularyApi.updateWordStatus(currentWord.id, {
-      reviewStatus: 'mastered',
-      reviewCount: (currentWord.reviewCount || 0) + 1,
-      lastReviewTime: new Date().toISOString()
-    })
+    await vocabularyApi.reviewWord(userStore.userInfo?.id || '', Number(currentWord.id), 'mastered')
     
     // 更新统计
     speedReviewStats.value.mastered++
@@ -3203,6 +3201,31 @@ const showDictationHint = () => {
   align-items: center;
 }
 
+/* 删除按钮 - 右下角垃圾桶图标 */
+.word-delete-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.delete-icon-btn {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  background: rgba(245, 108, 108, 0.1) !important;
+  border: 1px solid rgba(245, 108, 108, 0.3) !important;
+  color: #f56c6c !important;
+  transition: all 0.3s ease !important;
+}
+
+.delete-icon-btn:hover {
+  background: rgba(245, 108, 108, 0.2) !important;
+  border-color: #f56c6c !important;
+  transform: scale(1.1) !important;
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
+}
+
 /* 视图切换按钮 */
 .view-toggle {
   margin-bottom: 20px;
@@ -3223,7 +3246,7 @@ const showDictationHint = () => {
 /* 速刷模式头部 */
 .speed-review-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   width: 100%;
   max-width: 600px;
@@ -3235,6 +3258,7 @@ const showDictationHint = () => {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
 .speed-review-info h3 {
