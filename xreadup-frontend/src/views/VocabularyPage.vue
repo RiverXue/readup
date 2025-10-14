@@ -872,8 +872,15 @@ const speedReviewWordsCount = computed(() => {
     
     const wordsByStatus = words.value.filter((word: WordItem) =>
       !word.nextReviewTime &&
-      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
+      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing') &&
+      !word.noLongerReview // 排除不再巩固的单词
     )
+    
+    console.log('基于状态的单词数量:', wordsByStatus.length)
+    console.log('基于状态的单词状态分布:', wordsByStatus.reduce((acc, w) => {
+      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
+      return acc
+    }, {} as Record<string, number>))
     
     // 特殊处理：某些状态的单词即使时间超过今日，也可能需要复习
     const specialWords = words.value.filter((word: WordItem) =>
