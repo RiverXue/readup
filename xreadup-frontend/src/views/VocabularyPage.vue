@@ -103,7 +103,7 @@
             <!-- 新的进度条实现 - 与对勾对齐 -->
             <div class="aligned-progress-container">
               <!-- 状态指示器和进度条标题 -->
-              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 600; font-size: 11px; color: #909399;">
+              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
                 <div style="display: flex; align-items: center;">
                   <div class="status-indicator reviewing" style="margin-right: 8px; margin-bottom: 0;">
                     <span class="status-icon">•</span>
@@ -156,7 +156,7 @@
           <div v-else-if="word.reviewStatus === 'mastered' && !word.noLongerReview" class="review-progress">
             <div class="aligned-progress-container">
               <!-- 状态指示器和进度条标题 -->
-              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 600; font-size: 11px; color: #909399;">
+              <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
                 <div style="display: flex; align-items: center;">
                   <div class="status-indicator mastered" style="margin-right: 8px; margin-bottom: 0;">
                     <span class="status-icon">✓</span>
@@ -2413,14 +2413,14 @@ const showDictationHint = () => {
   display: inline-flex;
   align-items: center;
   margin-bottom: 0;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 16px;
+  padding: 6px 12px;
+  border-radius: 20px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
@@ -2461,11 +2461,11 @@ const showDictationHint = () => {
 /* 现代化进度条设计 */
 .new-progress-bar {
   position: relative;
-  height: 4px;
+  height: 6px;
   background: linear-gradient(90deg, 
     rgba(0, 0, 0, 0.05) 0%, 
     rgba(0, 0, 0, 0.08) 100%);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: visible;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
