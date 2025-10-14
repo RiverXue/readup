@@ -848,7 +848,7 @@ const shouldReviewWord = (word: WordItem) => {
 
 // 获取需要速刷的单词数量 - 与闪卡式复习和批量听写保持一致
 const speedReviewWordsCount = computed(() => {
-  // 优先使用本地计算的待复习单词数（与loadStats中的逻辑一致）
+  // 使用与loadStats相同的逻辑，确保与统计显示一致
   if (words.value.length > 0) {
     const locallyNeedingReview = words.value.filter((word: WordItem) =>
       word.nextReviewTime &&
@@ -1052,6 +1052,10 @@ const startWordSpeedReview = async () => {
     // 更健壮地处理数据，确保数据是数组并包含正确的字段
     let todayReviews = Array.isArray(response?.data) ? response.data : []
 
+    // 调试日志：显示API返回的数量和本地计算的数量
+    console.log('API返回的复习单词数量:', todayReviews.length)
+    console.log('本地计算的复习单词数量:', speedReviewWordsCount.value)
+
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
       const localReviewWords = words.value.filter((word: WordItem) =>
@@ -1063,6 +1067,7 @@ const startWordSpeedReview = async () => {
       if (localReviewWords.length > 0) {
         // 使用本地找到的单词作为速刷内容
         todayReviews = localReviewWords
+        console.log('使用本地筛选的单词数量:', localReviewWords.length)
       } else {
         ElMessage.info('暂无需要速刷的单词')
         return
