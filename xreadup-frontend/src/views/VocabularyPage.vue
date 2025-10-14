@@ -93,7 +93,7 @@
         v-for="word in paginatedWords"
         :key="word.id"
         class="word-card"
-        :body-style="{ padding: '20px' }"
+        :body-style="{ padding: '18px' }"
         :data-status="word.reviewStatus"
       >
         <!-- 状态指示区域 - 为所有状态提供直观的视觉提示 -->
@@ -2237,8 +2237,8 @@ const showDictationHint = () => {
 /* 单词卡片样式 */
 .word-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
   margin-bottom: 20px;
 }
 
@@ -2569,9 +2569,9 @@ const showDictationHint = () => {
 
 /* 主要信息：单词本身 - 最大最醒目 */
 .word-text {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #303133;
   letter-spacing: 0.5px;
   line-height: 1.2;
@@ -2580,9 +2580,9 @@ const showDictationHint = () => {
 /* 次要信息：音标 - 中等大小，辅助阅读 */
 .word-phonetic {
   color: #909399;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   font-style: italic;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   letter-spacing: 0.3px;
 }
@@ -2590,28 +2590,28 @@ const showDictationHint = () => {
 /* 核心信息：释义 - 重要但略小于单词 */
 .word-meaning {
   color: #606266;
-  margin-bottom: 12px;
-  line-height: 1.6;
-  font-size: 18px;
+  margin-bottom: 10px;
+  line-height: 1.5;
+  font-size: 16px;
   font-weight: 500;
 }
 
 /* 辅助信息：例句 - 较小字体，背景区分 */
 .word-example {
   color: #909399;
-  font-size: 15px;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  font-size: 14px;
+  margin-bottom: 10px;
+  line-height: 1.4;
   background: rgba(0, 0, 0, 0.03);
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
   border-left: 3px solid var(--color-primary);
 }
 
 /* 元信息：添加时间 - 最小字体，最淡颜色 */
 .word-date {
   color: #c0c4cc;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
 }
 
@@ -2779,19 +2779,19 @@ const showDictationHint = () => {
   }
 
   .word-text {
-    font-size: 24px;
+    font-size: 22px;
   }
   
   .word-phonetic {
-    font-size: 16px;
+    font-size: 14px;
   }
   
   .word-meaning {
-    font-size: 16px;
+    font-size: 14px;
   }
   
   .word-example {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .review-word {
