@@ -1,1203 +1,646 @@
-# XReadUp Frontend 设计系统文档
+# XReadUp 设计系统
 
 <div align="center">
 
-![Design System](https://img.shields.io/badge/Design_System-XReadUp-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.0.43-green.svg)
-![Status](https://img.shields.io/badge/Status-Production_Ready-success.svg)
-
-**现代化双系统前端设计规范**
+![Design System](https://img.shields.io/badge/Design_System-v1.0.0-blue.svg)
+![Vue](https://img.shields.io/badge/Vue-3.5.18-4FC08D?logo=vue.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8.0-3178C6?logo=typescript)
 
 </div>
 
-## 📋 设计系统概述
+## 📖 设计系统概述
 
-XReadUp Frontend 设计系统是一个完整的视觉和交互设计规范，专为智能英语学习平台打造。系统采用现代化的设计理念，支持双系统架构（用户端+管理员端），确保整个应用的视觉一致性和用户体验的连贯性。
+XReadUp 设计系统是一个基于 Vue 3 + TypeScript 的现代化 UI 设计系统，融合了 iOS 26 设计语言和 Airbnb 的温暖美学，为智能英语学习平台提供一致且优雅的用户体验。
 
-## 🎨 设计理念
+### 🎯 设计原则
 
-### 核心设计原则
+- **一致性** - 统一的视觉语言和交互模式
+- **可访问性** - 支持多种设备和用户需求
+- **可扩展性** - 易于维护和扩展的组件架构
+- **现代化** - 采用最新的设计趋势和技术
 
-1. **用户为中心**：以学习者的需求为核心，提供直观、高效的学习体验
-2. **双系统统一**：用户端和管理员端保持设计语言一致，但功能区分明确
-3. **现代化简约**：采用现代扁平化设计，减少视觉干扰，突出内容
-4. **响应式优先**：移动端优先设计，确保多设备一致性体验
-5. **无障碍友好**：支持键盘导航、屏幕阅读器等无障碍功能
+## 🎨 视觉设计
 
-### 设计语言
+### 设计理念
 
-- **风格**：现代简约、专业可信
-- **调性**：温暖友好、专业高效
-- **情感**：鼓励学习、成就导向
+#### Liquid Glass 效果
+- **玻璃态背景** - 半透明模糊效果，现代感十足
+- **柔和阴影** - 多层次阴影系统，增强层次感
+- **边框光效** - 微妙的边框高光，提升质感
 
-## 🌈 色彩系统
+#### iOS 26 风格
+- **简洁直观** - 符合用户习惯的交互模式
+- **圆角设计** - 柔和的圆角，友好的视觉感受
+- **层次分明** - 清晰的信息层级和视觉权重
 
-### 主色调系统
+#### Airbnb 温暖美学
+- **温馨色彩** - 温暖而舒适的配色方案
+- **友好交互** - 人性化的交互反馈
+- **情感化设计** - 注重用户体验的情感连接
 
-#### Element Plus 色彩体系
+### 色彩系统
+
+#### 主色调
 ```css
 :root {
-  /* 主色调 */
-  --el-color-primary: #409eff;
-  --el-color-primary-light-3: #79bbff;
-  --el-color-primary-light-5: #a0cfff;
-  --el-color-primary-light-7: #c6e2ff;
-  --el-color-primary-light-8: #d9ecff;
-  --el-color-primary-light-9: #ecf5ff;
-  --el-color-primary-dark-2: #337ecc;
+  /* iOS 系统色彩 */
+  --ios-blue: #007AFF;        /* 主色调 - 系统蓝 */
+  --ios-green: #34C759;       /* 成功色 - 系统绿 */
+  --ios-orange: #FF9500;      /* 警告色 - 系统橙 */
+  --ios-red: #FF3B30;         /* 危险色 - 系统红 */
+  --ios-gray: #8E8E93;        /* 信息色 - 系统灰 */
   
-  /* 功能色 */
-  --el-color-success: #67c23a;
-  --el-color-warning: #e6a23c;
-  --el-color-danger: #f56c6c;
-  --el-color-error: #f56c6c;
-  --el-color-info: #909399;
+  /* 背景色系 */
+  --bg-primary: #FFFFFF;      /* 主背景 - 纯白 */
+  --bg-secondary: #F2F2F7;    /* 次背景 - iOS 背景灰 */
+  --bg-tertiary: #F9F9F9;     /* 三级背景 - 浅灰 */
   
-  /* 中性色 */
-  --el-text-color-primary: #303133;
-  --el-text-color-regular: #606266;
-  --el-text-color-secondary: #909399;
-  --el-text-color-placeholder: #c0c4cc;
-  --el-text-color-disabled: #c0c4cc;
-  
-  /* 背景色 */
-  --el-bg-color: #ffffff;
-  --el-bg-color-page: #f2f3f5;
-  --el-bg-color-overlay: #ffffff;
-  
-  /* 边框色 */
-  --el-border-color: #dcdfe6;
-  --el-border-color-light: #e4e7ed;
-  --el-border-color-lighter: #ebeef5;
-  --el-border-color-extra-light: #f2f6fc;
+  /* 文本色系 */
+  --text-primary: #000000;    /* 主文本 - 纯黑 */
+  --text-secondary: #6D6D70;  /* 次文本 - 深灰 */
+  --text-tertiary: #8E8E93;   /* 三级文本 - 中灰 */
+  --text-quaternary: #C7C7CC; /* 四级文本 - 浅灰 */
 }
 ```
 
-#### 自定义色彩扩展
+#### 语义化颜色
 ```css
 :root {
-  /* 学习相关色彩 */
-  --learning-primary: #409eff;      /* 学习主色 */
-  --learning-success: #67c23a;      /* 学习成功 */
-  --learning-warning: #e6a23c;     /* 学习提醒 */
-  --learning-danger: #f56c6c;      /* 学习错误 */
-  
-  /* 阅读相关色彩 */
-  --reading-bg: #fafafa;           /* 阅读背景 */
-  --reading-text: #2c3e50;         /* 阅读文本 */
-  --reading-highlight: #e3f2fd;    /* 高亮背景 */
-  --reading-border: #e0e0e0;       /* 阅读边框 */
-  
-  /* 管理员系统色彩 */
-  --admin-primary: #409eff;         /* 管理员主色 */
-  --admin-secondary: #909399;      /* 管理员次要色 */
-  --admin-success: #67c23a;        /* 操作成功 */
-  --admin-warning: #e6a23c;        /* 操作警告 */
-  --admin-danger: #f56c6c;         /* 操作危险 */
-  
   /* 状态色彩 */
-  --status-active: #67c23a;        /* 激活状态 */
-  --status-inactive: #909399;      /* 非激活状态 */
-  --status-pending: #e6a23c;       /* 待处理状态 */
-  --status-error: #f56c6c;         /* 错误状态 */
+  --success: var(--ios-green);
+  --warning: var(--ios-orange);
+  --danger: var(--ios-red);
+  --info: var(--ios-blue);
+  
+  /* 渐变色彩 */
+  --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  --gradient-success: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  --gradient-warning: linear-gradient(135deg, #FF9500 0%, #FFCC00 100%);
+  --gradient-danger: linear-gradient(135deg, #FF3B30 0%, #FF6B6B 100%);
 }
 ```
-
-### 色彩使用规范
-
-| 色彩类型 | 颜色值 | 使用场景 | 示例 |
-|----------|--------|----------|------|
-| **主色调** | #409eff | 品牌色、主要按钮、关键交互 | 登录按钮、导航激活状态 |
-| **成功色** | #67c23a | 成功状态、确认操作 | 打卡成功、操作完成 |
-| **警告色** | #e6a23c | 警告信息、待处理状态 | 提醒信息、待确认操作 |
-| **危险色** | #f56c6c | 错误状态、删除操作 | 错误提示、删除按钮 |
-| **信息色** | #909399 | 辅助信息、次要文本 | 提示文本、元数据信息 |
-| **学习高亮** | #e3f2fd | 单词高亮、重点内容 | 双击朗读反馈、选中状态 |
-
-### 暗色模式支持
-
-```css
-@media (prefers-color-scheme: dark) {
-  :root {
-    --el-bg-color: #1a1a1a;
-    --el-bg-color-page: #141414;
-    --el-text-color-primary: #e5eaf3;
-    --el-text-color-regular: #cfd3dc;
-    --el-text-color-secondary: #a3a6ad;
-    --el-border-color: #4c4d4f;
-    --el-border-color-light: #414243;
-    --el-border-color-lighter: #363637;
-    
-    /* 学习相关暗色 */
-    --reading-bg: #1e1e1e;
-    --reading-text: #e5eaf3;
-    --reading-highlight: #2c3e50;
-    --reading-border: #4c4d4f;
-  }
-}
-```
-
-## 📝 排版系统
 
 ### 字体系统
 
-#### 字体族定义
+#### 字体族
 ```css
 :root {
-  /* 中文字体 */
-  --font-family-chinese: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  
-  /* 英文字体 */
-  --font-family-english: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-  
-  /* 等宽字体 */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   --font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+```
+
+#### 字体大小
+```css
+:root {
+  --text-xs: 12px;      /* 小号文本 */
+  --text-sm: 14px;      /* 标准小文本 */
+  --text-base: 16px;    /* 基础文本 */
+  --text-lg: 18px;      /* 大号文本 */
+  --text-xl: 20px;      /* 超大文本 */
+  --text-2xl: 24px;     /* 标题文本 */
+  --text-3xl: 30px;     /* 大标题 */
+  --text-4xl: 36px;     /* 超大标题 */
+}
+```
+
+#### 字体权重
+```css
+:root {
+  --font-weight-light: 300;    /* 细体 */
+  --font-weight-normal: 400;   /* 常规 */
+  --font-weight-medium: 500;   /* 中等 */
+  --font-weight-semibold: 600; /* 半粗 */
+  --font-weight-bold: 700;     /* 粗体 */
+}
+```
+
+### 间距系统
+
+#### 基础间距
+```css
+:root {
+  --space-1: 4px;       /* 最小间距 */
+  --space-2: 8px;       /* 小间距 */
+  --space-3: 12px;      /* 中小间距 */
+  --space-4: 16px;      /* 标准间距 */
+  --space-5: 20px;      /* 中大间距 */
+  --space-6: 24px;      /* 大间距 */
+  --space-8: 32px;      /* 超大间距 */
+  --space-10: 40px;     /* 特大间距 */
+  --space-12: 48px;     /* 巨大间距 */
+  --space-16: 64px;     /* 最大间距 */
+}
+```
+
+### 圆角系统
+
+```css
+:root {
+  --radius-sm: 4px;     /* 小圆角 */
+  --radius-md: 8px;     /* 中圆角 */
+  --radius-lg: 12px;    /* 大圆角 */
+  --radius-xl: 16px;    /* 超大圆角 */
+  --radius-full: 50%;   /* 完全圆角 */
+}
+```
+
+### 阴影系统
+
+```css
+:root {
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
   
-  /* 默认字体 */
-  --font-family-base: var(--font-family-chinese);
+  /* 玻璃态阴影 */
+  --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --glass-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 ```
 
-#### 字体层级系统
+## 🧩 组件系统
 
-| 层级 | 字号 | 字重 | 行高 | 用途 | 示例 |
-|------|------|------|------|------|------|
-| **H1** | 32px | 700 | 1.2 | 页面主标题 | 首页标题、Logo |
-| **H2** | 24px | 600 | 1.3 | 区域标题 | 文章标题、功能区块 |
-| **H3** | 20px | 600 | 1.4 | 组件标题 | 卡片标题、表单标题 |
-| **H4** | 18px | 500 | 1.5 | 次级标题 | 列表标题、分组标题 |
-| **Body** | 16px | 400 | 1.6 | 正文内容 | 文章内容、描述文本 |
-| **Small** | 14px | 400 | 1.5 | 辅助文本 | 提示信息、元数据 |
-| **Caption** | 12px | 400 | 1.4 | 说明文字 | 版权信息、时间戳 |
+### 按钮组件
 
-#### 字体样式类
-```css
-/* 标题样式 */
-.text-h1 { font-size: 32px; font-weight: 700; line-height: 1.2; }
-.text-h2 { font-size: 24px; font-weight: 600; line-height: 1.3; }
-.text-h3 { font-size: 20px; font-weight: 600; line-height: 1.4; }
-.text-h4 { font-size: 18px; font-weight: 500; line-height: 1.5; }
+#### 按钮变体
+```vue
+<!-- 主要按钮 -->
+<button class="btn btn--primary">主要操作</button>
 
-/* 正文样式 */
-.text-body { font-size: 16px; font-weight: 400; line-height: 1.6; }
-.text-small { font-size: 14px; font-weight: 400; line-height: 1.5; }
-.text-caption { font-size: 12px; font-weight: 400; line-height: 1.4; }
+<!-- 次要按钮 -->
+<button class="btn btn--secondary">次要操作</button>
 
-/* 字重样式 */
-.font-light { font-weight: 300; }
-.font-normal { font-weight: 400; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
+<!-- 成功按钮 -->
+<button class="btn btn--success">成功操作</button>
 
-/* 文本颜色 */
-.text-primary { color: var(--el-text-color-primary); }
-.text-regular { color: var(--el-text-color-regular); }
-.text-secondary { color: var(--el-text-color-secondary); }
-.text-placeholder { color: var(--el-text-color-placeholder); }
-.text-disabled { color: var(--el-text-color-disabled); }
+<!-- 警告按钮 -->
+<button class="btn btn--warning">警告操作</button>
+
+<!-- 危险按钮 -->
+<button class="btn btn--danger">危险操作</button>
+
+<!-- 文本按钮 -->
+<button class="btn btn--text">文本按钮</button>
 ```
 
-## 🧩 组件设计规范
+#### 按钮尺寸
+```vue
+<!-- 小按钮 -->
+<button class="btn btn--sm">小按钮</button>
 
-### 1. 按钮组件系统
+<!-- 标准按钮 -->
+<button class="btn">标准按钮</button>
 
-#### 按钮类型定义
-
-**主要按钮 (Primary)**
-```css
-.btn-primary {
-  background-color: var(--el-color-primary);
-  border-color: var(--el-color-primary);
-  color: #ffffff;
-}
-
-.btn-primary:hover {
-  background-color: var(--el-color-primary-light-3);
-  border-color: var(--el-color-primary-light-3);
-}
+<!-- 大按钮 -->
+<button class="btn btn--lg">大按钮</button>
 ```
 
-**次要按钮 (Secondary)**
-```css
-.btn-secondary {
-  background-color: transparent;
-  border-color: var(--el-color-primary);
-  color: var(--el-color-primary);
-}
+#### 按钮状态
+```vue
+<!-- 加载状态 -->
+<button class="btn btn--loading">
+  <span class="btn__spinner"></span>
+  加载中...
+</button>
 
-.btn-secondary:hover {
-  background-color: var(--el-color-primary-light-9);
-  border-color: var(--el-color-primary-light-3);
-}
+<!-- 禁用状态 -->
+<button class="btn" disabled>禁用按钮</button>
 ```
 
-**文字按钮 (Text)**
-```css
-.btn-text {
-  background-color: transparent;
-  border: none;
-  color: var(--el-color-primary);
-}
+### 卡片组件
 
-.btn-text:hover {
-  background-color: var(--el-color-primary-light-9);
-}
+#### 基础卡片
+```vue
+<div class="card">
+  <div class="card__header">
+    <h3 class="card__title">卡片标题</h3>
+  </div>
+  <div class="card__content">
+    <p>卡片内容...</p>
+  </div>
+  <div class="card__footer">
+    <button class="btn btn--primary">操作按钮</button>
+  </div>
+</div>
 ```
 
-#### 按钮尺寸系统
-
-| 尺寸 | 高度 | 内边距 | 字体大小 | 使用场景 |
-|------|------|--------|----------|----------|
-| **Large** | 40px | 12px 20px | 16px | 主要操作、移动端 |
-| **Default** | 32px | 8px 16px | 14px | 常规操作 |
-| **Small** | 24px | 4px 12px | 12px | 次要操作、紧凑布局 |
-
-#### 按钮状态系统
-
-```css
-/* 按钮状态 */
-.btn {
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.btn:disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
+#### 玻璃态卡片
+```vue
+<div class="card card--glass">
+  <div class="card__content">
+    <h3>玻璃态卡片</h3>
+    <p>具有模糊背景效果的卡片</p>
+  </div>
+</div>
 ```
 
-### 2. 卡片组件系统
+### 标签组件
 
-#### 卡片类型定义
+#### 胶囊标签
+```vue
+<!-- 分类标签 -->
+<span class="capsule-tag capsule-tag--category">技术</span>
 
-**基础卡片**
-```css
-.card {
-  background-color: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-}
+<!-- 难度标签 -->
+<span class="capsule-tag capsule-tag--difficulty">中等</span>
 
-.card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
+<!-- 状态标签 -->
+<span class="capsule-tag capsule-tag--status capsule-tag--success">已完成</span>
+<span class="capsule-tag capsule-tag--status capsule-tag--warning">进行中</span>
+<span class="capsule-tag capsule-tag--status capsule-tag--danger">已取消</span>
 ```
 
-**文章卡片**
-```css
-.article-card {
-  padding: 20px;
-  margin-bottom: 16px;
-}
+### 加载组件
 
-.article-card-header {
-  margin-bottom: 12px;
-}
-
-.article-card-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin-bottom: 8px;
-}
-
-.article-card-meta {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
+#### 旋转加载器
+```vue
+<div class="smart-spinner">
+  <div class="spinner-ring"></div>
+  <div class="spinner-ring"></div>
+  <div class="spinner-ring"></div>
+</div>
 ```
 
-**统计卡片**
-```css
-.stat-card {
-  text-align: center;
-  padding: 24px;
-}
-
-.stat-card-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--el-color-primary);
-  margin-bottom: 8px;
-}
-
-.stat-card-label {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
+#### 脉冲加载器
+```vue
+<div class="smart-pulse">
+  <div class="pulse-dot"></div>
+  <div class="pulse-dot"></div>
+  <div class="pulse-dot"></div>
+</div>
 ```
 
-### 3. 导航组件系统
-
-#### 顶部导航栏
-```css
-.header {
-  background-color: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-}
-
-.nav-menu ul {
-  display: flex;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  gap: 32px;
-}
-
-.nav-link {
-  color: var(--el-text-color-regular);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.nav-link:hover,
-.nav-link.router-link-active {
-  color: var(--el-color-primary);
-}
+#### 波浪加载器
+```vue
+<div class="smart-wave">
+  <div class="wave-bar"></div>
+  <div class="wave-bar"></div>
+  <div class="wave-bar"></div>
+  <div class="wave-bar"></div>
+  <div class="wave-bar"></div>
+</div>
 ```
 
-#### 管理员侧边栏
-```css
-.admin-sidebar {
-  width: 240px;
-  background-color: var(--el-bg-color);
-  border-right: 1px solid var(--el-border-color-lighter);
-  height: 100vh;
-  position: fixed;
-  left: 0;
-  top: 0;
-  overflow-y: auto;
-}
-
-.admin-sidebar-menu {
-  padding: 20px 0;
-}
-
-.admin-sidebar-item {
-  padding: 12px 20px;
-  color: var(--el-text-color-regular);
-  text-decoration: none;
-  display: block;
-  transition: all 0.2s ease;
-}
-
-.admin-sidebar-item:hover {
-  background-color: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-}
-
-.admin-sidebar-item.active {
-  background-color: var(--el-color-primary-light-8);
-  color: var(--el-color-primary);
-  border-right: 3px solid var(--el-color-primary);
-}
+#### 骨架屏
+```vue
+<div class="smart-skeleton">
+  <div class="skeleton-line"></div>
+  <div class="skeleton-line"></div>
+  <div class="skeleton-line"></div>
+  <div class="skeleton-line"></div>
+</div>
 ```
 
-### 4. 表单组件系统
+### 表单组件
 
-#### 输入框组件
-```css
-.form-input {
-  width: 100%;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.2s ease;
-}
-
-.form-input:focus {
-  border-color: var(--el-color-primary);
-  outline: none;
-  box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
-}
-
-.form-input.error {
-  border-color: var(--el-color-danger);
-}
-
-.form-input:disabled {
-  background-color: var(--el-bg-color-page);
-  color: var(--el-text-color-disabled);
-  cursor: not-allowed;
-}
+#### 输入框
+```vue
+<div class="form-group">
+  <label class="form-label">用户名</label>
+  <input type="text" class="form-input" placeholder="请输入用户名">
+  <div class="form-help">请输入3-20个字符</div>
+</div>
 ```
 
-#### 表单标签
-```css
-.form-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
-
-.form-label.required::after {
-  content: ' *';
-  color: var(--el-color-danger);
-}
+#### 选择框
+```vue
+<div class="form-group">
+  <label class="form-label">难度等级</label>
+  <select class="form-select">
+    <option value="">请选择难度</option>
+    <option value="easy">简单</option>
+    <option value="medium">中等</option>
+    <option value="hard">困难</option>
+  </select>
+</div>
 ```
 
-#### 表单验证
-```css
-.form-error {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--el-color-danger);
-}
-
-.form-help {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
+#### 复选框
+```vue
+<div class="form-group">
+  <label class="checkbox">
+    <input type="checkbox" class="checkbox__input">
+    <span class="checkbox__checkmark"></span>
+    <span class="checkbox__label">记住我</span>
+  </label>
+</div>
 ```
 
-### 5. 阅读相关组件
-
-#### 文章阅读器
-```css
-.article-reader {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  line-height: 1.8;
-}
-
-.article-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin-bottom: 16px;
-}
-
-.article-content {
-  font-size: 16px;
-  color: var(--el-text-color-primary);
-  margin-bottom: 20px;
-}
-
-.article-word {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.article-word:hover {
-  background-color: var(--reading-highlight);
-}
-
-.article-word.active {
-  background-color: var(--el-color-primary-light-8);
-}
-```
-
-#### TTS控制组件
-```css
-.tts-control {
-  position: fixed;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.tts-control-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.tts-control-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.tts-control-buttons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.tts-speed-control {
-  margin-bottom: 16px;
-}
-
-.tts-speed-label {
-  font-size: 14px;
-  color: var(--el-text-color-regular);
-  margin-bottom: 8px;
-}
-```
-
-## 🎯 图标系统
-
-### Element Plus 图标库
-
-#### 图标分类使用
-
-| 分类 | 图标示例 | 使用场景 |
-|------|----------|----------|
-| **操作图标** | Edit, Delete, Save, Search | 编辑、删除、保存、搜索操作 |
-| **状态图标** | Success, Warning, Error, Info | 成功、警告、错误、信息提示 |
-| **导航图标** | Home, Menu, User, Setting | 首页、菜单、用户、设置导航 |
-| **功能图标** | Reading, Book, Chart, Star | 阅读、生词、报告、收藏功能 |
-| **学习图标** | Trophy, Clock, Check, CircleClose | 成就、时间、完成、关闭 |
-
-#### 图标使用规范
-
-```css
-/* 图标尺寸 */
-.icon-xs { font-size: 12px; }
-.icon-sm { font-size: 14px; }
-.icon-md { font-size: 16px; }
-.icon-lg { font-size: 20px; }
-.icon-xl { font-size: 24px; }
-
-/* 图标颜色 */
-.icon-primary { color: var(--el-color-primary); }
-.icon-success { color: var(--el-color-success); }
-.icon-warning { color: var(--el-color-warning); }
-.icon-danger { color: var(--el-color-danger); }
-.icon-info { color: var(--el-color-info); }
-.icon-secondary { color: var(--el-text-color-secondary); }
-```
-
-## 🎬 动画效果系统
+## 🎭 动画系统
 
 ### 过渡动画
 
-#### 标准过渡
+#### 基础过渡
 ```css
-/* 标准过渡时间 */
-.transition-fast { transition: all 0.15s ease; }
-.transition-normal { transition: all 0.3s ease; }
-.transition-slow { transition: all 0.5s ease; }
-
-/* 缓动函数 */
-.ease-in { transition-timing-function: ease-in; }
-.ease-out { transition-timing-function: ease-out; }
-.ease-in-out { transition-timing-function: ease-in-out; }
-```
-
-#### 页面转场动画
-```css
-/* 淡入动画 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.transition-base {
+  transition: all 0.3s ease;
 }
 
-.fade-in {
-  animation: fadeIn 0.5s ease-out;
+.transition-fast {
+  transition: all 0.15s ease;
 }
 
-/* 滑入动画 */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.slide-in {
-  animation: slideIn 0.3s ease-out;
+.transition-slow {
+  transition: all 0.5s ease;
 }
 ```
 
-#### 交互反馈动画
+#### 微交互
 ```css
-/* 悬停上浮效果 */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
+/* 悬停效果 */
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
 }
 
-/* 点击缩放效果 */
-.click-scale {
-  transition: transform 0.1s ease;
-}
-
+/* 点击效果 */
 .click-scale:active {
   transform: scale(0.98);
 }
 
-/* 加载动画 */
+/* 焦点效果 */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+}
+```
+
+### 关键帧动画
+
+#### 旋转动画
+```css
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-.loading-spinner {
-  animation: spin 1s linear infinite;
+@keyframes smartSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
+```
 
-/* 脉冲动画 */
+#### 脉冲动画
+```css
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
 
-.pulse {
-  animation: pulse 2s ease-in-out infinite;
+@keyframes smartPulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
 }
 ```
 
-## 📱 响应式设计系统
+#### 波浪动画
+```css
+@keyframes smartWave {
+  0%, 100% {
+    transform: scaleY(0.4);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+```
+
+## 📱 响应式设计
 
 ### 断点系统
 
 ```css
-/* 断点定义 */
 :root {
-  --breakpoint-xs: 480px;
-  --breakpoint-sm: 768px;
-  --breakpoint-md: 1024px;
-  --breakpoint-lg: 1200px;
-  --breakpoint-xl: 1440px;
+  --breakpoint-sm: 480px;   /* 小屏手机 */
+  --breakpoint-md: 768px;   /* 平板 */
+  --breakpoint-lg: 1024px;  /* 小屏笔记本 */
+  --breakpoint-xl: 1200px;  /* 大屏显示器 */
+  --breakpoint-2xl: 1536px; /* 超大屏显示器 */
+}
+```
+
+### 媒体查询
+
+```css
+/* 移动端优先 */
+@media (max-width: 480px) {
+  .container {
+    padding: var(--space-4);
+  }
 }
 
-/* 媒体查询 */
-@media (max-width: 767px) {
-  /* 移动端样式 */
-  .container { padding: 0 16px; }
-  .nav-menu { display: none; }
-  .mobile-menu { display: block; }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* 平板端样式 */
-  .container { padding: 0 24px; }
-  .grid-2 { grid-template-columns: 1fr 1fr; }
+@media (min-width: 768px) {
+  .container {
+    padding: var(--space-6);
+  }
 }
 
 @media (min-width: 1024px) {
-  /* 桌面端样式 */
-  .container { padding: 0 32px; }
-  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .container {
+    padding: var(--space-8);
+  }
 }
 ```
 
 ### 网格系统
 
 ```css
-/* 网格容器 */
-.grid-container {
+.grid {
   display: grid;
-  gap: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  gap: var(--space-4);
 }
 
-/* 网格布局 */
-.grid-1 { grid-template-columns: 1fr; }
-.grid-2 { grid-template-columns: 1fr 1fr; }
-.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-.grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 /* 响应式网格 */
-@media (max-width: 767px) {
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
-}
-```
-
-### 移动端优化
-
-```css
-/* 触摸友好 */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 12px 16px;
-}
-
-/* 移动端导航 */
-.mobile-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: var(--el-bg-color);
-  border-top: 1px solid var(--el-border-color-lighter);
-  display: flex;
-  justify-content: space-around;
-  padding: 8px 0;
-  z-index: 1000;
-}
-
-.mobile-nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px;
-  text-decoration: none;
-  color: var(--el-text-color-secondary);
-  font-size: 12px;
-}
-
-.mobile-nav-item.active {
-  color: var(--el-color-primary);
+@media (max-width: 768px) {
+  .grid--2,
+  .grid--3,
+  .grid--4 {
+    grid-template-columns: 1fr;
+  }
 }
 ```
 
 ## 🎨 主题系统
 
-### 主题切换
+### 浅色主题（默认）
 
 ```css
-/* 主题变量 */
-[data-theme="light"] {
-  --el-bg-color: #ffffff;
-  --el-text-color-primary: #303133;
-  --el-border-color: #dcdfe6;
+:root {
+  color-scheme: light;
+  
+  /* 背景色 */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F2F2F7;
+  --bg-tertiary: #F9F9F9;
+  
+  /* 文本色 */
+  --text-primary: #000000;
+  --text-secondary: #6D6D70;
+  --text-tertiary: #8E8E93;
+  
+  /* 边框色 */
+  --border-light: #E5E5EA;
+  --border-medium: #D1D1D6;
+  --border-dark: #C7C7CC;
 }
+```
 
+### 深色主题
+
+```css
 [data-theme="dark"] {
-  --el-bg-color: #1a1a1a;
-  --el-text-color-primary: #e5eaf3;
-  --el-border-color: #4c4d4f;
-}
-
-/* 主题切换动画 */
-.theme-transition {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-```
-
-### 学习模式主题
-
-```css
-/* 专注阅读模式 */
-.reading-mode {
-  --reading-bg: #f8f9fa;
-  --reading-text: #2c3e50;
-  --reading-highlight: #e3f2fd;
-}
-
-.reading-mode .article-reader {
-  background-color: var(--reading-bg);
-  color: var(--reading-text);
-  padding: 40px;
-  border-radius: 8px;
-}
-
-/* 夜间阅读模式 */
-.night-reading {
-  --reading-bg: #1e1e1e;
-  --reading-text: #e5eaf3;
-  --reading-highlight: #2c3e50;
+  color-scheme: dark;
+  
+  /* 背景色 */
+  --bg-primary: #1C1C1E;
+  --bg-secondary: #2C2C2E;
+  --bg-tertiary: #3A3A3C;
+  
+  /* 文本色 */
+  --text-primary: #FFFFFF;
+  --text-secondary: #EBEBF5;
+  --text-tertiary: #8E8E93;
+  
+  /* 边框色 */
+  --border-light: #38383A;
+  --border-medium: #48484A;
+  --border-dark: #636366;
 }
 ```
 
-## 📊 数据可视化设计
+## 🛠 使用指南
 
-### ECharts 主题配置
+### 安装和引入
 
-```javascript
-// 默认主题配置
-const defaultTheme = {
-  color: [
-    '#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399',
-    '#79bbff', '#95d475', '#f0c78a', '#f89898', '#b1b3b8'
-  ],
-  backgroundColor: 'transparent',
-  textStyle: {
-    color: '#303133',
-    fontSize: 12
-  },
-  title: {
-    textStyle: {
-      color: '#303133',
-      fontSize: 16,
-      fontWeight: 600
-    }
-  },
-  legend: {
-    textStyle: {
-      color: '#606266'
-    }
-  },
-  grid: {
-    borderColor: '#e4e7ed'
-  }
-}
-
-// 暗色主题配置
-const darkTheme = {
-  color: [
-    '#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399',
-    '#79bbff', '#95d475', '#f0c78a', '#f89898', '#b1b3b8'
-  ],
-  backgroundColor: 'transparent',
-  textStyle: {
-    color: '#e5eaf3',
-    fontSize: 12
-  },
-  title: {
-    textStyle: {
-      color: '#e5eaf3',
-      fontSize: 16,
-      fontWeight: 600
-    }
-  },
-  legend: {
-    textStyle: {
-      color: '#cfd3dc'
-    }
-  },
-  grid: {
-    borderColor: '#4c4d4f'
-  }
-}
-```
-
-### 图表样式规范
-
-```css
-/* 图表容器 */
-.chart-container {
-  background-color: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.chart-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin-bottom: 16px;
-}
-
-.chart-subtitle {
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 20px;
-}
-```
-
-## 🛠️ 组件开发规范
-
-### Vue 组件规范
-
-#### 组件命名
 ```typescript
-// 组件命名：PascalCase
-const ArticleReader = defineComponent({...})
-const UserManagement = defineComponent({...})
-const TTSControl = defineComponent({...})
+// 在 main.ts 中引入设计系统
+import '@/assets/design-system.css'
+
+// 在组件中使用
+import { SmartLoading } from '@/components/common/SmartLoading.vue'
 ```
 
-#### 组件结构
+### 自定义主题
+
+```css
+/* 覆盖 CSS 变量来自定义主题 */
+:root {
+  --ios-blue: #your-brand-color;
+  --primary-gradient: linear-gradient(135deg, #your-color-1, #your-color-2);
+}
+```
+
+### 组件使用示例
+
 ```vue
 <template>
-  <!-- 使用语义化标签 -->
-  <div class="component-container">
-    <header class="component-header">
-      <h2 class="component-title">{{ title }}</h2>
-    </header>
-    <main class="component-content">
-      <!-- 组件内容 -->
-    </main>
-    <footer class="component-footer">
-      <!-- 组件操作 -->
-    </footer>
+  <div class="page-container">
+    <!-- 使用设计系统组件 -->
+    <div class="card card--glass">
+      <div class="card__header">
+        <h2 class="card__title">学习进度</h2>
+        <span class="capsule-tag capsule-tag--success">已完成</span>
+      </div>
+      
+      <div class="card__content">
+        <p class="text-secondary">今日学习单词：<span class="text-primary font-semibold">25</span></p>
+        
+        <!-- 加载状态 -->
+        <SmartLoading type="spinner" text="加载中..." />
+      </div>
+      
+      <div class="card__footer">
+        <button class="btn btn--primary">继续学习</button>
+        <button class="btn btn--secondary">查看详情</button>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup lang="ts">
-// 导入顺序：Vue -> 第三方库 -> 自定义模块
-import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
-
-// Props 定义
-interface Props {
-  title: string
-  data?: any[]
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  data: () => []
-})
-
-// Emits 定义
-interface Emits {
-  update: [value: any]
-  close: []
-}
-
-const emit = defineEmits<Emits>()
-
-// 响应式数据
-const isLoading = ref(false)
-const userStore = useUserStore()
-
-// 计算属性
-const filteredData = computed(() => {
-  return props.data.filter(item => item.active)
-})
-
-// 方法
-const handleUpdate = (value: any) => {
-  emit('update', value)
-}
-
-// 生命周期
-onMounted(() => {
-  console.log('Component mounted')
-})
-</script>
-
 <style scoped>
-/* 使用 BEM 命名规范 */
-.component-container {
-  background-color: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.component-header {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.component-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  margin: 0;
-}
-
-.component-content {
-  margin-bottom: 16px;
-}
-
-.component-footer {
-  padding-top: 12px;
-  border-top: 1px solid var(--el-border-color-lighter);
+.page-container {
+  padding: var(--space-6);
+  background: var(--bg-secondary);
+  min-height: 100vh;
 }
 </style>
 ```
 
-### CSS 类命名规范
+## 📚 最佳实践
 
-```css
-/* BEM 命名规范 */
-.block { }                    /* 块 */
-.block__element { }          /* 元素 */
-.block--modifier { }         /* 修饰符 */
+### 1. 保持一致性
+- 使用设计系统提供的组件和样式
+- 遵循命名规范和代码约定
+- 保持视觉和交互的一致性
 
-/* 示例 */
-.article-card { }            /* 文章卡片块 */
-.article-card__title { }     /* 文章卡片标题元素 */
-.article-card--featured { } /* 文章卡片特色修饰符 */
+### 2. 响应式设计
+- 移动端优先的设计方法
+- 使用断点系统进行适配
+- 测试各种设备尺寸
 
-/* 状态类 */
-.is-active { }               /* 激活状态 */
-.is-disabled { }             /* 禁用状态 */
-.is-loading { }              /* 加载状态 */
-.has-error { }               /* 错误状态 */
-```
+### 3. 可访问性
+- 提供足够的颜色对比度
+- 支持键盘导航
+- 添加适当的 ARIA 标签
 
-## 🔍 设计系统检查清单
+### 4. 性能优化
+- 使用 CSS 变量减少重复代码
+- 合理使用动画，避免过度动画
+- 优化图片和资源加载
 
-### 视觉一致性检查
+## 🔄 更新日志
 
-- [ ] **颜色使用**：所有组件使用设计系统定义的颜色变量
-- [ ] **字体层级**：文本使用正确的字体大小、字重和行高
-- [ ] **间距规范**：组件间、元素间的间距保持一致
-- [ ] **圆角规范**：统一使用 4px、8px 圆角
-- [ ] **阴影规范**：统一使用设计系统定义的阴影效果
+### v1.0.0 (2024-01-15)
+- ✨ 初始版本发布
+- 🎨 完整的色彩系统
+- 🧩 基础组件库
+- 📱 响应式设计支持
+- 🎭 动画系统
+- 🎨 Liquid Glass 效果
 
-### 交互一致性检查
+## 🤝 贡献指南
 
-- [ ] **按钮状态**：悬停、点击、禁用状态符合规范
-- [ ] **表单交互**：输入框聚焦、验证状态符合规范
-- [ ] **导航交互**：链接激活、悬停状态符合规范
-- [ ] **动画效果**：过渡时间、缓动函数符合规范
+### 如何贡献
+1. Fork 项目
+2. 创建功能分支
+3. 遵循设计规范
+4. 提交 Pull Request
 
-### 响应式检查
-
-- [ ] **移动端适配**：在 768px 以下设备显示正常
-- [ ] **平板端适配**：在 768px-1024px 设备显示正常
-- [ ] **桌面端适配**：在 1024px 以上设备显示正常
-- [ ] **触摸友好**：触摸目标大小符合 44px 最小要求
-
-### 无障碍检查
-
-- [ ] **颜色对比度**：文本与背景对比度符合 WCAG 标准
-- [ ] **键盘导航**：支持 Tab 键导航
-- [ ] **屏幕阅读器**：提供适当的 ARIA 标签
-- [ ] **焦点指示**：清晰的焦点状态指示
-
-## 📚 设计系统工具
-
-### CSS 变量工具
-
-```css
-/* 颜色工具类 */
-.bg-primary { background-color: var(--el-color-primary); }
-.bg-success { background-color: var(--el-color-success); }
-.bg-warning { background-color: var(--el-color-warning); }
-.bg-danger { background-color: var(--el-color-danger); }
-
-.text-primary { color: var(--el-color-primary); }
-.text-success { color: var(--el-color-success); }
-.text-warning { color: var(--el-color-warning); }
-.text-danger { color: var(--el-color-danger); }
-
-/* 间距工具类 */
-.m-0 { margin: 0; }
-.m-1 { margin: 4px; }
-.m-2 { margin: 8px; }
-.m-3 { margin: 12px; }
-.m-4 { margin: 16px; }
-.m-5 { margin: 20px; }
-
-.p-0 { padding: 0; }
-.p-1 { padding: 4px; }
-.p-2 { padding: 8px; }
-.p-3 { padding: 12px; }
-.p-4 { padding: 16px; }
-.p-5 { padding: 20px; }
-```
-
-### 设计系统文档生成
-
-```javascript
-// 设计系统配置
-const designSystem = {
-  colors: {
-    primary: '#409eff',
-    success: '#67c23a',
-    warning: '#e6a23c',
-    danger: '#f56c6c',
-    info: '#909399'
-  },
-  typography: {
-    h1: { fontSize: '32px', fontWeight: 700, lineHeight: 1.2 },
-    h2: { fontSize: '24px', fontWeight: 600, lineHeight: 1.3 },
-    h3: { fontSize: '20px', fontWeight: 600, lineHeight: 1.4 },
-    body: { fontSize: '16px', fontWeight: 400, lineHeight: 1.6 }
-  },
-  spacing: {
-    xs: '4px',
-    sm: '8px',
-    md: '12px',
-    lg: '16px',
-    xl: '20px',
-    xxl: '24px'
-  },
-  borderRadius: {
-    sm: '4px',
-    md: '8px',
-    lg: '12px'
-  }
-}
-```
-
-## 🌟 设计系统总结
-
-### 核心价值
-
-1. **一致性**：确保整个应用的视觉和交互一致性
-2. **效率**：提高设计和开发效率，减少重复工作
-3. **可维护性**：便于后续维护和更新
-4. **扩展性**：支持新功能和组件的快速开发
-5. **用户体验**：提供统一、优质的用户体验
-
-### 设计原则
-
-1. **用户为中心**：以学习者的需求为核心设计
-2. **简洁明了**：避免过度设计，保持界面简洁
-3. **功能导向**：设计服务于功能，不为了设计而设计
-4. **响应式优先**：确保多设备一致性体验
-5. **无障碍友好**：支持所有用户的使用需求
-
-### 持续改进
-
-设计系统是一个持续演进的过程，需要：
-
-- 定期收集用户反馈
-- 持续优化组件和样式
-- 保持与最新设计趋势的同步
-- 确保技术实现的可行性
-- 维护文档的及时更新
+### 设计规范
+- 遵循现有的设计语言
+- 保持组件的可复用性
+- 提供完整的文档和示例
+- 确保跨浏览器兼容性
 
 ---
 
 <div align="center">
 
-**🎨 构建现代化设计系统，打造一致的用户体验**
+**🎨 让设计更美好，让体验更流畅**
 
-*设计于 ❤️ 与最佳实践*
+*XReadUp Design System - 为智能英语学习而设计*
 
 </div>
