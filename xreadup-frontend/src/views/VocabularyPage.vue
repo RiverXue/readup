@@ -2320,11 +2320,10 @@ const showDictationHint = () => {
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
   background-clip: padding-box !important;
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   position: relative !important;
-  transform: scale(1.02) !important;
 }
 
 .word-card.el-card[data-status="reviewing"]::before {
@@ -2348,12 +2347,10 @@ const showDictationHint = () => {
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
   background-clip: padding-box !important;
   box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.08),
-    0 2px 6px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   position: relative !important;
-  transform: scale(0.98) !important;
-  opacity: 0.85 !important;
 }
 
 .word-card.el-card[data-status="mastered"]::before {
@@ -2364,11 +2361,11 @@ const showDictationHint = () => {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(103, 194, 58, 0.15) 0%, 
-    rgba(103, 194, 58, 0.08) 50%, 
-    rgba(120, 220, 100, 0.12) 100%);
+    rgba(103, 194, 58, 0.2) 0%, 
+    rgba(103, 194, 58, 0.1) 50%, 
+    rgba(120, 220, 100, 0.15) 100%);
   border-radius: 20px;
-  opacity: 0.7;
+  opacity: 0.8;
   z-index: -1;
 }
 
@@ -2492,10 +2489,7 @@ const showDictationHint = () => {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, 
-    #409eff 0%, 
-    #67c23a 50%, 
-    #e6a23c 100%);
+  background: linear-gradient(90deg, #67c23a 0%, #e6a23c 100%);
   border-radius: 3px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
