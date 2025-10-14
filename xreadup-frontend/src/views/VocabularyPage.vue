@@ -55,7 +55,7 @@
                 class="guide-button"
               >
                 <template #icon>
-                  <el-icon><help-filled /></el-icon>
+                <el-icon><help-filled /></el-icon>
                 </template>
                 了解学习模式
               </TactileButton>
@@ -292,8 +292,8 @@
           circle
         >
           <el-icon><ArrowLeft /></el-icon>
-        </el-button>
-      </div>
+          </el-button>
+          </div>
       
       <!-- 单词堆叠区域 -->
       <div class="word-stack">
@@ -414,7 +414,7 @@
                   class="pronunciation-button"
                 >
                   🔊
-                </el-button>
+          </el-button>
               </div>
               <p class="word-phonetic" v-if="word.phonetic">{{ word.phonetic }}</p>
               <p class="word-meaning">{{ word.meaning }}</p>
@@ -454,11 +454,11 @@
               <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
                 删除
               </TactileButton>
-            </div>
-          </el-card>
         </div>
-      </div>
-      
+      </el-card>
+        </div>
+    </div>
+
       <!-- 右侧导航按钮 -->
       <div class="stack-nav-right">
         <el-button 
@@ -917,13 +917,43 @@ const getStackCardStyle = (index: number) => {
 // 叠层视图控制方法
 const nextStackCard = () => {
   if (currentStackIndex.value < filteredWords.value.length - 1) {
-    currentStackIndex.value++
+    // 添加当前卡片向右消失的动画
+    const currentCard = document.querySelector('.word-card-stack:first-child .word-card') as HTMLElement
+    if (currentCard) {
+      currentCard.style.transition = 'all 0.4s ease-in-out'
+      currentCard.style.transform = 'translateX(100%) rotate(15deg)'
+      currentCard.style.opacity = '0'
+    }
+    
+    // 延迟切换卡片，让动画完成
+    setTimeout(() => {
+      currentStackIndex.value++
+      // 重置动画状态
+      setTimeout(() => {
+        resetCardAnimation()
+      }, 50)
+    }, 200)
   }
 }
 
 const previousStackCard = () => {
   if (currentStackIndex.value > 0) {
-    currentStackIndex.value--
+    // 添加当前卡片向左消失的动画
+    const currentCard = document.querySelector('.word-card-stack:first-child .word-card') as HTMLElement
+    if (currentCard) {
+      currentCard.style.transition = 'all 0.4s ease-in-out'
+      currentCard.style.transform = 'translateX(-100%) rotate(-15deg)'
+      currentCard.style.opacity = '0'
+    }
+    
+    // 延迟切换卡片，让动画完成
+    setTimeout(() => {
+      currentStackIndex.value--
+      // 重置动画状态
+      setTimeout(() => {
+        resetCardAnimation()
+      }, 50)
+    }, 200)
   }
 }
 
@@ -931,6 +961,18 @@ const handleStackCardClick = (index: number) => {
   if (index > 0) {
     currentStackIndex.value += index
   }
+}
+
+// 重置卡片动画状态
+const resetCardAnimation = () => {
+  // 重置所有卡片的动画状态
+  const cards = document.querySelectorAll('.word-card-stack .word-card')
+  cards.forEach(card => {
+    const element = card as HTMLElement
+    element.style.transition = ''
+    element.style.transform = ''
+    element.style.opacity = ''
+  })
 }
 
 // 当前复习单词
@@ -2673,9 +2715,9 @@ const showDictationHint = () => {
 /* 现代进入动画：保持三色配色，增强玻璃态效果 */
 @keyframes glow-in-blue {
   to { 
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
-      0 2px 8px rgba(0, 0, 0, 0.05), 
+      0 2px 8px rgba(0, 0, 0, 0.05),
       0 0 12px 4px rgba(64, 158, 255, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
@@ -2683,9 +2725,9 @@ const showDictationHint = () => {
 
 @keyframes glow-in-orange {
   to { 
-    box-shadow: 
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
-      0 2px 8px rgba(0, 0, 0, 0.05), 
+      0 2px 8px rgba(0, 0, 0, 0.05),
       0 0 12px 4px rgba(230, 162, 60, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
