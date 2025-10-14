@@ -617,8 +617,8 @@ onMounted(async () => {
     <div class="hero-section">
       <!-- 未登录状态 -->
       <div v-if="!userStore.isLoggedIn" class="hero-content">
-        <h1>AI驱动的英语学习平台</h1>
-        <p>用人工智能重新定义你的英语学习体验</p>
+        <h1 class="hero-title">AI驱动的英语学习平台</h1>
+        <p class="hero-subtitle">用人工智能重新定义你的英语学习体验</p>
         <div class="hero-actions">
           <TactileButton variant="primary" size="lg" @click="$router.push('/article/1')">
             <template #icon>
@@ -626,7 +626,7 @@ onMounted(async () => {
             </template>
             开始阅读
           </TactileButton>
-          <TactileButton variant="liquid-glass" size="lg" @click="$router.push('/login')">
+          <TactileButton variant="secondary" size="lg" @click="$router.push('/login')">
             <template #icon>
               <Message size="20" />
             </template>
@@ -767,6 +767,12 @@ onMounted(async () => {
   width: 100%;
   padding: 0;
   animation: fadeInUp 0.8s ease-out;
+  background: linear-gradient(135deg, 
+    rgba(248, 250, 252, 0.3) 0%, 
+    rgba(241, 245, 249, 0.2) 50%, 
+    rgba(248, 250, 252, 0.3) 100%);
+  border-radius: var(--radius-2xl);
+  position: relative;
 }
 
 @keyframes fadeInUp {
@@ -793,17 +799,23 @@ onMounted(async () => {
 
 .hero-section {
   text-align: center;
-  padding: var(--space-12) var(--space-6);
-  background: var(--gradient-primary);
-  color: var(--text-inverse);
+  padding: var(--space-8) var(--space-6);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(248, 250, 252, 0.8) 50%, 
+    rgba(241, 245, 249, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-3xl);
   margin-bottom: var(--space-12);
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-ios-heavy);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
 }
 
 .hero-section::before {
@@ -813,9 +825,9 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(90, 200, 250, 0.02) 50%, rgba(0, 122, 255, 0.03) 100%);
   pointer-events: none;
-  animation: liquidFlow 15s ease-in-out infinite;
+  animation: liquidFlow 20s ease-in-out infinite;
 }
 
 .welcome-message {
@@ -828,8 +840,8 @@ onMounted(async () => {
   font-size: var(--text-4xl);
   font-weight: var(--font-weight-bold);
   margin-bottom: var(--space-3);
-  color: var(--text-inverse);
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+  text-shadow: none;
   position: relative;
   z-index: 2;
   font-family: var(--font-family-display);
@@ -840,9 +852,9 @@ onMounted(async () => {
   display: block;
   font-size: var(--text-xl);
   font-weight: var(--font-weight-normal);
-  color: rgba(255, 255, 255, 0.95);
-  opacity: 0.95;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: var(--text-secondary);
+  opacity: 1;
+  text-shadow: none;
   position: relative;
   z-index: 2;
 }
@@ -850,7 +862,24 @@ onMounted(async () => {
 .hero-section p {
   font-size: var(--text-lg);
   margin-bottom: var(--space-8);
-  opacity: 0.9;
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.hero-title {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-4);
+  color: var(--text-primary);
+  font-family: var(--font-family-display);
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: var(--text-xl);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
+  font-weight: var(--font-weight-normal);
 }
 
 .hero-content.logged-in {
@@ -899,20 +928,25 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: var(--glass-white-medium);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.8) 0%, 
+    rgba(248, 250, 252, 0.6) 50%, 
+    rgba(241, 245, 249, 0.8) 100%);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   padding: var(--space-4) var(--space-6);
   border-radius: var(--radius-ios-large);
   font-size: var(--text-sm);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    0 8px 32px var(--glass-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
   font-family: var(--font-family-primary);
+  color: var(--text-primary);
 }
 
 .summary-item::before {
@@ -932,26 +966,80 @@ onMounted(async () => {
 
 .summary-item:hover {
   transform: translateY(-3px) scale(1.02);
-  background: var(--glass-white-strong);
-  box-shadow:
-    0 12px 40px var(--glass-shadow-medium),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(248, 250, 252, 0.8) 50%, 
+    rgba(241, 245, 249, 0.9) 100%);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: var(--ios-blue);
 }
 
 .summary-icon {
-  color: #fff;
+  color: var(--ios-blue);
   animation: iconGlow 3s ease-in-out infinite;
 }
-.summary-icon.time { color: #ba68c8; }
-.summary-icon.words { color: #67c23a; }
-.summary-icon.review { color: #ffcc00; }
-.summary-icon.streak { color: #ff6b6b; }
+.summary-icon.time { 
+  color: #ba68c8; 
+  animation: iconGlowTime 3s ease-in-out infinite;
+}
+.summary-icon.words { 
+  color: #67c23a; 
+  animation: iconGlowWords 3s ease-in-out infinite;
+}
+.summary-icon.review { 
+  color: #ffcc00; 
+  animation: iconGlowReview 3s ease-in-out infinite;
+}
+.summary-icon.streak { 
+  color: #ff6b6b; 
+  animation: iconGlowStreak 3s ease-in-out infinite;
+}
+
 @keyframes iconGlow {
   0%, 100% {
-    filter: brightness(1) drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+    filter: brightness(1) drop-shadow(0 0 4px rgba(0, 122, 255, 0.3));
   }
   50% {
-    filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(0, 122, 255, 0.6));
+  }
+}
+
+@keyframes iconGlowTime {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px rgba(186, 104, 200, 0.3));
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(186, 104, 200, 0.6));
+  }
+}
+
+@keyframes iconGlowWords {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px rgba(103, 194, 58, 0.3));
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(103, 194, 58, 0.6));
+  }
+}
+
+@keyframes iconGlowReview {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px rgba(255, 204, 0, 0.3));
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 204, 0, 0.6));
+  }
+}
+
+@keyframes iconGlowStreak {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 4px rgba(255, 107, 107, 0.3));
+  }
+  50% {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 107, 107, 0.6));
   }
 }
 
