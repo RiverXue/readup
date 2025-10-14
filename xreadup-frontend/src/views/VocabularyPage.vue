@@ -104,7 +104,7 @@
           size="small"
         >
           <el-icon><Collection /></el-icon>
-          叠层视图
+          单词速刷
         </el-button>
       </el-button-group>
     </div>
@@ -281,8 +281,33 @@
       </el-card>
     </div>
 
-    <!-- 叠层视图 -->
+    <!-- 单词速刷模式 -->
     <div v-if="viewMode === 'stack'" class="word-stack-container">
+      <!-- 速刷模式指示器 -->
+      <div class="quick-review-header">
+        <div class="mode-indicator">
+          <el-icon><Collection /></el-icon>
+          <span>单词速刷模式</span>
+        </div>
+        <div class="quick-actions">
+          <TactileButton 
+            @click="markCurrentAsMastered" 
+            variant="success" 
+            size="sm"
+            :disabled="!currentWord"
+          >
+            ✓ 已掌握
+          </TactileButton>
+          <TactileButton 
+            @click="skipCurrentWord" 
+            variant="warning" 
+            size="sm"
+            :disabled="!currentWord"
+          >
+            ⏭ 跳过
+          </TactileButton>
+        </div>
+      </div>
       <!-- 左侧导航按钮 -->
       <div class="stack-nav-left">
         <el-button 
@@ -963,6 +988,31 @@ const handleStackCardClick = (index: number) => {
   }
 }
 
+// 速刷模式快捷操作
+const markCurrentAsMastered = async () => {
+  if (currentWord.value) {
+    try {
+      // 使用现有的单词更新方法
+      await vocabularyApi.updateWord(currentWord.value.id, {
+        ...currentWord.value,
+        reviewStatus: 'mastered'
+      })
+      ElMessage.success('已标记为掌握')
+      // 刷新单词列表
+      await loadWords()
+      // 自动切换到下一张
+      nextStackCard()
+    } catch (error) {
+      ElMessage.error('操作失败')
+    }
+  }
+}
+
+const skipCurrentWord = () => {
+  // 直接跳过当前单词
+  nextStackCard()
+}
+
 // 重置卡片动画状态
 const resetCardAnimation = () => {
   // 重置所有卡片的动画状态
@@ -992,6 +1042,14 @@ const resetCardAnimation = () => {
 const currentReviewWord = computed(() => {
   if (reviewWords.value.length > 0 && currentReviewIndex.value < reviewWords.value.length) {
     return reviewWords.value[currentReviewIndex.value]
+  }
+  return null
+})
+
+// 当前速刷单词
+const currentWord = computed(() => {
+  if (visibleStackWords.value.length > 0) {
+    return visibleStackWords.value[0]
   }
   return null
 })
@@ -3007,6 +3065,41 @@ const showDictationHint = () => {
 .view-toggle {
   margin-bottom: 20px;
   text-align: center;
+}
+
+/* 速刷模式头部 */
+.quick-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.mode-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.mode-indicator .el-icon {
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 /* 叠层视图容器 */
