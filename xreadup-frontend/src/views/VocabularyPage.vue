@@ -611,14 +611,6 @@
       </div>
     </el-dialog>
 
-    <!-- 听写模态框 -->
-    <DictationModal
-      ref="dictationModal"
-      v-model:visible="showDictationModal"
-      :word="currentDictationWord || undefined"
-      @close="closeDictationModal"
-      @finish="handleDictationModalFinish"
-    />
 
     <!-- 批量听写模式模态框 -->
     <el-dialog
@@ -787,8 +779,6 @@ const currentPage = ref(1)
 const pageSize = ref(9)
 const totalWords = ref(0)
 const loading = ref(false)
-const isReviewing = ref(false)
-const reviewingWordId = ref<number | null>(null)
 const stats = ref({
   totalWords: 0,
   todayWords: 0,
@@ -1556,65 +1546,6 @@ const mapStatusToMasteryLevel = (status: string): number => {
   return levelMap[status] || 0
 }
 
-const reviewWord = async (word: WordItem) => {
-  // 防止重复点击
-  if (isReviewing.value) {
-    return
-  }
-
-  try {
-    const userId = userStore.userInfo?.id
-    if (!userId) {
-      ElMessage.warning('请先登录')
-      return
-    }
-
-    // 设置复习状态
-    isReviewing.value = true
-    reviewingWordId.value = word.id
-
-    // 使用ElMessageBox让用户确认是否记住了单词
-    // 注意：ElMessageBox.confirm的返回值value是boolean类型
-    const { value: isRemembered } = await ElMessageBox.confirm(
-      `您记住了单词 "${word.word}" 吗？`,
-      {
-        title: '确认复习结果',
-        confirmButtonText: '记住了',
-        cancelButtonText: '没记住',
-        type: 'warning'
-      }
-    )
-
-    // 确保isRemembered是布尔值
-    const isRememberedBool: boolean = !!isRemembered
-
-    // 将布尔值映射为后端期望的状态字符串
-    const reviewStatus = isRememberedBool ? 'mastered' : 'learning';
-    // 调用实际API更新单词复习记录
-    await vocabularyApi.reviewWord(String(userId), word.id, reviewStatus)
-
-    // 保存当前页码，避免刷新后回到第一页
-    const currentPageValue = currentPage.value
-
-    // 重新从后端获取最新数据，确保状态实时更新
-    await loadWords()
-
-    // 恢复当前页码，保持用户体验一致性
-    currentPage.value = currentPageValue
-
-    ElMessage.success('复习成功！')
-    // 刷新统计信息
-    loadStats()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('操作失败，请稍后再试')
-    }
-  } finally {
-    // 无论成功失败，都要重置复习状态
-    isReviewing.value = false
-    reviewingWordId.value = null
-  }
-}
 
 const deleteWord = async (word: WordItem) => {
   try {
@@ -1852,24 +1783,16 @@ const showLearningModesGuide = () => {
           </div>
 
           <div class="guide-card" style="background-color: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);">
+            <h5 style="color: #303133; font-size: 14px; margin: 0 0 8px 0;">⚡ 单词速刷</h5>
+            <p style="color: #606266; line-height: 1.5; margin: 0; font-size: 13px;">快速浏览大量单词，通过堆叠卡片视图进行高效复习，适合快速巩固和查漏补缺。</p>
+          </div>
+
+          <div class="guide-card" style="background-color: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);">
             <h5 style="color: #303133; font-size: 14px; margin: 0 0 8px 0;">📝 批量听写</h5>
             <p style="color: #606266; line-height: 1.5; margin: 0; font-size: 13px;">连续听写多个单词，模拟真实听力场景，适合系统性训练，提高学习效率。</p>
           </div>
         </div>
 
-        <div style="margin-bottom: 20px;">
-          <h4 style="color: #303133; font-size: 15px; margin: 0 0 15px 0; padding-left: 10px; border-left: 4px solid #67c23a;">单个单词学习模式</h4>
-
-          <div class="guide-card" style="background-color: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);">
-            <h5 style="color: #303133; font-size: 14px; margin: 0 0 8px 0;">🎧 单词听写</h5>
-            <p style="color: #606266; line-height: 1.5; margin: 0; font-size: 13px;">在单词卡片上直接进行听写练习，强化单词拼写和发音记忆，快速巩固。</p>
-          </div>
-
-          <div class="guide-card" style="background-color: #f8fafc; border-radius: 10px; padding: 16px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);">
-            <h5 style="color: #303133; font-size: 14px; margin: 0 0 8px 0;">⚡ 快速复习</h5>
-            <p style="color: #606266; line-height: 1.5; margin: 0; font-size: 13px;">单独点击按钮进行快速复习，灵活控制学习进度，适合碎片化时间学习。</p>
-          </div>
-        </div>
 
         <div class="guide-tip" style="background-color: #e6f7ff; border-radius: 8px; padding: 12px; text-align: center;">
           <p style="color: #1890ff; font-size: 13px; margin: 0;">💡 小贴士：结合多种学习模式，可显著提高记忆效果！</p>
@@ -2147,100 +2070,8 @@ const handleSpeakWord = (word: string) => {
   }
 }
 
-// 导入听写模态框组件
-import DictationModal from '@/components/common/DictationModal.vue'
 import {HelpFilled} from "@element-plus/icons-vue";
 
-// 听写模态框相关状态
-const dictationModal = ref<InstanceType<typeof DictationModal> | null>(null)
-const showDictationModal = ref(false)
-const currentDictationWord = ref<WordItem | null>(null)
-
-// 处理单词听写
-const handleDictateWord = (word: WordItem) => {
-  console.log('Dictation button clicked, user tier:', userStore.userTier);
-  // 检查用户是否登录
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('请先登录以使用听写功能')
-    console.log('User not logged in, can\'t use dictation');
-    return
-  }
-
-  // 检查用户是否为PRO会员或以上
-  if (userStore.userTier !== 'pro' && userStore.userTier !== 'enterprise') {
-    console.log('User is not premium, showing upgrade dialog');
-    ElMessageBox.confirm(
-      '听写功能是PRO会员专属特权，升级会员即可解锁全部学习功能！',
-      '会员特权',
-      {
-        confirmButtonText: '立即升级',
-        cancelButtonText: '暂不升级',
-        type: 'info'
-      }
-    ).then(() => {
-      // 跳转到会员中心页面
-      window.location.href = '/subscription'
-    }).catch(() => {
-      // 用户取消
-    })
-    return
-  }
-
-  // 设置当前要听写的单词并显示模态框
-  console.log('Setting dictation word:', word.word);
-  currentDictationWord.value = word
-  showDictationModal.value = true
-  console.log('showDictationModal set to:', showDictationModal.value);
-
-  // 强制下一个tick检查状态
-  nextTick(() => {
-    console.log('After nextTick - showDictationModal:', showDictationModal.value, 'currentDictationWord:', currentDictationWord.value?.word);
-  })
-}
-
-// 关闭听写模态框
-const closeDictationModal = () => {
-  showDictationModal.value = false
-  currentDictationWord.value = null
-}
-
-// 处理听写模态框完成事件（单个单词听写）
-const handleDictationModalFinish = async (results: { word: WordItem; isCorrect: boolean }[]) => {
-  if (!results || results.length === 0) return
-
-  const userId = userStore.userInfo?.id
-  if (!userId) {
-    ElMessage.warning('请先登录')
-    return
-  }
-
-  isDictationLoading.value = true
-  try {
-    // 获取第一个结果（单个单词听写模式下只有一个结果）
-    const { word, isCorrect } = results[0]
-    
-    // 将布尔值映射为后端期望的状态字符串
-    const reviewStatus = isCorrect ? 'mastered' : 'learning';
-    
-    // 调用API记录听写结果
-    await vocabularyApi.reviewWord(
-      String(userId),
-      word.id,
-      reviewStatus
-    )
-
-    // 立即刷新数据，更新单词状态
-    await loadWords()
-    await loadStats()
-
-    // 显示操作成功的提示
-    ElMessage.success(isCorrect ? '回答正确！单词状态已更新。' : '已记录听写结果。')
-  } catch (error) {
-    ElMessage.error('记录听写结果失败，请稍后再试')
-  } finally {
-    isDictationLoading.value = false
-  }
-}
 
 // 开始批量听写
 const startBatchDictation = async () => {
