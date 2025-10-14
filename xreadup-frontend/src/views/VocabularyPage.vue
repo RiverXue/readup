@@ -841,9 +841,9 @@ const visibleStackWords = computed(() => {
   })
   
   const start = currentStackIndex.value
-  // 动态计算堆叠数量：当前张数 + 后续最多3张
+  // 动态计算堆叠数量：根据实际单词数量，最多显示8张（包括当前张）
   const remainingWords = sortedWords.length - start
-  const dynamicStackSize = Math.min(remainingWords, 4) // 最多显示4张，包括当前张
+  const dynamicStackSize = Math.min(remainingWords, 8) // 最多显示8张，包括当前张
   const end = start + dynamicStackSize
   return sortedWords.slice(start, end)
 })
