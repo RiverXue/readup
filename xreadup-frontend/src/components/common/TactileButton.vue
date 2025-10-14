@@ -242,10 +242,12 @@ const createRipple = (event: MouseEvent) => {
 }
 
 .tactile-button--warning {
-  background: linear-gradient(135deg, #efc331 0%, #e9c243 100%);
+  background: linear-gradient(135deg, #ff9500 0%, #ffcc02 100%);
   color: #ffffff;
   box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    0 8px 25px rgba(255, 149, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.3);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
@@ -253,8 +255,10 @@ const createRipple = (event: MouseEvent) => {
 .tactile-button--warning:hover:not(.tactile-button--disabled) {
   transform: translateY(-2px);
   box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  border-color: rgba(255, 255, 255, 0.6);
+    0 12px 35px rgba(255, 149, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .tactile-button--danger {

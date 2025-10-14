@@ -2244,31 +2244,65 @@ const showDictationHint = () => {
 
 
 .no-longer-review-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin-right: 10px;
-  padding: 4px 10px;
-  background-color: #ffc300;
-  color: #000000;
-  border-radius: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #ff9500 0%, #ffcc02 100%);
+  color: white;
+  border-radius: 20px;
   font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+  transition: all 0.3s ease;
 }
 
-/* 现代玻璃态单词卡片 - 保持三色配色和边缘效果 */
+.no-longer-review-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 149, 0, 0.4);
+}
+
+/* 现代玻璃态单词卡片 - 接近文章卡片效果，保持三色配色和边缘效果 */
 .word-card.el-card {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 16px !important;
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
+  border-radius: 20px !important;
   padding: 24px !important;
   margin-bottom: 20px !important;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%) !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   /* 移除默认阴影，由状态光晕接管 */
   box-shadow: none !important;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   overflow: hidden !important;
+  cursor: pointer !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+/* 单词卡片悬停效果 - 类似文章卡片 */
+.word-card.el-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(0, 122, 255, 0.1) 0%, 
+    rgba(255, 119, 198, 0.1) 50%, 
+    rgba(120, 219, 255, 0.1) 100%);
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* 现代状态光晕 - 保持三色配色，增强玻璃态效果 */
@@ -2276,8 +2310,8 @@ const showDictationHint = () => {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 0 rgba(64, 158, 255, 0),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    0 0 12px 4px rgba(64, 158, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   animation: glow-in-blue 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
@@ -2285,8 +2319,8 @@ const showDictationHint = () => {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 0 rgba(230, 162, 60, 0),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    0 0 12px 4px rgba(230, 162, 60, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   animation: glow-in-orange 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, glow-pulse 2s ease-in-out infinite;
 }
 
@@ -2294,8 +2328,8 @@ const showDictationHint = () => {
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
-    0 0 0 0 rgba(103, 194, 58, 0),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    0 0 12px 4px rgba(103, 194, 58, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   animation: glow-in-green 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
@@ -2348,9 +2382,17 @@ const showDictationHint = () => {
   }
 }
 
-/* 现代悬停效果：保持三色配色，增强玻璃态反馈 */
+/* 现代悬停效果：保持三色配色，增强玻璃态反馈 - 类似文章卡片 */
 .word-card.el-card:hover {
-  transform: translateY(-4px) scale(1.02) !important;
+  transform: translateY(-8px) scale(1.02) !important;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.word-card.el-card:hover::before {
+  opacity: 1;
 }
 
 .word-card.el-card[data-status="unreviewed"]:hover {
