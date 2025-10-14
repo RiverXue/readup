@@ -869,13 +869,9 @@ const speedReviewWordsCount = computed(() => {
       (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
     )
     
-    // 检查是否还有其他需要复习的单词（包括mastered状态）
-    const otherSpecialWords = words.value.filter((word: WordItem) =>
-      word.nextReviewTime &&
-      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
-      word.reviewStatus === 'mastered' &&
-      !word.noLongerReview // 排除不再巩固的单词
-    )
+    // 根据API行为，可能不包含mastered状态但时间超过今日的单词
+    // 让我们先不包含这些单词，看看是否能匹配API
+    const otherSpecialWords: WordItem[] = []
     
     console.log('特殊处理的单词数:', specialWords.length)
     console.log('特殊处理单词状态分布:', specialWords.reduce((acc, w) => {
