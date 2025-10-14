@@ -846,9 +846,22 @@ const shouldReviewWord = (word: WordItem) => {
   return word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing'
 }
 
-// 获取需要速刷的单词 - 使用所有单词而不是筛选后的单词
+// 获取需要速刷的单词数量 - 与闪卡式复习和批量听写保持一致
 const speedReviewWordsCount = computed(() => {
-  return words.value.filter(shouldReviewWord).length
+  // 优先使用本地计算的待复习单词数（与loadStats中的逻辑一致）
+  if (words.value.length > 0) {
+    const locallyNeedingReview = words.value.filter((word: WordItem) =>
+      word.nextReviewTime &&
+      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+    ).length
+    
+    if (locallyNeedingReview > 0) {
+      return locallyNeedingReview
+    }
+  }
+  
+  // 如果没有本地数据，返回0
+  return 0
 })
 
 // 分页后的数据
@@ -1025,12 +1038,53 @@ const resetCardAnimation = () => {
 
 // 单词速刷相关方法
 const startWordSpeedReview = async () => {
+  const userId = userStore.userInfo?.id
+  if (!userId) {
+    ElMessage.warning('请先登录')
+    return
+  }
+
+  isSpeedReviewLoading.value = true
   try {
-    isSpeedReviewLoading.value = true
-    
-    // 获取需要速刷的单词 - 使用所有单词而不是筛选后的单词
-    const wordsToReview = words.value.filter(shouldReviewWord)
-    
+    // 调用learning API获取今日复习单词 - 与闪卡式复习和批量听写保持一致
+    const response = await learningApi.getTodayReviewWords(String(userId))
+
+    // 更健壮地处理数据，确保数据是数组并包含正确的字段
+    let todayReviews = Array.isArray(response?.data) ? response.data : []
+
+    // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
+    if (todayReviews.length === 0 && words.value.length > 0) {
+      const localReviewWords = words.value.filter((word: WordItem) =>
+        word.nextReviewTime &&
+        new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+      )
+
+      // 如果本地有需要复习的单词
+      if (localReviewWords.length > 0) {
+        // 使用本地找到的单词作为速刷内容
+        todayReviews = localReviewWords
+      } else {
+        ElMessage.info('暂无需要速刷的单词')
+        return
+      }
+    }
+
+    // 规范化速刷单词数据，确保每个单词都有必要的字段
+    const wordsToReview = todayReviews.map((word: any) => ({
+      id: word.id || word.wordId || 0,
+      word: word.word || '',
+      meaning: word.meaning || word.definition || '暂无释义',
+      phonetic: word.phonetic || word.pronunciation || '',
+      example: word.example || '',
+      reviewStatus: word.reviewStatus || 'unreviewed',
+      createdAt: word.createdAt || new Date().toISOString(),
+      nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
+      reviewCount: word.reviewCount || 0,
+      masteryLevel: word.masteryLevel || 0,
+      needsReview: true,
+      noLongerReview: false
+    })).filter(word => word.word.trim() !== '') // 过滤掉空单词
+
     if (wordsToReview.length === 0) {
       ElMessage.info('暂无需要速刷的单词')
       return
@@ -1067,7 +1121,49 @@ const startWordSpeedReview = async () => {
     ElMessage.success(`开始单词速刷，共 ${wordsToReview.length} 个单词`)
     
   } catch (error) {
-    ElMessage.error('启动速刷失败')
+    // 发生错误时，也尝试从本地获取复习单词作为备选
+    if (words.value.length > 0) {
+      const localReviewWords = words.value.filter((word: WordItem) =>
+        word.reviewStatus === 'reviewing' &&
+        word.nextReviewTime &&
+        new Date(word.nextReviewTime) <= new Date()
+      )
+
+      if (localReviewWords.length > 0) {
+        // 使用本地找到的单词作为速刷内容
+        speedReviewWords.value = localReviewWords
+        currentSpeedReviewIndex.value = 0
+        speedReviewStats.value = {
+          total: localReviewWords.length,
+          mastered: 0,
+          skipped: 0,
+          startTime: new Date()
+        }
+        
+        // 切换到叠层视图
+        viewMode.value = 'stack'
+        currentStackIndex.value = 0
+        isSpeedReviewMode.value = true
+        
+        // 自动滚动到堆叠视图
+        await nextTick()
+        const stackContainer = document.querySelector('.word-stack-container')
+        if (stackContainer) {
+          const rect = stackContainer.getBoundingClientRect()
+          const scrollTop = window.pageYOffset + rect.top - 100
+          window.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          })
+        }
+        
+        ElMessage.success(`开始单词速刷，共 ${localReviewWords.length} 个单词`)
+      } else {
+        ElMessage.error('获取速刷内容失败，请稍后再试')
+      }
+    } else {
+      ElMessage.error('获取速刷内容失败，请稍后再试')
+    }
   } finally {
     isSpeedReviewLoading.value = false
   }
