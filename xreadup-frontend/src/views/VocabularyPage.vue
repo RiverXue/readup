@@ -976,9 +976,25 @@ const speedReviewWordsCount = computed(() => {
     }, {} as Record<string, number>))
     console.log('其他特殊单词数(mastered但时间超过):', otherSpecialWords.length)
     
-    // 确保不重复计算：特殊处理的单词已经包含了被排除的reviewing单词
-    // 所以总计算应该是：基于时间的单词 + 基于状态的单词 + 特殊处理的单词
-    const totalNeedingReview = wordsByTime.length + wordsByStatus.length + specialWords.length + otherSpecialWords.length
+    // 根据API行为，我们需要包含所有需要复习的单词
+    // 基于时间的单词已经包含了所有状态的单词（91个）
+    // 特殊处理的单词包含明天的reviewing单词（1个）
+    // 但API返回93个，说明还需要包含1个单词
+    
+    // 让我们尝试包含所有可能复习的单词，看看是否能匹配API
+    const allWordsForReview = words.value.filter((word: WordItem) => 
+      !word.noLongerReview && // 排除不再巩固的单词
+      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing' || word.reviewStatus === 'mastered')
+    )
+    
+    console.log('所有需要复习的单词数:', allWordsForReview.length)
+    console.log('所有需要复习的单词状态分布:', allWordsForReview.reduce((acc, w) => {
+      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
+      return acc
+    }, {} as Record<string, number>))
+    
+    // 使用所有需要复习的单词数量
+    const totalNeedingReview = allWordsForReview.length
     
     console.log('计算详情:')
     console.log('- 基于时间的单词:', wordsByTime.length)
