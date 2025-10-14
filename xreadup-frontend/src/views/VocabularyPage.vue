@@ -1096,6 +1096,21 @@ const startWordSpeedReview = async () => {
     console.log('本地没有nextReviewTime的单词数:', localWordsWithoutNextReviewTime)
     console.log('本地按状态需要复习的单词数:', localWordsByStatus)
     console.log('本地总计应该复习的单词数:', localWordsNeedingReview + localWordsByStatus)
+    
+    // 分析时间差异：找出被本地筛选排除但API包含的单词
+    const todayEnd = new Date(new Date().setHours(23, 59, 59, 999))
+    const excludedWords = words.value.filter(word => 
+      word.nextReviewTime && 
+      new Date(word.nextReviewTime) > todayEnd
+    )
+    console.log('本地被时间筛选排除的单词数:', excludedWords.length)
+    if (excludedWords.length > 0) {
+      console.log('被排除的单词时间:', excludedWords.map(w => ({ 
+        word: w.word, 
+        nextReviewTime: w.nextReviewTime,
+        timeDiff: new Date(w.nextReviewTime).getTime() - todayEnd.getTime()
+      })))
+    }
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
@@ -1989,6 +2004,10 @@ const startTodayReview = async () => {
     // 更健壮地处理数据，确保数据是数组并包含正确的字段
     let todayReviews = Array.isArray(response?.data) ? response.data : []
 
+    // 调试日志：闪卡式复习
+    console.log('=== 闪卡式复习 ===')
+    console.log('API返回的复习单词数量:', todayReviews.length)
+
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
       const localReviewWords = words.value.filter((word: WordItem) =>
@@ -2270,6 +2289,10 @@ const startBatchDictation = async () => {
 
     // 更健壮地处理数据
     let dictationWords = Array.isArray(response?.data) ? response.data : []
+
+    // 调试日志：批量听写
+    console.log('=== 批量听写 ===')
+    console.log('API返回的复习单词数量:', dictationWords.length)
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (dictationWords.length === 0 && words.value.length > 0) {
