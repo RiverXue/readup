@@ -869,6 +869,18 @@ const speedReviewWordsCount = computed(() => {
       (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
     )
     
+    console.log('被排除的reviewing单词详情:', words.value.filter((word: WordItem) =>
+      word.nextReviewTime &&
+      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
+      word.reviewStatus === 'reviewing'
+    ).map(w => ({
+      id: w.id,
+      word: w.word,
+      reviewStatus: w.reviewStatus,
+      nextReviewTime: w.nextReviewTime,
+      timeDiff: new Date(w.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime()
+    })))
+    
     // 根据API行为，可能不包含mastered状态但时间超过今日的单词
     // 让我们先不包含这些单词，看看是否能匹配API
     const otherSpecialWords: WordItem[] = []
