@@ -843,7 +843,6 @@ const getStackCardStyle = (index: number) => {
   const horizontalOffset = index % 2 === 1 ? 15 : -10 // 左右交替偏移，增加偏移量
   const verticalOffset = index * 8 // 垂直偏移，模拟卡片厚度
   const zIndex = stackSize - index
-  const opacity = Math.max(0.7 - index * 0.15, 0.3) // 透明度递减
   
   // 添加轻微的旋转，让卡片看起来更自然
   const rotation = index % 2 === 1 ? 1 : -0.5 // 左右交替轻微旋转
@@ -851,7 +850,7 @@ const getStackCardStyle = (index: number) => {
   return {
     transform: `translateY(${verticalOffset}px) translateX(${horizontalOffset}px) rotate(${rotation}deg)`,
     zIndex: zIndex,
-    opacity: opacity,
+    opacity: 1, // 移除透明度，避免颜色晕染
     position: 'absolute' as const,
     top: 0,
     left: 0,
@@ -2937,10 +2936,21 @@ const showDictationHint = () => {
 
 /* 为叠层卡片添加厚度边框效果 */
 .word-card-stack:not(:first-child) .word-card {
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  /* 确保叠层卡片有完整的背景，避免透明 */
+  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+}
+
+/* 叠层卡片的特殊样式 */
+.word-card-stack:not(:first-child) {
+  /* 添加卡片边缘效果，模拟真实卡片 */
+  border-radius: 20px;
+  overflow: hidden;
+  /* 确保不透明 */
+  background: transparent;
 }
 
 /* 叠层视图控制 */
