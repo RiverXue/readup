@@ -2438,14 +2438,20 @@ const showDictationHint = () => {
 .status-indicator.mastered {
   color: white;
   background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.1) 4px,
+    rgba(255, 255, 255, 0.1) 8px
+  );
   box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
 }
 
 .status-indicator.mastered-no-review {
   color: white;
-  background: linear-gradient(135deg, #8E8E93 0%, #AEAEB2 100%);
-  box-shadow: 0 4px 12px rgba(142, 142, 147, 0.3);
-  opacity: 0.8;
+  background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
 }
 
 .status-indicator.reviewing {
