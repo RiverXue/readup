@@ -2302,7 +2302,7 @@ const showDictationHint = () => {
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
     0 0 12px 4px rgba(230, 162, 60, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   animation: glow-in-orange 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards, glow-pulse 2s ease-in-out infinite;
 }
 
