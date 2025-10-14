@@ -852,9 +852,11 @@ const shouldReviewWord = (word: WordItem) => {
 const speedReviewWordsCount = computed(() => {
   if (words.value.length > 0) {
     // 使用与API相同的筛选逻辑：时间筛选 + 状态筛选
+    // 包含所有时间在今日内的单词，包括mastered状态
     const wordsByTime = words.value.filter((word: WordItem) =>
       word.nextReviewTime &&
-      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999)) &&
+      !word.noLongerReview // 排除不再巩固的单词
     )
     
     console.log('今日结束时间:', new Date(new Date().setHours(23, 59, 59, 999)))
