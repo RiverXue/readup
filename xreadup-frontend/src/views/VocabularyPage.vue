@@ -481,7 +481,9 @@
       
       <!-- 底部进度显示 -->
       <div class="stack-progress-bottom">
-        <span class="stack-progress">{{ currentStackIndex + 1 }} / {{ filteredWords.length }}</span>
+        <span class="stack-progress">
+          {{ isSpeedReviewMode ? `${currentSpeedReviewIndex + 1} / ${speedReviewWords.length}` : `${currentStackIndex + 1} / ${filteredWords.length}` }}
+        </span>
       </div>
     </div>
 
