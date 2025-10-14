@@ -2306,7 +2306,7 @@ const showDictationHint = () => {
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05), 
       0 0 12px 4px rgba(64, 158, 255, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
 }
 
@@ -2316,7 +2316,7 @@ const showDictationHint = () => {
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05), 
       0 0 12px 4px rgba(230, 162, 60, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
 }
 
@@ -2326,7 +2326,7 @@ const showDictationHint = () => {
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05), 
       0 0 12px 4px rgba(103, 194, 58, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
 }
 
@@ -2337,14 +2337,14 @@ const showDictationHint = () => {
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05),
       0 0 12px 4px rgba(230, 162, 60, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
   50% {
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05),
       0 0 16px 6px rgba(230, 162, 60, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
   }
 }
 
@@ -2385,14 +2385,14 @@ const showDictationHint = () => {
       0 16px 48px rgba(0, 0, 0, 0.15),
       0 4px 12px rgba(0, 0, 0, 0.1), 
       0 0 20px 8px rgba(230, 162, 60, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
   }
   50% { 
     box-shadow: 
       0 16px 48px rgba(0, 0, 0, 0.15),
       0 4px 12px rgba(0, 0, 0, 0.1), 
       0 0 24px 10px rgba(230, 162, 60, 0.6),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
   }
 }
 
@@ -2411,31 +2411,43 @@ const showDictationHint = () => {
   flex: 1;
 }
 
-/* 状态指示器：为所有状态提供直观的识别元素 */
+/* 状态指示器：为所有状态提供直观的识别元素 - 现代胶囊样式 */
 .status-indicator {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   margin-bottom: 8px;
   font-size: 12px;
-  font-weight: bold;
-  color: #606266;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.status-indicator:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 .status-indicator.unreviewed {
-  color: #409eff;
-  background-color: rgba(64, 158, 255, 0.1);
+  color: white;
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
 .status-indicator.mastered {
-  color: #67c23a;
-  background-color: rgba(103, 194, 58, 0.1);
+  color: white;
+  background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
 }
 
 .status-indicator.reviewing {
-  color: #e6a23c;
-  background-color: rgba(230, 162, 60, 0.1);
+  color: white;
+  background: linear-gradient(135deg, #FF9500 0%, #FFCC02 100%);
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
 }
 
 .status-icon {
