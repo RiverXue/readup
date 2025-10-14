@@ -824,21 +824,42 @@ const visibleStackWords = computed(() => {
 
 // 叠层卡片样式
 const getStackCardStyle = (index: number) => {
-  const offset = index * 8 // 每层偏移8px
-  const scale = 1 - index * 0.05 // 每层缩小5%
+  if (index === 0) {
+    // 当前卡片：完全可见，无偏移
+    return {
+      transform: 'translateY(0px) translateX(0px)',
+      zIndex: stackSize,
+      opacity: 1,
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      cursor: 'default',
+      transition: 'all 0.3s ease'
+    }
+  }
+  
+  // 叠层卡片：左右偏移，模拟卡片厚度
+  const horizontalOffset = index % 2 === 1 ? 15 : -10 // 左右交替偏移，增加偏移量
+  const verticalOffset = index * 8 // 垂直偏移，模拟卡片厚度
   const zIndex = stackSize - index
-  const opacity = index === 0 ? 1 : 0.8 - index * 0.1
+  const opacity = Math.max(0.7 - index * 0.15, 0.3) // 透明度递减
+  
+  // 添加轻微的旋转，让卡片看起来更自然
+  const rotation = index % 2 === 1 ? 1 : -0.5 // 左右交替轻微旋转
   
   return {
-    transform: `translateY(${offset}px) scale(${scale})`,
+    transform: `translateY(${verticalOffset}px) translateX(${horizontalOffset}px) rotate(${rotation}deg)`,
     zIndex: zIndex,
-    opacity: Math.max(opacity, 0.3),
+    opacity: opacity,
     position: 'absolute' as const,
     top: 0,
     left: 0,
     right: 0,
-    cursor: index === 0 ? 'default' : 'pointer',
-    transition: 'all 0.3s ease'
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    // 添加更真实的卡片厚度阴影
+    boxShadow: `0 ${verticalOffset}px ${verticalOffset * 1.5}px rgba(0, 0, 0, 0.15), 0 ${verticalOffset * 0.5}px ${verticalOffset}px rgba(0, 0, 0, 0.1)`
   }
 }
 
@@ -2896,15 +2917,30 @@ const showDictationHint = () => {
   max-width: 400px;
   height: 500px;
   margin-bottom: 20px;
+  /* 添加透视效果，增强立体感 */
+  perspective: 1000px;
 }
 
 .word-card-stack {
   width: 100%;
   height: 100%;
+  /* 为每张卡片添加厚度感 */
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 .word-card-stack:hover {
-  transform: translateY(var(--offset, 0px)) scale(var(--scale, 1)) !important;
+  /* 悬停时稍微抬起，增强交互感 */
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 为叠层卡片添加厚度边框效果 */
+.word-card-stack:not(:first-child) .word-card {
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 /* 叠层视图控制 */
