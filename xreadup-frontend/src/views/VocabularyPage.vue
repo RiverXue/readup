@@ -481,9 +481,7 @@
       
       <!-- 底部进度显示 -->
       <div class="stack-progress-bottom">
-        <span class="stack-progress">
-          {{ isSpeedReviewMode ? `${currentSpeedReviewIndex + 1} / ${speedReviewWords.length}` : `${currentStackIndex + 1} / ${filteredWords.length}` }}
-        </span>
+        <span class="stack-progress">{{ currentStackIndex + 1 }} / {{ filteredWords.length }}</span>
       </div>
     </div>
 
@@ -848,163 +846,17 @@ const shouldReviewWord = (word: WordItem) => {
   return word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing'
 }
 
-// 获取需要速刷的单词数量 - 与API逻辑保持一致
+// 获取需要速刷的单词数量 - 与闪卡式复习和批量听写保持一致
 const speedReviewWordsCount = computed(() => {
+  // 使用与loadStats相同的逻辑，确保与统计显示一致
   if (words.value.length > 0) {
-    // 使用与API相同的筛选逻辑：时间筛选 + 状态筛选
-    // 包含所有时间在今日内的单词，包括mastered状态
-    const wordsByTime = words.value.filter((word: WordItem) =>
+    const locallyNeedingReview = words.value.filter((word: WordItem) =>
       word.nextReviewTime &&
-      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999)) &&
-      !word.noLongerReview // 排除不再巩固的单词
-    )
+      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+    ).length
     
-    console.log('今日结束时间:', new Date(new Date().setHours(23, 59, 59, 999)))
-    console.log('reviewing单词时间:', new Date('2025-10-15 09:44:48'))
-    console.log('是否在今日内:', new Date('2025-10-15 09:44:48') <= new Date(new Date().setHours(23, 59, 59, 999)))
-    
-    console.log('基于时间的单词数量:', wordsByTime.length)
-    console.log('基于时间的单词状态分布:', wordsByTime.reduce((acc, w) => {
-      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
-      return acc
-    }, {} as Record<string, number>))
-    console.log('基于时间的mastered单词数:', wordsByTime.filter(w => w.reviewStatus === 'mastered').length)
-    
-    const wordsByStatus = words.value.filter((word: WordItem) =>
-      !word.nextReviewTime &&
-      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing') &&
-      !word.noLongerReview // 排除不再巩固的单词
-    )
-    
-    console.log('基于状态的单词数量:', wordsByStatus.length)
-    console.log('基于状态的单词状态分布:', wordsByStatus.reduce((acc, w) => {
-      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
-      return acc
-    }, {} as Record<string, number>))
-    
-    // 特殊处理：某些状态的单词即使时间超过今日，也可能需要复习
-    const specialWords = words.value.filter((word: WordItem) =>
-      word.nextReviewTime &&
-      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
-      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
-    )
-    
-    const excludedReviewingWords = words.value.filter((word: WordItem) =>
-      word.nextReviewTime &&
-      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
-      word.reviewStatus === 'reviewing'
-    )
-    
-    console.log('被排除的reviewing单词详情:', excludedReviewingWords.map(w => ({
-      id: w.id,
-      word: w.word,
-      reviewStatus: w.reviewStatus,
-      nextReviewTime: w.nextReviewTime,
-      timeDiff: new Date(w.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime()
-    })))
-    
-    console.log('特殊处理的reviewing单词详情:', specialWords.map(w => ({
-      id: w.id,
-      word: w.word,
-      reviewStatus: w.reviewStatus,
-      nextReviewTime: w.nextReviewTime,
-      timeDiff: new Date(w.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime()
-    })))
-    
-    // 检查是否有重复的单词
-    const excludedIds = excludedReviewingWords.map(w => w.id)
-    const specialIds = specialWords.map(w => w.id)
-    const duplicateIds = excludedIds.filter(id => specialIds.includes(id))
-    console.log('重复的单词ID:', duplicateIds)
-    
-    // 根据API行为，可能不包含mastered状态但时间超过今日的单词
-    // 让我们先不包含这些单词，看看是否能匹配API
-    const otherSpecialWords: WordItem[] = []
-    
-    // 检查API是否包含了某些mastered状态的单词
-    // 让我们尝试包含一些mastered状态的单词，看看是否能匹配API
-    const masteredWordsForAPI = words.value.filter((word: WordItem) =>
-      word.nextReviewTime &&
-      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
-      word.reviewStatus === 'mastered' &&
-      !word.noLongerReview &&
-      // 只包含时间差异较小的mastered单词（比如明天到期的）
-      new Date(word.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime() <= 24 * 60 * 60 * 1000 // 24小时内
-    )
-    
-    console.log('可能被API包含的mastered单词数:', masteredWordsForAPI.length)
-    console.log('可能被API包含的mastered单词详情:', masteredWordsForAPI.map(w => ({
-      id: w.id,
-      word: w.word,
-      reviewStatus: w.reviewStatus,
-      nextReviewTime: w.nextReviewTime,
-      timeDiff: new Date(w.nextReviewTime).getTime() - new Date(new Date().setHours(23, 59, 59, 999)).getTime()
-    })))
-    
-    // 检查是否有其他可能被API包含的单词
-    const allWordsForReview = words.value.filter((word: WordItem) => 
-      !word.noLongerReview && // 排除不再巩固的单词
-      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing' || word.reviewStatus === 'mastered')
-    )
-    
-    console.log('所有可能复习的单词数(排除不再巩固):', allWordsForReview.length)
-    console.log('所有可能复习的单词状态分布:', allWordsForReview.reduce((acc, w) => {
-      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
-      return acc
-    }, {} as Record<string, number>))
-    
-    // 检查是否有时间在今日内的mastered单词
-    const masteredWordsInToday = words.value.filter((word: WordItem) =>
-      word.nextReviewTime &&
-      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999)) &&
-      word.reviewStatus === 'mastered' &&
-      !word.noLongerReview
-    )
-    
-    console.log('今日内的mastered单词数:', masteredWordsInToday.length)
-    console.log('今日内的mastered单词详情:', masteredWordsInToday.map(w => ({
-      id: w.id,
-      word: w.word,
-      reviewStatus: w.reviewStatus,
-      nextReviewTime: w.nextReviewTime
-    })))
-    
-    console.log('特殊处理的单词数:', specialWords.length)
-    console.log('特殊处理单词状态分布:', specialWords.reduce((acc, w) => {
-      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
-      return acc
-    }, {} as Record<string, number>))
-    console.log('其他特殊单词数(mastered但时间超过):', otherSpecialWords.length)
-    
-    // 根据API行为，我们需要包含所有需要复习的单词
-    // 基于时间的单词已经包含了所有状态的单词（91个）
-    // 特殊处理的单词包含明天的reviewing单词（1个）
-    // 但API返回93个，说明还需要包含1个单词
-    
-    // 让我们尝试包含所有可能复习的单词，看看是否能匹配API
-    const allWordsForReview = words.value.filter((word: WordItem) => 
-      !word.noLongerReview && // 排除不再巩固的单词
-      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing' || word.reviewStatus === 'mastered')
-    )
-    
-    console.log('所有需要复习的单词数:', allWordsForReview.length)
-    console.log('所有需要复习的单词状态分布:', allWordsForReview.reduce((acc, w) => {
-      acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
-      return acc
-    }, {} as Record<string, number>))
-    
-    // 使用所有需要复习的单词数量
-    const totalNeedingReview = allWordsForReview.length
-    
-    console.log('计算详情:')
-    console.log('- 基于时间的单词:', wordsByTime.length)
-    console.log('- 基于状态的单词:', wordsByStatus.length) 
-    console.log('- 特殊处理的单词:', specialWords.length)
-    console.log('- 其他特殊单词:', otherSpecialWords.length)
-    console.log('- 总计:', totalNeedingReview)
-    
-    if (totalNeedingReview > 0) {
-      return totalNeedingReview
+    if (locallyNeedingReview > 0) {
+      return locallyNeedingReview
     }
   }
   
@@ -1022,7 +874,7 @@ const paginatedWords = computed(() => {
 // 叠层视图数据 - 按状态排序：未复习 → 复习中 → 已掌握
 const visibleStackWords = computed(() => {
   // 速刷模式使用速刷单词列表
-  if (isSpeedReviewMode.value) {
+  if (isSpeedReviewMode.value && speedReviewWords.value.length > 0) {
     const start = currentSpeedReviewIndex.value
     const remainingWords = speedReviewWords.value.length - start
     const dynamicStackSize = Math.min(remainingWords, 8)
@@ -1030,9 +882,10 @@ const visibleStackWords = computed(() => {
     const result = speedReviewWords.value.slice(start, end)
     
     // 调试日志：显示可见堆叠单词数量
-    console.log('visibleStackWords数量:', result.length)
-    console.log('speedReviewWords总数量:', speedReviewWords.value.length)
-    console.log('currentSpeedReviewIndex:', currentSpeedReviewIndex.value)
+    console.log('速刷模式 - visibleStackWords数量:', result.length)
+    console.log('速刷模式 - speedReviewWords总数量:', speedReviewWords.value.length)
+    console.log('速刷模式 - currentSpeedReviewIndex:', currentSpeedReviewIndex.value)
+    console.log('速刷模式 - isSpeedReviewMode:', isSpeedReviewMode.value)
     
     return result
   }
@@ -1048,7 +901,14 @@ const visibleStackWords = computed(() => {
   const remainingWords = sortedWords.length - start
   const dynamicStackSize = Math.min(remainingWords, 8) // 最多显示8张，包括当前张
   const end = start + dynamicStackSize
-  return sortedWords.slice(start, end)
+  const result = sortedWords.slice(start, end)
+  
+  // 调试日志：显示普通模式数量
+  console.log('普通模式 - visibleStackWords数量:', result.length)
+  console.log('普通模式 - filteredWords总数量:', filteredWords.value.length)
+  console.log('普通模式 - isSpeedReviewMode:', isSpeedReviewMode.value)
+  
+  return result
 })
 
 // 叠层卡片样式
@@ -1210,54 +1070,6 @@ const startWordSpeedReview = async () => {
     // 调试日志：显示API返回的数量和本地计算的数量
     console.log('API返回的复习单词数量:', todayReviews.length)
     console.log('本地计算的复习单词数量:', speedReviewWordsCount.value)
-    
-    // 检查API返回的数据中"不再巩固"单词的数量
-    const noLongerReviewCount = todayReviews.filter((word: any) => word.noLongerReview === true).length
-    const normalReviewCount = todayReviews.filter((word: any) => !word.noLongerReview).length
-    console.log('API返回中不再巩固的单词数量:', noLongerReviewCount)
-    console.log('API返回中正常复习的单词数量:', normalReviewCount)
-    
-    // 详细分析本地筛选逻辑
-    const localWordsWithNextReviewTime = words.value.filter(word => word.nextReviewTime).length
-    const localWordsNeedingReview = words.value.filter(word => 
-      word.nextReviewTime && 
-      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
-    ).length
-    const localWordsWithoutNextReviewTime = words.value.filter(word => !word.nextReviewTime).length
-    const localWordsByStatus = words.value.filter(word => 
-      !word.nextReviewTime && 
-      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
-    ).length
-    
-    console.log('本地单词总数:', words.value.length)
-    console.log('本地有nextReviewTime的单词数:', localWordsWithNextReviewTime)
-    console.log('本地需要复习的单词数(基于时间):', localWordsNeedingReview)
-    console.log('本地没有nextReviewTime的单词数:', localWordsWithoutNextReviewTime)
-    console.log('本地按状态需要复习的单词数:', localWordsByStatus)
-    console.log('本地总计应该复习的单词数:', localWordsNeedingReview + localWordsByStatus)
-    
-    // 分析时间差异：找出被本地筛选排除但API包含的单词
-    const todayEnd = new Date(new Date().setHours(23, 59, 59, 999))
-    const excludedWords = words.value.filter(word => 
-      word.nextReviewTime && 
-      new Date(word.nextReviewTime) > todayEnd
-    )
-    console.log('本地被时间筛选排除的单词数:', excludedWords.length)
-    if (excludedWords.length > 0) {
-      console.log('被排除的单词时间:', excludedWords.map(w => ({ 
-        word: w.word, 
-        nextReviewTime: w.nextReviewTime,
-        timeDiff: new Date(w.nextReviewTime).getTime() - todayEnd.getTime(),
-        reviewStatus: w.reviewStatus
-      })))
-      
-      // 分析被排除单词的状态分布
-      const excludedByStatus = excludedWords.reduce((acc, w) => {
-        acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-      console.log('被排除单词的状态分布:', excludedByStatus)
-    }
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
@@ -1278,24 +1090,20 @@ const startWordSpeedReview = async () => {
     }
 
     // 规范化速刷单词数据，确保每个单词都有必要的字段
-    // 同时过滤掉"不再巩固"的单词和空单词
-    const wordsToReview = todayReviews
-      .filter((word: any) => !word.noLongerReview) // 过滤掉不再巩固的单词
-      .map((word: any) => ({
-        id: word.id || word.wordId || 0,
-        word: word.word || '',
-        meaning: word.meaning || word.definition || '暂无释义',
-        phonetic: word.phonetic || word.pronunciation || '',
-        example: word.example || '',
-        reviewStatus: word.reviewStatus || 'unreviewed',
-        createdAt: word.createdAt || new Date().toISOString(),
-        nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
-        reviewCount: word.reviewCount || 0,
-        masteryLevel: word.masteryLevel || 0,
-        needsReview: true,
-        noLongerReview: false
-      }))
-      .filter(word => word.word.trim() !== '') // 过滤掉空单词
+    const wordsToReview = todayReviews.map((word: any) => ({
+      id: word.id || word.wordId || 0,
+      word: word.word || '',
+      meaning: word.meaning || word.definition || '暂无释义',
+      phonetic: word.phonetic || word.pronunciation || '',
+      example: word.example || '',
+      reviewStatus: word.reviewStatus || 'unreviewed',
+      createdAt: word.createdAt || new Date().toISOString(),
+      nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
+      reviewCount: word.reviewCount || 0,
+      masteryLevel: word.masteryLevel || 0,
+      needsReview: true,
+      noLongerReview: false
+    })).filter(word => word.word.trim() !== '') // 过滤掉空单词
 
     // 调试日志：显示映射后的数量
     console.log('映射后的速刷单词数量:', wordsToReview.length)
@@ -2151,10 +1959,6 @@ const startTodayReview = async () => {
     // 更健壮地处理数据，确保数据是数组并包含正确的字段
     let todayReviews = Array.isArray(response?.data) ? response.data : []
 
-    // 调试日志：闪卡式复习
-    console.log('=== 闪卡式复习 ===')
-    console.log('API返回的复习单词数量:', todayReviews.length)
-
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
       const localReviewWords = words.value.filter((word: WordItem) =>
@@ -2436,10 +2240,6 @@ const startBatchDictation = async () => {
 
     // 更健壮地处理数据
     let dictationWords = Array.isArray(response?.data) ? response.data : []
-
-    // 调试日志：批量听写
-    console.log('=== 批量听写 ===')
-    console.log('API返回的复习单词数量:', dictationWords.length)
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (dictationWords.length === 0 && words.value.length > 0) {
