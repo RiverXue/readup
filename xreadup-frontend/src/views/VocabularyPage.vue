@@ -267,21 +267,6 @@
 
     <!-- 叠层视图 -->
     <div v-if="viewMode === 'stack'" class="word-stack-container">
-      <!-- 速刷模式头部 -->
-      <div v-if="isSpeedReviewMode" class="speed-review-header">
-        <div class="speed-review-info">
-          <h3>🚀 单词速刷模式</h3>
-          <div class="speed-progress">
-            <span>{{ currentSpeedReviewIndex + 1 }} / {{ speedReviewStats.total }}</span>
-            <div class="progress-bar">
-              <div 
-                class="progress-fill" 
-                :style="{ width: `${((currentSpeedReviewIndex + 1) / speedReviewStats.total) * 100}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
       
       <!-- 左侧导航按钮 -->
       <div class="stack-nav-left">
@@ -860,21 +845,7 @@ const filteredWords = computed(() => {
   return result
 })
 
-// 判断单词是否需要复习
-const isTimeToReview = (word: WordItem) => {
-  const now = new Date()
-  const lastReview = new Date(word.lastReviewTime || word.createdAt)
-  const daysSinceLastReview = (now.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24)
-  
-  // 根据复习次数确定间隔（艾宾浩斯记忆曲线）
-  const intervals = [1, 2, 4, 7, 15, 30] // 天
-  const reviewCount = word.reviewCount || 0
-  const nextInterval = intervals[Math.min(reviewCount, intervals.length - 1)]
-  
-  return daysSinceLastReview >= nextInterval
-}
-
-// 判断单词是否应该进入速刷
+// 判断单词是否应该进入速刷 - 参考闪卡式复习逻辑
 const shouldReviewWord = (word: WordItem) => {
   // 1. 未复习的单词必须复习
   if (word.reviewStatus === 'unreviewed') return true
@@ -882,14 +853,20 @@ const shouldReviewWord = (word: WordItem) => {
   // 2. 已逾期必须复习
   if (word.reviewStatus === 'overdue') return true
   
-  // 3. 复习中的单词按时间间隔判断
+  // 3. 复习中的单词 - 检查nextReviewTime
   if (word.reviewStatus === 'reviewing') {
-    return isTimeToReview(word)
+    if (word.nextReviewTime) {
+      return new Date(word.nextReviewTime) <= new Date()
+    }
+    return true // 如果没有nextReviewTime，默认需要复习
   }
   
-  // 4. 已掌握的单词（可选巩固）
+  // 4. 已掌握的单词（可选巩固）- 检查nextReviewTime
   if (word.reviewStatus === 'mastered' && !word.noLongerReview) {
-    return isTimeToReview(word)
+    if (word.nextReviewTime) {
+      return new Date(word.nextReviewTime) <= new Date()
+    }
+    return false // 如果没有nextReviewTime，默认不需要复习
   }
   
   return false
@@ -1123,9 +1100,15 @@ const markSpeedReviewAsMastered = async () => {
   const currentWord = speedReviewWords.value[currentSpeedReviewIndex.value]
   if (!currentWord) return
   
+  const userId = userStore.userInfo?.id
+  if (!userId) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  
   try {
-    // 更新单词状态
-    await vocabularyApi.reviewWord(userStore.userInfo?.id || '', Number(currentWord.id), 'mastered')
+    // 更新单词状态为已掌握
+    await vocabularyApi.reviewWord(String(userId), Number(currentWord.id), 'mastered')
     
     // 更新统计
     speedReviewStats.value.mastered++
@@ -1141,12 +1124,32 @@ const markSpeedReviewAsMastered = async () => {
   }
 }
 
-const skipSpeedReviewWord = () => {
-  // 更新统计
-  speedReviewStats.value.skipped++
+const skipSpeedReviewWord = async () => {
+  const currentWord = speedReviewWords.value[currentSpeedReviewIndex.value]
+  if (!currentWord) return
   
-  // 切换到下一张
-  nextSpeedReviewCard()
+  const userId = userStore.userInfo?.id
+  if (!userId) {
+    ElMessage.warning('请先登录')
+    return
+  }
+  
+  try {
+    // 跳过单词，标记为学习中
+    await vocabularyApi.reviewWord(String(userId), Number(currentWord.id), 'learning')
+    
+    // 更新统计
+    speedReviewStats.value.skipped++
+    
+    // 刷新单词列表
+    await loadWords()
+    
+    // 切换到下一张
+    nextSpeedReviewCard()
+    
+  } catch (error) {
+    ElMessage.error('跳过失败')
+  }
 }
 
 const nextSpeedReviewCard = () => {
@@ -3204,7 +3207,7 @@ const showDictationHint = () => {
 /* 删除按钮 - 右下角垃圾桶图标 */
 .word-delete-btn {
   position: absolute;
-  top: 12px;
+  bottom: 12px;
   right: 12px;
   z-index: 10;
 }
@@ -3243,64 +3246,6 @@ const showDictationHint = () => {
   min-height: 500px;
 }
 
-/* 速刷模式头部 */
-.speed-review-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 600px;
-  margin-bottom: 20px;
-  padding: 16px 24px;
-  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.9) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.speed-review-info h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.speed-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.speed-progress span {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  min-width: 60px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #67c23a 0%, #85ce61 100%);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.speed-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
 
 /* 速刷导航按钮 */
 .speed-nav-buttons {
