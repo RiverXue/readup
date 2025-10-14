@@ -1062,6 +1062,12 @@ const startWordSpeedReview = async () => {
     // 调试日志：显示API返回的数量和本地计算的数量
     console.log('API返回的复习单词数量:', todayReviews.length)
     console.log('本地计算的复习单词数量:', speedReviewWordsCount.value)
+    
+    // 检查API返回的数据中"不再巩固"单词的数量
+    const noLongerReviewCount = todayReviews.filter((word: any) => word.noLongerReview === true).length
+    const normalReviewCount = todayReviews.filter((word: any) => !word.noLongerReview).length
+    console.log('API返回中不再巩固的单词数量:', noLongerReviewCount)
+    console.log('API返回中正常复习的单词数量:', normalReviewCount)
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
@@ -1082,20 +1088,24 @@ const startWordSpeedReview = async () => {
     }
 
     // 规范化速刷单词数据，确保每个单词都有必要的字段
-    const wordsToReview = todayReviews.map((word: any) => ({
-      id: word.id || word.wordId || 0,
-      word: word.word || '',
-      meaning: word.meaning || word.definition || '暂无释义',
-      phonetic: word.phonetic || word.pronunciation || '',
-      example: word.example || '',
-      reviewStatus: word.reviewStatus || 'unreviewed',
-      createdAt: word.createdAt || new Date().toISOString(),
-      nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
-      reviewCount: word.reviewCount || 0,
-      masteryLevel: word.masteryLevel || 0,
-      needsReview: true,
-      noLongerReview: false
-    })).filter(word => word.word.trim() !== '') // 过滤掉空单词
+    // 同时过滤掉"不再巩固"的单词和空单词
+    const wordsToReview = todayReviews
+      .filter((word: any) => !word.noLongerReview) // 过滤掉不再巩固的单词
+      .map((word: any) => ({
+        id: word.id || word.wordId || 0,
+        word: word.word || '',
+        meaning: word.meaning || word.definition || '暂无释义',
+        phonetic: word.phonetic || word.pronunciation || '',
+        example: word.example || '',
+        reviewStatus: word.reviewStatus || 'unreviewed',
+        createdAt: word.createdAt || new Date().toISOString(),
+        nextReviewTime: word.nextReviewTime || word.dueDate || new Date().toISOString(),
+        reviewCount: word.reviewCount || 0,
+        masteryLevel: word.masteryLevel || 0,
+        needsReview: true,
+        noLongerReview: false
+      }))
+      .filter(word => word.word.trim() !== '') // 过滤掉空单词
 
     // 调试日志：显示映射后的数量
     console.log('映射后的速刷单词数量:', wordsToReview.length)
