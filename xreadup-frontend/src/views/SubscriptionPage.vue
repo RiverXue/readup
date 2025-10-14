@@ -8,15 +8,13 @@
 
     <!-- 当前订阅状态 -->
     <div v-if="currentSubscription && currentSubscription.planType !== 'FREE'" class="current-subscription">
-      <el-card class="subscription-card">
-        <template #header>
-          <div class="card-header">
-            <span>当前订阅</span>
-            <el-tag :type="getStatusType(currentSubscription.status)">
-              {{ getStatusText(currentSubscription.status) }}
-            </el-tag>
-          </div>
-        </template>
+      <div class="subscription-card modern-card">
+        <div class="card-header">
+          <span>当前订阅</span>
+          <span class="capsule-tag" :class="`capsule-tag--${getStatusType(currentSubscription.status)}`">
+            {{ getStatusText(currentSubscription.status) }}
+          </span>
+        </div>
 
         <div class="subscription-info">
           <div class="plan-info">
@@ -42,31 +40,29 @@
           </div>
 
           <div class="subscription-actions">
-            <el-button 
-              v-if="currentSubscription.planType !== 'ENTERPRISE'" 
-              type="primary" 
-              @click="showUpgradeDialog = true" 
+            <TactileButton
+              v-if="currentSubscription.planType !== 'ENTERPRISE'"
+              variant="primary"
+              @click="showUpgradeDialog = true"
               class="unified-button"
             >
               升级套餐
-            </el-button>
-            <el-button type="danger" plain @click="cancelSubscription" class="unified-button">
+            </TactileButton>
+            <TactileButton variant="danger" @click="cancelSubscription" class="unified-button">
               取消订阅
-            </el-button>
+            </TactileButton>
           </div>
         </div>
-      </el-card>
+      </div>
     </div>
 
     <!-- 免费用户状态 -->
     <div v-else-if="currentSubscription && currentSubscription.planType === 'FREE'" class="current-subscription">
-      <el-card class="subscription-card">
-        <template #header>
-          <div class="card-header">
-            <span>当前状态</span>
-            <el-tag type="info">免费用户</el-tag>
-          </div>
-        </template>
+      <div class="subscription-card modern-card">
+        <div class="card-header">
+          <span>当前状态</span>
+          <span class="capsule-tag capsule-tag--info">免费用户</span>
+        </div>
 
         <div class="subscription-info">
           <div class="plan-info">
@@ -90,12 +86,12 @@
           </div>
 
           <div class="subscription-actions">
-            <el-button type="primary" @click="showUpgradeDialog = true" class="unified-button">
+            <TactileButton variant="primary" @click="showUpgradeDialog = true" class="unified-button">
               升级为付费会员
-            </el-button>
+            </TactileButton>
           </div>
         </div>
-      </el-card>
+      </div>
     </div>
 
     <!-- 套餐选择 -->
@@ -868,21 +864,19 @@ onMounted(() => {
   left: 50%;
   transform: translateX(-50%);
   width: 60px;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  height: 3px;
+  background: var(--primary-500);
   border-radius: var(--radius-sm);
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 .page-header h1 {
   font-size: var(--text-5xl);
   margin-bottom: var(--space-4);
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--warm-orange) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .page-header p {
@@ -898,10 +892,15 @@ onMounted(() => {
 }
 
 .subscription-card {
-  background: var(--bg-primary);
+  background: var(--glass-white);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-3xl);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-light);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--glass-border);
   transition: all var(--transition-normal);
   overflow: hidden;
   position: relative;
@@ -913,13 +912,17 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  height: 3px;
+  background: var(--primary-500);
+  opacity: 0.8;
 }
 
 .subscription-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-6px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .subscription-card .card-header {
@@ -927,8 +930,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-6);
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-light);
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(248, 250, 252, 0.8) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .subscription-info {
@@ -950,17 +958,20 @@ onMounted(() => {
   font-size: var(--text-xl);
   color: var(--primary-600);
   font-weight: var(--font-weight-bold);
-  background: linear-gradient(135deg, var(--primary-600), var(--warm-orange));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .usage-info {
-  background: var(--bg-secondary);
+  background: linear-gradient(135deg,
+    rgba(248, 250, 252, 0.8) 0%,
+    rgba(241, 245, 249, 0.6) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   padding: var(--space-6);
   border-radius: var(--radius-2xl);
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .usage-info .usage-item {
@@ -969,7 +980,7 @@ onMounted(() => {
   align-items: center;
   margin-bottom: var(--space-3);
   padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .usage-info .usage-item:last-child {
@@ -1004,8 +1015,9 @@ onMounted(() => {
   transform: translateX(-50%);
   width: 80px;
   height: 3px;
-  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  background: var(--primary-500);
   border-radius: var(--radius-sm);
+  opacity: 0.6;
 }
 
 .plans-grid {
@@ -1032,8 +1044,8 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary-500), var(--warm-orange));
+  height: 3px;
+  background: var(--primary-500);
   opacity: 0;
   transition: opacity var(--transition-normal);
 }
@@ -1061,7 +1073,7 @@ onMounted(() => {
   position: absolute;
   top: var(--space-4);
   right: var(--space-4);
-  background: linear-gradient(135deg, var(--primary-500), var(--warm-orange));
+  background: var(--primary-500);
   color: var(--text-inverse);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
@@ -1094,10 +1106,7 @@ onMounted(() => {
 .plan-price .price {
   font-size: var(--text-4xl);
   font-weight: var(--font-weight-bold);
-  background: linear-gradient(135deg, var(--primary-600), var(--warm-orange));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--primary-600);
 }
 
 .plan-price .duration {
@@ -1235,7 +1244,7 @@ onMounted(() => {
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+  background: var(--primary-500);
   color: var(--text-inverse);
   border: none;
   box-shadow: var(--shadow-primary);

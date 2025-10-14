@@ -801,21 +801,24 @@ onMounted(async () => {
   text-align: center;
   padding: var(--space-8) var(--space-6);
   background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.9) 0%, 
-    rgba(248, 250, 252, 0.8) 50%, 
-    rgba(241, 245, 249, 0.9) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.9) 50%, 
+    rgba(241, 245, 249, 0.95) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-radius: var(--radius-3xl);
   margin-bottom: var(--space-12);
   position: relative;
   overflow: hidden;
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+    0 12px 48px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+  border: 3px solid rgba(255, 255, 255, 0.4);
   color: var(--text-primary);
+  transition: all var(--transition-normal);
 }
 
 .hero-section::before {
@@ -825,9 +828,44 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(90, 200, 250, 0.02) 50%, rgba(0, 122, 255, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(90, 200, 250, 0.03) 50%, rgba(0, 122, 255, 0.05) 100%);
   pointer-events: none;
   animation: liquidFlow 20s ease-in-out infinite;
+}
+
+.hero-section:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 16px 64px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, 
+    rgba(0, 122, 255, 0.1) 0%, 
+    rgba(90, 200, 250, 0.05) 25%, 
+    rgba(0, 122, 255, 0.1) 50%, 
+    rgba(90, 200, 250, 0.05) 75%, 
+    rgba(0, 122, 255, 0.1) 100%);
+  border-radius: var(--radius-3xl);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
+}
+
+.hero-section:hover::after {
+  opacity: 1;
 }
 
 .welcome-message {
@@ -912,6 +950,35 @@ onMounted(async () => {
   margin-top: var(--space-8);
   position: relative;
   z-index: 3;
+}
+
+/* 去掉Hero区域内按钮的外发光效果 */
+.hero-actions .tactile-button--primary {
+  box-shadow: 
+    0 4px 12px rgba(52, 199, 89, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hero-actions .tactile-button--primary:hover:not(.tactile-button--disabled) {
+  box-shadow: 
+    0 6px 16px rgba(52, 199, 89, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.hero-actions .tactile-button--warning {
+  box-shadow: 
+    0 4px 12px rgba(255, 149, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hero-actions .tactile-button--warning:hover:not(.tactile-button--disabled) {
+  box-shadow: 
+    0 6px 16px rgba(255, 149, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .learning-summary {

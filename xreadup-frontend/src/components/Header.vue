@@ -44,24 +44,26 @@
         <!-- 已登录状态 -->
         <div v-else class="user-info">
           <!-- 每日打卡按钮 -->
-          <el-button
-            :icon="hasCheckedInToday ? Check : Clock"
-            size="small"
-            :type="hasCheckedInToday ? 'success' : 'primary'"
+          <TactileButton
+            :variant="hasCheckedInToday ? 'success' : 'primary'"
+            size="sm"
             :loading="isCheckingIn"
             :disabled="hasCheckedInToday || isCheckingIn"
             @click="performCheckIn"
             class="checkin-button"
           >
-            <template #default>
-              <span v-if="!isCheckingIn">
-                {{ hasCheckedInToday ? `已打卡${streakDays}天` : '每日打卡' }}
-              </span>
-              <span v-else>
-                打卡中...
-              </span>
+            <template #icon>
+              <el-icon>
+                <component :is="hasCheckedInToday ? Check : Clock" />
+              </el-icon>
             </template>
-          </el-button>
+            <span v-if="!isCheckingIn">
+              {{ hasCheckedInToday ? `已打卡${streakDays}天` : '每日打卡' }}
+            </span>
+            <span v-else>
+              打卡中...
+            </span>
+          </TactileButton>
 
           <div class="user-avatar" v-if="userStore.userInfo?.avatar">
             <img :src="userStore.userInfo.avatar" alt="用户头像">
@@ -95,6 +97,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { CaretBottom, Check, Clock } from '@element-plus/icons-vue'
 import { learningApi } from '@/utils/api'
+import TactileButton from '@/components/common/TactileButton.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
