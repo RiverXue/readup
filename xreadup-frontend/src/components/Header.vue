@@ -30,6 +30,9 @@
           <li class="nav-item" v-if="userStore.isLoggedIn">
             <router-link to="/subscription" class="nav-link">💎 会员</router-link>
           </li>
+          <li class="nav-item">
+            <router-link to="/ui-demo" class="nav-link">🎨 UI演示</router-link>
+          </li>
         </ul>
       </nav>
 

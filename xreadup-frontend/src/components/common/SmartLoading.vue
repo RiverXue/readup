@@ -103,40 +103,26 @@ const getSkeletonWidth = (index: number) => {
   gap: var(--space-4);
 }
 
-/* 智能旋转加载器 */
+/* 智能旋转加载器 - 经典旋转设计 */
 .smart-spinner {
   position: relative;
   width: 40px;
   height: 40px;
-}
-
-.spinner-ring {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 3px solid transparent;
   border-radius: 50%;
-  animation: smartSpin 1.5s linear infinite;
-}
-
-.spinner-ring:nth-child(1) {
-  border-top-color: var(--ios-blue);
-  animation-delay: 0s;
-}
-
-.spinner-ring:nth-child(2) {
-  border-right-color: var(--ios-purple);
-  animation-delay: 0.5s;
-}
-
-.spinner-ring:nth-child(3) {
-  border-bottom-color: var(--ios-pink);
-  animation-delay: 1s;
+  border: 3px solid rgba(0, 122, 255, 0.1);
+  border-top: 3px solid var(--ios-blue);
+  border-right: 3px solid var(--ios-green);
+  border-bottom: 3px solid var(--ios-orange);
+  animation: smartSpin 1s linear infinite;
 }
 
 @keyframes smartSpin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% { 
+    transform: rotate(0deg);
+  }
+  100% { 
+    transform: rotate(360deg);
+  }
 }
 
 /* 脉冲加载器 */
@@ -232,30 +218,56 @@ const getSkeletonWidth = (index: number) => {
 .smart-skeleton {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   width: 100%;
   max-width: 300px;
+  padding: var(--space-4);
 }
 
 .skeleton-line {
   height: 12px;
-  background: var(--gradient-liquid-glass);
+  background: linear-gradient(90deg, 
+    rgba(0, 122, 255, 0.1) 0%, 
+    rgba(0, 122, 255, 0.3) 50%, 
+    rgba(0, 122, 255, 0.1) 100%);
   border-radius: 6px;
   animation: skeletonShimmer 2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    transparent 100%);
+  animation: skeletonShine 2s ease-in-out infinite;
 }
 
 @keyframes skeletonShimmer {
   0% {
     opacity: 0.6;
-    transform: translateX(-100%);
   }
   50% {
     opacity: 1;
-    transform: translateX(0);
   }
   100% {
     opacity: 0.6;
-    transform: translateX(100%);
+  }
+}
+
+@keyframes skeletonShine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
   }
 }
 

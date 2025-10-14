@@ -15,6 +15,7 @@ import SubscriptionManagement from '../views/admin/SubscriptionManagement.vue'
 import SystemSettings from '../views/admin/SystemSettings.vue'
 import AiAnalysisView from '../views/admin/AiAnalysisView.vue'
 import AdminUsersManagement from '../views/admin/AdminUsersManagement.vue'
+import UIDemoPage from '../views/UIDemoPage.vue'
 import { adminGuard, adminLoginGuard } from './guards/adminGuard'
 import { userGuard, loginGuard } from './guards/userGuard'
 
@@ -70,6 +71,13 @@ const router = createRouter({
       path: '/reading-list',
       name: 'readingList',
       component: ArticleListView,
+      meta: { requiresAuth: false }
+    },
+    // UI演示页面
+    { 
+      path: '/ui-demo',
+      name: 'uiDemo',
+      component: UIDemoPage,
       meta: { requiresAuth: false }
     },
     
