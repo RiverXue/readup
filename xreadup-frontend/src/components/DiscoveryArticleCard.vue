@@ -1,5 +1,5 @@
 <template>
-  <div class="discovery-card tactile-button" @click="handleClick">
+  <div class="discovery-card" @click="handleClick">
     <!-- 探索标识 -->
     <div class="discovery-badge">
       <span class="badge-icon">{{ getDiscoveryLabel.icon }}</span>

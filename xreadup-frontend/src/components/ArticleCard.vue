@@ -1,5 +1,5 @@
 <template>
-  <div class="airbnb-modern-card tactile-button" @click="handleClick">
+  <div class="airbnb-modern-card" @click="handleClick">
     <!-- 卡片内容 -->
     <div class="card-content compact">
       <!-- 分类与难度 -->
