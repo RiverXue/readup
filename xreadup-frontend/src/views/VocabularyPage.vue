@@ -2455,20 +2455,20 @@ const showDictationHint = () => {
 
 .status-indicator.unreviewed {
   color: white;
-  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.8) 0%, rgba(64, 158, 255, 0.6) 100%);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
 .status-indicator.mastered {
   color: white;
-  background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
-  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+  background: linear-gradient(135deg, rgba(103, 194, 58, 0.8) 0%, rgba(103, 194, 58, 0.6) 100%);
+  box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
 }
 
 .status-indicator.reviewing {
   color: white;
-  background: linear-gradient(135deg, #FF9500 0%, #FFCC02 100%);
-  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+  background: linear-gradient(135deg, rgba(230, 162, 60, 0.8) 0%, rgba(230, 162, 60, 0.6) 100%);
+  box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3);
 }
 
 .status-icon {
