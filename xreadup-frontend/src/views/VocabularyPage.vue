@@ -160,7 +160,7 @@
                 <div style="display: flex; align-items: center;">
                   <div class="status-indicator mastered" style="margin-right: 8px; margin-bottom: 0;">
                     <span class="status-icon">✓</span>
-                    <span>已掌握</span>
+                    <span>已掌握·巩固中</span>
                   </div>
                 </div>
                 <span>{{ word.nextReviewTime ? formatNextReviewTime(word.nextReviewTime).replace('复习', '巩固') : '-' }}</span>
@@ -194,14 +194,11 @@
               </div>
             </div>
           </div>
-          <!-- 已掌握且已不再巩固状态：显示状态指示器和不再巩固标签 -->
-          <div v-else-if="word.reviewStatus === 'mastered' && word.noLongerReview" class="status-row">
-            <div class="status-indicator mastered">
+          <!-- 已掌握且已不再巩固状态：显示融合状态指示器 -->
+          <div v-else-if="word.reviewStatus === 'mastered' && word.noLongerReview">
+            <div class="status-indicator mastered-no-review">
               <span class="status-icon">✓</span>
-              <span>已掌握</span>
-            </div>
-            <div class="no-longer-review-badge">
-              已不再巩固
+              <span>已掌握·不再巩固</span>
             </div>
           </div>
         </div>
@@ -2243,28 +2240,6 @@ const showDictationHint = () => {
 }
 
 
-.no-longer-review-badge {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 4px;
-  padding: 4px 8px;
-  background: linear-gradient(135deg, #ff9500 0%, #ffcc02 100%);
-  color: white;
-  border-radius: 16px;
-  font-size: 11px;
-  font-weight: 600;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.no-longer-review-badge:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 149, 0, 0.4);
-}
 
 /* 现代玻璃态单词卡片 - 接近文章卡片效果，保持三色配色和边缘效果 */
 .word-card.el-card {
@@ -2432,13 +2407,6 @@ const showDictationHint = () => {
   flex: 1;
 }
 
-/* 状态行：包含状态指示器和相关标签 */
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
 
 /* 状态指示器：为所有状态提供直观的识别元素 - 现代胶囊样式 */
 .status-indicator {
@@ -2471,6 +2439,13 @@ const showDictationHint = () => {
   color: white;
   background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
   box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+}
+
+.status-indicator.mastered-no-review {
+  color: white;
+  background: linear-gradient(135deg, #8E8E93 0%, #AEAEB2 100%);
+  box-shadow: 0 4px 12px rgba(142, 142, 147, 0.3);
+  opacity: 0.8;
 }
 
 .status-indicator.reviewing {
