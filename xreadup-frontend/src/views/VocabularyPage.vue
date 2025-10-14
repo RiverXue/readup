@@ -479,10 +479,12 @@
         </el-button>
       </div>
       
-      <!-- 底部进度显示 -->
-      <div class="stack-progress-bottom">
-        <span class="stack-progress">{{ currentStackIndex + 1 }} / {{ filteredWords.length }}</span>
-      </div>
+        <!-- 底部进度显示 -->
+        <div class="stack-progress-bottom">
+          <span class="stack-progress">
+            {{ isSpeedReviewMode ? `${currentSpeedReviewIndex + 1} / ${speedReviewWords.length}` : `${currentStackIndex + 1} / ${filteredWords.length}` }}
+          </span>
+        </div>
     </div>
 
     <!-- 分页 - 只在网格视图显示 -->
