@@ -2324,7 +2324,6 @@ const showDictationHint = () => {
     0 2px 8px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   position: relative !important;
-  animation: glow-pulse 2s ease-in-out infinite;
 }
 
 .word-card.el-card[data-status="reviewing"]::before {
@@ -2335,13 +2334,12 @@ const showDictationHint = () => {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(230, 162, 60, 0.2) 0%, 
-    rgba(230, 162, 60, 0.1) 50%, 
-    rgba(255, 200, 100, 0.15) 100%);
+    rgba(230, 162, 60, 0.25) 0%, 
+    rgba(230, 162, 60, 0.15) 50%, 
+    rgba(255, 200, 100, 0.2) 100%);
   border-radius: 20px;
-  opacity: 0.8;
+  opacity: 0.9;
   z-index: -1;
-  animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .word-card.el-card[data-status="mastered"] {
@@ -2402,33 +2400,6 @@ const showDictationHint = () => {
   }
 }
 
-/* 现代"待复习"状态呼吸动画 - 使用渐变背景脉冲 */
-@keyframes glow-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-
-/* 复习中状态背景脉冲动画 */
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 0.8;
-    background: linear-gradient(135deg, 
-      rgba(230, 162, 60, 0.2) 0%, 
-      rgba(230, 162, 60, 0.1) 50%, 
-      rgba(255, 200, 100, 0.15) 100%);
-  }
-  50% {
-    opacity: 1;
-    background: linear-gradient(135deg, 
-      rgba(230, 162, 60, 0.3) 0%, 
-      rgba(230, 162, 60, 0.2) 50%, 
-      rgba(255, 200, 100, 0.25) 100%);
-  }
-}
 
 /* 现代悬停效果：参考文章卡片设计，增强渐变背景 */
 .word-card.el-card:hover {
