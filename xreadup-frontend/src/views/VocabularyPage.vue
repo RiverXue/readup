@@ -93,7 +93,7 @@
         v-for="word in paginatedWords"
         :key="word.id"
         class="word-card"
-        :body-style="{ padding: '18px' }"
+        :body-style="{ padding: '16px' }"
         :data-status="word.reviewStatus"
       >
         <!-- 状态指示区域 - 为所有状态提供直观的视觉提示 -->
@@ -2237,8 +2237,8 @@ const showDictationHint = () => {
 /* 单词卡片样式 */
 .word-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -2334,9 +2334,9 @@ const showDictationHint = () => {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(230, 162, 60, 0.3) 0%, 
-    rgba(230, 162, 60, 0.2) 50%, 
-    rgba(255, 200, 100, 0.25) 100%);
+    rgba(255, 193, 7, 0.08) 0%, 
+    rgba(255, 193, 7, 0.05) 50%, 
+    rgba(255, 235, 59, 0.06) 100%);
   border-radius: 20px;
   opacity: 1;
   z-index: -1;
@@ -2569,57 +2569,57 @@ const showDictationHint = () => {
 
 /* 主要信息：单词本身 - 最大最醒目 */
 .word-text {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   color: #303133;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   line-height: 1.2;
 }
 
 /* 次要信息：音标 - 中等大小，辅助阅读 */
 .word-phonetic {
   color: #909399;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-style: italic;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 /* 核心信息：释义 - 重要但略小于单词 */
 .word-meaning {
   color: #606266;
-  margin-bottom: 10px;
-  line-height: 1.5;
-  font-size: 16px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  font-size: 14px;
   font-weight: 500;
 }
 
 /* 辅助信息：例句 - 较小字体，背景区分 */
 .word-example {
   color: #909399;
-  font-size: 14px;
-  margin-bottom: 10px;
-  line-height: 1.4;
-  background: rgba(0, 0, 0, 0.03);
-  padding: 8px 10px;
-  border-radius: 6px;
-  border-left: 3px solid var(--color-primary);
+  font-size: 13px;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 6px 8px;
+  border-radius: 4px;
+  border-left: 2px solid var(--color-primary);
 }
 
 /* 元信息：添加时间 - 最小字体，最淡颜色 */
 .word-date {
   color: #c0c4cc;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
 }
 
 /* 操作按钮样式 */
 .word-actions {
-  margin-top: 15px;
+  margin-top: 12px;
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 
 /* 分页样式 */
@@ -2779,19 +2779,19 @@ const showDictationHint = () => {
   }
 
   .word-text {
-    font-size: 22px;
+    font-size: 20px;
   }
   
   .word-phonetic {
-    font-size: 14px;
+    font-size: 12px;
   }
   
   .word-meaning {
-    font-size: 14px;
+    font-size: 12px;
   }
   
   .word-example {
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .review-word {
