@@ -194,11 +194,14 @@
               </div>
             </div>
           </div>
-          <!-- 已掌握且已不再巩固状态：仅显示状态指示器 -->
-          <div v-else-if="word.reviewStatus === 'mastered' && word.noLongerReview">
+          <!-- 已掌握且已不再巩固状态：显示状态指示器和不再巩固标签 -->
+          <div v-else-if="word.reviewStatus === 'mastered' && word.noLongerReview" class="status-row">
             <div class="status-indicator mastered">
               <span class="status-icon">✓</span>
               <span>已掌握</span>
+            </div>
+            <div class="no-longer-review-badge">
+              已不再巩固
             </div>
           </div>
         </div>
@@ -252,9 +255,6 @@
           >
             不再巩固
           </TactileButton>
-          <div v-if="word.noLongerReview" class="no-longer-review-badge">
-            已不再巩固
-          </div>
           <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
             删除
           </TactileButton>
@@ -2432,11 +2432,19 @@ const showDictationHint = () => {
   flex: 1;
 }
 
+/* 状态行：包含状态指示器和相关标签 */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 /* 状态指示器：为所有状态提供直观的识别元素 - 现代胶囊样式 */
 .status-indicator {
   display: inline-flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   font-size: 12px;
   font-weight: 600;
   padding: 6px 12px;
