@@ -250,7 +250,7 @@
             variant="warning"
             size="sm"
           >
-            不再巩固
+            不巩固
           </TactileButton>
           <TactileButton @click="deleteWord(word)" variant="danger" size="sm">
             删除
