@@ -848,17 +848,24 @@ const shouldReviewWord = (word: WordItem) => {
   return word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing'
 }
 
-// 获取需要速刷的单词数量 - 与闪卡式复习和批量听写保持一致
+// 获取需要速刷的单词数量 - 与API逻辑保持一致
 const speedReviewWordsCount = computed(() => {
-  // 使用与loadStats相同的逻辑，确保与统计显示一致
   if (words.value.length > 0) {
-    const locallyNeedingReview = words.value.filter((word: WordItem) =>
+    // 使用与API相同的筛选逻辑：时间筛选 + 状态筛选
+    const wordsByTime = words.value.filter((word: WordItem) =>
       word.nextReviewTime &&
       new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
-    ).length
+    )
     
-    if (locallyNeedingReview > 0) {
-      return locallyNeedingReview
+    const wordsByStatus = words.value.filter((word: WordItem) =>
+      !word.nextReviewTime &&
+      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
+    )
+    
+    const totalNeedingReview = wordsByTime.length + wordsByStatus.length
+    
+    if (totalNeedingReview > 0) {
+      return totalNeedingReview
     }
   }
   
@@ -1070,6 +1077,25 @@ const startWordSpeedReview = async () => {
     const normalReviewCount = todayReviews.filter((word: any) => !word.noLongerReview).length
     console.log('API返回中不再巩固的单词数量:', noLongerReviewCount)
     console.log('API返回中正常复习的单词数量:', normalReviewCount)
+    
+    // 详细分析本地筛选逻辑
+    const localWordsWithNextReviewTime = words.value.filter(word => word.nextReviewTime).length
+    const localWordsNeedingReview = words.value.filter(word => 
+      word.nextReviewTime && 
+      new Date(word.nextReviewTime) <= new Date(new Date().setHours(23, 59, 59, 999))
+    ).length
+    const localWordsWithoutNextReviewTime = words.value.filter(word => !word.nextReviewTime).length
+    const localWordsByStatus = words.value.filter(word => 
+      !word.nextReviewTime && 
+      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
+    ).length
+    
+    console.log('本地单词总数:', words.value.length)
+    console.log('本地有nextReviewTime的单词数:', localWordsWithNextReviewTime)
+    console.log('本地需要复习的单词数(基于时间):', localWordsNeedingReview)
+    console.log('本地没有nextReviewTime的单词数:', localWordsWithoutNextReviewTime)
+    console.log('本地按状态需要复习的单词数:', localWordsByStatus)
+    console.log('本地总计应该复习的单词数:', localWordsNeedingReview + localWordsByStatus)
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
     if (todayReviews.length === 0 && words.value.length > 0) {
