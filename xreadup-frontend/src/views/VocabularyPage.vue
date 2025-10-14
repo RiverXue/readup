@@ -862,7 +862,14 @@ const speedReviewWordsCount = computed(() => {
       (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
     )
     
-    const totalNeedingReview = wordsByTime.length + wordsByStatus.length
+    // 特殊处理：某些状态的单词即使时间超过今日，也可能需要复习
+    const specialWords = words.value.filter((word: WordItem) =>
+      word.nextReviewTime &&
+      new Date(word.nextReviewTime) > new Date(new Date().setHours(23, 59, 59, 999)) &&
+      (word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing')
+    )
+    
+    const totalNeedingReview = wordsByTime.length + wordsByStatus.length + specialWords.length
     
     if (totalNeedingReview > 0) {
       return totalNeedingReview
@@ -1108,8 +1115,16 @@ const startWordSpeedReview = async () => {
       console.log('被排除的单词时间:', excludedWords.map(w => ({ 
         word: w.word, 
         nextReviewTime: w.nextReviewTime,
-        timeDiff: new Date(w.nextReviewTime).getTime() - todayEnd.getTime()
+        timeDiff: new Date(w.nextReviewTime).getTime() - todayEnd.getTime(),
+        reviewStatus: w.reviewStatus
       })))
+      
+      // 分析被排除单词的状态分布
+      const excludedByStatus = excludedWords.reduce((acc, w) => {
+        acc[w.reviewStatus] = (acc[w.reviewStatus] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+      console.log('被排除单词的状态分布:', excludedByStatus)
     }
 
     // 如果API返回空数组，尝试从本地单词列表中找出需要复习的单词
