@@ -920,8 +920,8 @@ const nextStackCard = () => {
     // 添加当前卡片向右消失的动画
     const currentCard = document.querySelector('.word-card-stack:first-child .word-card') as HTMLElement
     if (currentCard) {
-      currentCard.style.transition = 'all 0.4s ease-in-out'
-      currentCard.style.transform = 'translateX(100%) rotate(15deg)'
+      currentCard.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      currentCard.style.transform = 'translateX(120%) rotate(20deg) scale(0.8)'
       currentCard.style.opacity = '0'
     }
     
@@ -931,8 +931,8 @@ const nextStackCard = () => {
       // 重置动画状态
       setTimeout(() => {
         resetCardAnimation()
-      }, 50)
-    }, 200)
+      }, 100)
+    }, 300)
   }
 }
 
@@ -941,8 +941,8 @@ const previousStackCard = () => {
     // 添加当前卡片向左消失的动画
     const currentCard = document.querySelector('.word-card-stack:first-child .word-card') as HTMLElement
     if (currentCard) {
-      currentCard.style.transition = 'all 0.4s ease-in-out'
-      currentCard.style.transform = 'translateX(-100%) rotate(-15deg)'
+      currentCard.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      currentCard.style.transform = 'translateX(-120%) rotate(-20deg) scale(0.8)'
       currentCard.style.opacity = '0'
     }
     
@@ -952,8 +952,8 @@ const previousStackCard = () => {
       // 重置动画状态
       setTimeout(() => {
         resetCardAnimation()
-      }, 50)
-    }, 200)
+      }, 100)
+    }, 300)
   }
 }
 
@@ -967,11 +967,24 @@ const handleStackCardClick = (index: number) => {
 const resetCardAnimation = () => {
   // 重置所有卡片的动画状态
   const cards = document.querySelectorAll('.word-card-stack .word-card')
-  cards.forEach(card => {
+  cards.forEach((card, index) => {
     const element = card as HTMLElement
     element.style.transition = ''
     element.style.transform = ''
     element.style.opacity = ''
+    
+    // 为新出现的卡片添加淡入动画
+    if (index === 0) {
+      element.style.opacity = '0'
+      element.style.transform = 'translateY(20px) scale(0.95)'
+      element.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      
+      // 触发淡入动画
+      setTimeout(() => {
+        element.style.opacity = '1'
+        element.style.transform = 'translateY(0) scale(1)'
+      }, 50)
+    }
   })
 }
 
