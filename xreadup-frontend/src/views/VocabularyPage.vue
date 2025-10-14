@@ -2237,7 +2237,7 @@ const showDictationHint = () => {
 /* 单词卡片样式 */
 .word-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
@@ -2320,10 +2320,11 @@ const showDictationHint = () => {
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
   background-clip: padding-box !important;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   position: relative !important;
+  transform: scale(1.02) !important;
 }
 
 .word-card.el-card[data-status="reviewing"]::before {
@@ -2334,11 +2335,11 @@ const showDictationHint = () => {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(230, 162, 60, 0.25) 0%, 
-    rgba(230, 162, 60, 0.15) 50%, 
-    rgba(255, 200, 100, 0.2) 100%);
+    rgba(230, 162, 60, 0.3) 0%, 
+    rgba(230, 162, 60, 0.2) 50%, 
+    rgba(255, 200, 100, 0.25) 100%);
   border-radius: 20px;
-  opacity: 0.9;
+  opacity: 1;
   z-index: -1;
 }
 
@@ -2347,10 +2348,12 @@ const showDictationHint = () => {
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
   background-clip: padding-box !important;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    0 6px 24px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   position: relative !important;
+  transform: scale(0.98) !important;
+  opacity: 0.85 !important;
 }
 
 .word-card.el-card[data-status="mastered"]::before {
@@ -2361,11 +2364,11 @@ const showDictationHint = () => {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(103, 194, 58, 0.2) 0%, 
-    rgba(103, 194, 58, 0.1) 50%, 
-    rgba(120, 220, 100, 0.15) 100%);
+    rgba(103, 194, 58, 0.15) 0%, 
+    rgba(103, 194, 58, 0.08) 50%, 
+    rgba(120, 220, 100, 0.12) 100%);
   border-radius: 20px;
-  opacity: 0.8;
+  opacity: 0.7;
   z-index: -1;
 }
 
@@ -2475,42 +2478,79 @@ const showDictationHint = () => {
   font-size: 14px;
 }
 
+/* 现代化进度条设计 */
 .new-progress-bar {
   position: relative;
-  height: 4px; /* 保持细进度条，更精致 */
-  background-color: #f0f0f0;
-  border-radius: 2px;
+  height: 6px;
+  background: linear-gradient(90deg, 
+    rgba(0, 0, 0, 0.05) 0%, 
+    rgba(0, 0, 0, 0.08) 100%);
+  border-radius: 3px;
   overflow: visible;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #67c23a 0%, #e6a23c 100%); /* 使用蓝绿渐变色，更符合学习进度的视觉表达 */
-  border-radius: 2px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, 
+    #409eff 0%, 
+    #67c23a 50%, 
+    #e6a23c 100%);
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%);
+  border-radius: 3px;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 .progress-checkmark {
   position: absolute;
-  right: -1px;
+  right: -2px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #67c23a;
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
   color: white;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 
+    0 3px 8px rgba(103, 194, 58, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 2px solid white;
+  transition: all 0.3s ease;
 }
 
 /* 逾期状态的进度条标记 */
 .progress-overdue {
-  background-color: #f56c6c;
+  background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%) !important;
+  box-shadow: 
+    0 3px 8px rgba(245, 108, 108, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 进度条光泽动画 */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* 进度条标签样式 - 降低视觉权重 */
@@ -2533,35 +2573,52 @@ const showDictationHint = () => {
   margin-top: 20px;
 }
 
+/* 主要信息：单词本身 - 最大最醒目 */
 .word-text {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
   color: #303133;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
+/* 次要信息：音标 - 中等大小，辅助阅读 */
 .word-phonetic {
   color: #909399;
   margin-bottom: 15px;
   font-style: italic;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
+/* 核心信息：释义 - 重要但略小于单词 */
 .word-meaning {
   color: #606266;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   line-height: 1.6;
+  font-size: 18px;
+  font-weight: 500;
 }
 
+/* 辅助信息：例句 - 较小字体，背景区分 */
 .word-example {
   color: #909399;
-  font-size: 14px;
-  margin-bottom: 10px;
-  line-height: 1.6;
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.03);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-primary);
 }
 
+/* 元信息：添加时间 - 最小字体，最淡颜色 */
 .word-date {
   color: #c0c4cc;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 400;
 }
 
 /* 操作按钮样式 */
@@ -2728,7 +2785,19 @@ const showDictationHint = () => {
   }
 
   .word-text {
-    font-size: 20px;
+    font-size: 24px;
+  }
+  
+  .word-phonetic {
+    font-size: 16px;
+  }
+  
+  .word-meaning {
+    font-size: 16px;
+  }
+  
+  .word-example {
+    font-size: 14px;
   }
 
   .review-word {
