@@ -345,21 +345,54 @@
       <!-- 加载状态 -->
       <div class="loading-state" v-else-if="isLoadingTrending || isLoadingCategory || isLoadingCustomTopic">
         <div class="loading-content">
-          <div class="loading-header">
-            <div class="loading-title"></div>
+          <!-- 加载指示器 -->
+          <div class="loading-indicator">
+            <div class="loading-spinner">
+              <div class="spinner-ring"></div>
+              <div class="spinner-ring"></div>
+              <div class="spinner-ring"></div>
+            </div>
+            <div class="loading-text">
+              <h3 class="loading-title">正在获取精彩文章...</h3>
+              <p class="loading-subtitle">请稍候，我们正在为您精心挑选优质内容</p>
+            </div>
+            <div class="loading-progress">
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+              <div class="progress-dots">
+                <span class="dot" v-for="n in 3" :key="n" :style="{ animationDelay: (n - 1) * 0.2 + 's' }"></span>
+              </div>
+            </div>
           </div>
+          
+          <!-- 加载文章网格 -->
           <div class="loading-grid">
-            <div class="loading-card" v-for="n in 6" :key="n">
+            <div class="loading-card" v-for="n in 6" :key="n" :style="{ animationDelay: (n - 1) * 0.1 + 's' }">
+              <!-- 探索标识骨架 -->
+              <div class="loading-badge">
+                <div class="loading-badge-icon"></div>
+                <div class="loading-badge-text"></div>
+              </div>
+              
+              <!-- NEW标识骨架 -->
+              <div class="loading-new-badge"></div>
+              
+              <!-- 卡片内容骨架 -->
               <div class="loading-card-content">
-                <div class="loading-image"></div>
-                <div class="loading-text">
-                  <div class="loading-card-title"></div>
-                  <div class="loading-card-desc"></div>
-                  <div class="loading-card-desc short"></div>
-                  <div class="loading-card-meta">
-                    <div class="loading-meta-item"></div>
-                    <div class="loading-meta-item"></div>
-                  </div>
+                <!-- 标题骨架 -->
+                <div class="loading-card-title"></div>
+                <div class="loading-card-title short"></div>
+                
+                <!-- 描述骨架 -->
+                <div class="loading-card-desc"></div>
+                <div class="loading-card-desc"></div>
+                <div class="loading-card-desc short"></div>
+                
+                <!-- 标签骨架 -->
+                <div class="loading-meta">
+                  <div class="loading-tag"></div>
+                  <div class="loading-tag"></div>
                 </div>
               </div>
             </div>
@@ -1583,28 +1616,123 @@ const fetchCustomTopicArticles = async () => {
   margin: 0 auto;
 }
 
-.loading-header {
-  margin-bottom: 30px;
+/* 加载指示器 */
+.loading-indicator {
   text-align: center;
+  margin-bottom: 40px;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.loading-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 2s linear infinite;
+}
+
+.spinner-ring:nth-child(1) {
+  border-top-color: #409eff;
+  animation-duration: 1.5s;
+}
+
+.spinner-ring:nth-child(2) {
+  border-right-color: #67c23a;
+  animation-duration: 2s;
+  animation-delay: -0.5s;
+}
+
+.spinner-ring:nth-child(3) {
+  border-bottom-color: #e6a23c;
+  animation-duration: 2.5s;
+  animation-delay: -1s;
+}
+
+.loading-text {
+  margin-bottom: 24px;
 }
 
 .loading-title {
-  width: 200px;
-  height: 28px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.8) 0%, 
-    rgba(248, 250, 252, 0.6) 50%, 
-    rgba(241, 245, 249, 0.8) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 14px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 8px 0;
+  background: linear-gradient(135deg, #409eff, #67c23a, #e6a23c);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+.loading-subtitle {
+  font-size: 16px;
+  color: #606266;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.loading-progress {
+  max-width: 300px;
   margin: 0 auto;
-  animation: shimmer 2s ease-in-out infinite;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(64, 158, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #67c23a, #e6a23c);
+  background-size: 200% 100%;
+  border-radius: 2px;
+  animation: progressMove 2s ease-in-out infinite;
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: #409eff;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.dot:nth-child(2) {
+  background: #67c23a;
+}
+
+.dot:nth-child(3) {
+  background: #e6a23c;
 }
 
 .loading-grid {
@@ -1630,6 +1758,9 @@ const fetchCustomTopicArticles = async () => {
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  animation: cardAppear 0.6s ease-out forwards;
 }
 
 .loading-card::before {
@@ -1645,6 +1776,52 @@ const fetchCustomTopicArticles = async () => {
 
 .loading-card-content {
   padding: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.loading-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(64, 158, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  z-index: 2;
+}
+
+.loading-badge-icon {
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #409eff, #67c23a);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-badge-text {
+  width: 40px;
+  height: 12px;
+  background: linear-gradient(135deg, 
+    rgba(64, 158, 255, 0.6) 0%, 
+    rgba(103, 194, 58, 0.4) 100%);
+  border-radius: 6px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.loading-new-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 24px;
+  height: 16px;
+  background: linear-gradient(135deg, #f56c6c, #e6a23c);
+  border-radius: 8px;
+  animation: pulse 1.8s ease-in-out infinite;
+  z-index: 2;
 }
 
 .loading-image {
@@ -1692,6 +1869,23 @@ const fetchCustomTopicArticles = async () => {
   width: 70%;
 }
 
+.loading-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.loading-tag {
+  width: 60px;
+  height: 20px;
+  background: linear-gradient(135deg, 
+    rgba(240, 244, 248, 0.5) 0%, 
+    rgba(226, 232, 240, 0.3) 50%, 
+    rgba(240, 244, 248, 0.5) 100%);
+  border-radius: 10px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
 .loading-card-meta {
   display: flex;
   gap: 12px;
@@ -1720,6 +1914,72 @@ const fetchCustomTopicArticles = async () => {
   100% {
     background-position: 200% 0;
     opacity: 0.8;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes progressMove {
+  0% {
+    background-position: 0% 50%;
+    width: 0%;
+  }
+  50% {
+    background-position: 100% 50%;
+    width: 70%;
+  }
+  100% {
+    background-position: 0% 50%;
+    width: 100%;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes cardAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
