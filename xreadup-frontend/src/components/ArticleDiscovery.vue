@@ -686,6 +686,7 @@ const fetchTrendingArticles = async () => {
   clearError()
   lastAction.value = fetchTrendingArticles
   isLoadingTrending.value = true
+  articles.value = [] // 清空文章列表，显示加载状态
   try {
       // 调用热点文章API
       const response = await articleApi.getTrendingArticles(9)
@@ -725,6 +726,7 @@ const fetchCategoryArticles = async () => {
   clearError()
   lastAction.value = fetchCategoryArticles
   isLoadingCategory.value = true
+  articles.value = [] // 清空文章列表，显示加载状态
   try {
     let response
     
@@ -806,6 +808,7 @@ const fetchCustomTopicArticles = async () => {
   clearError()
   lastAction.value = fetchCustomTopicArticles
   isLoadingCustomTopic.value = true
+  articles.value = [] // 清空文章列表，显示加载状态
   try {
     let response
     
