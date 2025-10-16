@@ -9,19 +9,23 @@
     <!-- 操作按钮区 -->
     <div class="action-buttons">
       <!-- 热点文章按钮 -->
-      <TactileButton
-        :variant="isPremiumUser ? 'primary' : 'secondary'"
-        :loading="isLoadingTrending"
-        :disabled="!canFetchTrending || isLoadingTrending"
-        @click="fetchTrendingArticles"
-        class="discovery-button"
-        size="lg"
-      >
-        <template #icon>
-          <TrendChartsIcon />
-        </template>
-        获取热点文章
-      </TactileButton>
+      <div class="trending-selector">
+        <div class="button-with-tag">
+          <TactileButton
+            :variant="isPremiumUser ? 'primary' : 'secondary'"
+            :loading="isLoadingTrending"
+            :disabled="!canFetchTrending || isLoadingTrending"
+            @click="fetchTrendingArticles"
+            class="discovery-button"
+            size="lg"
+          >
+            <template #icon>
+              <TrendChartsIcon />
+            </template>
+            获取热点文章
+          </TactileButton>
+        </div>
+      </div>
 
       <!-- 主题文章选择器和按钮 -->
       <div class="category-selector">
@@ -33,14 +37,12 @@
           :disabled="!canFetchCategory || isLoadingCategory"
           :tooltip="!canFetchCategory ? '升级基础会员及以上解锁此功能' : ''"
         >
-          <el-option label="科技" value="technology" />
-          <el-option label="健康" value="health" />
-          <el-option label="商业" value="business" />
-          <el-option label="教育" value="education" />
-          <el-option label="娱乐" value="entertainment" />
-          <el-option label="体育" value="sports" />
-          <el-option label="旅行" value="travel" />
-          <el-option label="美食" value="food" />
+          <el-option 
+            v-for="option in getCategoryOptions()" 
+            :key="option.value"
+            :label="option.label" 
+            :value="option.value" 
+          />
         </el-select>
         <div class="button-with-tag">
           <TactileButton
@@ -107,6 +109,122 @@
         >
           <div class="pro-feature-tag">专业会员功能</div>
         </el-tooltip>
+      </div>
+
+      <!-- 高级筛选面板 -->
+      <div class="advanced-filters" v-if="advancedFilters.useAdvanced">
+        <div class="filters-header">
+          <div class="filters-title">
+            <h4>高级筛选</h4>
+            <div class="filter-tip">
+              <el-icon><InfoFilled /></el-icon>
+              <span>注意：语言和国家不能同时使用，优先使用语言筛选</span>
+            </div>
+          </div>
+          <el-button type="text" @click="advancedFilters.useAdvanced = false">
+            <el-icon><Close /></el-icon>
+          </el-button>
+        </div>
+        <div class="filters-content">
+          <div class="filter-row">
+            <div class="filter-item">
+              <label>
+                语言
+                <el-tooltip content="控制新闻的语言，如英语、中文、法语等" placement="top">
+                  <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+              </label>
+              <el-select v-model="advancedFilters.language" placeholder="选择语言" size="small">
+                <el-option 
+                  v-for="option in getLanguageOptions()" 
+                  :key="option.value"
+                  :label="getLanguageLabel(option.value)"
+                  :value="option.value"
+                >
+                  <div class="option-content">
+                    <span class="option-flag">{{ option.flag }}</span>
+                    <span class="option-label">{{ option.label }}</span>
+                    <span class="option-desc">{{ option.description }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+            <div class="filter-item">
+              <label>
+                国家（可选）
+                <el-tooltip content="可选：控制新闻来源的国家。不选择则获取所有国家的新闻" placement="top">
+                  <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                </el-tooltip>
+              </label>
+              <el-select 
+                v-model="advancedFilters.country" 
+                placeholder="不限国家" 
+                clearable 
+                size="small"
+                :disabled="!!advancedFilters.language"
+              >
+                <el-option 
+                  v-for="option in getCountryOptions()" 
+                  :key="option.value"
+                  :label="getCountryLabel(option.value)"
+                  :value="option.value"
+                >
+                  <div class="option-content">
+                    <span class="option-flag">{{ option.flag }}</span>
+                    <span class="option-label">{{ option.label }}</span>
+                    <span class="option-desc">{{ option.description }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+            <div class="filter-item">
+              <label>排序</label>
+              <el-select v-model="advancedFilters.sortBy" placeholder="选择排序" size="small">
+                <el-option 
+                  v-for="option in getSortOptions()" 
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </div>
+          </div>
+          <div class="filter-row">
+            <div class="filter-item">
+              <label>开始日期</label>
+              <el-date-picker
+                v-model="advancedFilters.fromDate"
+                type="datetime"
+                placeholder="选择开始日期"
+                size="small"
+                format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DDTHH:mm:ssZ"
+              />
+            </div>
+            <div class="filter-item">
+              <label>结束日期</label>
+              <el-date-picker
+                v-model="advancedFilters.toDate"
+                type="datetime"
+                placeholder="选择结束日期"
+                size="small"
+                format="YYYY-MM-DD HH:mm:ss"
+                value-format="YYYY-MM-DDTHH:mm:ssZ"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 高级筛选切换按钮 -->
+      <div class="advanced-toggle">
+        <el-button 
+          type="text" 
+          @click="advancedFilters.useAdvanced = !advancedFilters.useAdvanced"
+          :icon="advancedFilters.useAdvanced ? 'ArrowUp' : 'ArrowDown'"
+        >
+          {{ advancedFilters.useAdvanced ? '隐藏高级筛选' : '显示高级筛选' }}
+        </el-button>
       </div>
     </div>
 
@@ -209,45 +327,98 @@
       </div>
     </div>
 
-    <!-- 文章结果展示区 -->
-    <div class="articles-result" v-if="articles.length > 0">
-      <h3 class="result-title">{{ resultTitle }}</h3>
-      <div class="articles-grid">
-        <DiscoveryArticleCard
-          v-for="article in articles"
-          :key="article.id"
-          :article="article"
-          :discovery-type="getDiscoveryType()"
-        />
+    <!-- 内容展示区 -->
+    <div class="content-area">
+      <!-- 文章结果展示区 -->
+      <div class="articles-result" v-if="articles.length > 0">
+        <h3 class="result-title">{{ resultTitle }}</h3>
+        <div class="articles-grid">
+          <DiscoveryArticleCard
+            v-for="article in articles"
+            :key="article.id"
+            :article="article"
+            :discovery-type="getDiscoveryType()"
+          />
+        </div>
       </div>
-    </div>
 
-    <!-- 空状态 -->
-    <div class="empty-state" v-else-if="!isLoadingTrending && !isLoadingCategory && !isLoadingCustomTopic">
-      <DocumentIcon class="empty-icon" />
-      <p>暂无文章，点击按钮获取</p>
-      <div v-if="!isPremiumUser" style="margin-top: 16px;">
-        <el-button
-          type="primary"
-          @click="navigateToSubscription"
-        >
-          升级会员，解锁更多内容
-        </el-button>
-      </div>
-    </div>
-
-    <!-- 加载状态 -->
-    <div class="loading-state" v-else>
-      <el-skeleton :count="6" :loading="true" animated>
-        <template #template>
-          <div class="article-skeleton">
-            <div class="skeleton-cover" />
-            <div class="skeleton-title" />
-            <div class="skeleton-desc" />
-            <div class="skeleton-meta" />
+      <!-- 错误状态 -->
+      <div class="error-state" v-else-if="hasError">
+        <div class="error-icon-wrapper">
+          <el-icon class="error-icon"><WarningFilled /></el-icon>
+        </div>
+        <h3 class="error-title">获取文章失败</h3>
+        <p class="error-message">{{ errorMessage }}</p>
+        <div class="error-suggestions">
+          <div class="suggestion-item" v-if="advancedFilters.useAdvanced">
+            <el-icon><InfoFilled /></el-icon>
+            <span>GNews API限制：语言和国家不能同时使用，已自动优先使用语言筛选</span>
           </div>
-        </template>
-      </el-skeleton>
+          <div class="suggestion-item">
+            <el-icon><InfoFilled /></el-icon>
+            <span>检查网络连接是否正常</span>
+          </div>
+          <div class="suggestion-item">
+            <el-icon><InfoFilled /></el-icon>
+            <span>尝试选择其他分类或关键词</span>
+          </div>
+        </div>
+        <div class="error-actions">
+          <el-button type="primary" @click="retryLastAction">
+            <el-icon><RefreshRight /></el-icon>
+            重试
+          </el-button>
+          <el-button @click="clearError">返回</el-button>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div class="empty-state" v-else-if="articles.length === 0 && !hasError">
+        <div class="empty-content">
+          <div class="empty-icon-wrapper">
+            <el-icon class="empty-icon"><Document /></el-icon>
+          </div>
+          <h3 class="empty-title">暂无文章</h3>
+          <p class="empty-description">选择分类或输入关键词开始探索精彩内容</p>
+          <div class="empty-actions">
+            <el-button type="primary" size="large" @click="fetchTrendingArticles">
+              <el-icon><TrendCharts /></el-icon>
+              获取热点文章
+            </el-button>
+            <el-button size="large" @click="() => { selectedCategory = 'general'; fetchCategoryArticles(); }">
+              <el-icon><Menu /></el-icon>
+              浏览分类文章
+            </el-button>
+          </div>
+          <div v-if="!isPremiumUser" class="upgrade-prompt">
+            <el-divider>
+              <span class="divider-text">升级解锁更多功能</span>
+            </el-divider>
+            <el-button
+              type="success"
+              plain
+              @click="navigateToSubscription"
+            >
+              <el-icon><Star /></el-icon>
+              升级会员，解锁更多内容
+            </el-button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 加载状态 -->
+      <div class="loading-state" v-else>
+        <el-skeleton :count="6" :loading="true" animated>
+          <template #template>
+            <div class="article-skeleton">
+              <div class="skeleton-cover" />
+              <div class="skeleton-title" />
+              <div class="skeleton-desc" />
+              <div class="skeleton-meta" />
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
     </div>
   </div>
 </template>
@@ -255,13 +426,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElButton, ElSelect, ElOption, ElTooltip, ElSkeleton, ElMessage, ElInput } from 'element-plus'
-import { TrendCharts, Document, MagicStick, Clock, Search } from '@element-plus/icons-vue'
+import { TrendCharts, Document, MagicStick, Clock, Search, Close, ArrowUp, ArrowDown, InfoFilled, QuestionFilled, WarningFilled, RefreshRight, Menu, Star } from '@element-plus/icons-vue'
 import { articleApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { watch } from 'vue'
 import DiscoveryArticleCard from '@/components/DiscoveryArticleCard.vue'
 import TactileButton from '@/components/common/TactileButton.vue'
+import { CATEGORY_MAP, getCategoryOptions } from '@/utils/categoryConfig'
+import { getLanguageOptions, getCountryOptions, getSortOptions, getLanguageLabel, getCountryLabel, getSortLabel, getLanguageDescription, getCountryDescription } from '@/utils/gnewsConfig'
 
 // 重命名图标组件以避免命名冲突
 const TrendChartsIcon = TrendCharts
@@ -297,6 +470,25 @@ const isLoadingCustomTopic = ref(false)
 // 主题选择
 const selectedCategory = ref('')
 const customTopic = ref('')
+
+// 高级筛选选项
+const advancedFilters = ref({
+  language: 'en',
+  country: '',
+  sortBy: 'publishedAt',
+  fromDate: '',
+  toDate: '',
+  useAdvanced: false
+})
+
+// 错误状态
+const errorMessage = ref('')
+const lastAction = ref<(() => void) | null>(null)
+
+// 计算属性：是否有错误
+const hasError = computed(() => {
+  return !!errorMessage.value && !isLoadingTrending.value && !isLoadingCategory.value && !isLoadingCustomTopic.value
+})
 
 // 配额信息状态
 const remainingTrendingQuota = ref(5) // 热点文章剩余次数
@@ -362,6 +554,9 @@ onMounted(async () => {
 
   await loadUserQuota()
   loadSavedArticles()
+  
+  // 确保初始状态没有错误
+  clearError()
 })
 
 // 监听用户等级变化，当等级变化时自动刷新配额
@@ -469,10 +664,27 @@ const saveQuotaToStorage = () => {
   }
 }
 
+// 清除错误
+const clearError = () => {
+  errorMessage.value = ''
+  lastAction.value = null
+}
+
+// 重试最后的操作
+const retryLastAction = () => {
+  if (lastAction.value) {
+    clearError()
+    lastAction.value()
+  }
+}
+
+
 // 获取热点文章
 const fetchTrendingArticles = async () => {
   if (!canFetchTrending.value || isLoadingTrending.value) return
 
+  clearError()
+  lastAction.value = fetchTrendingArticles
   isLoadingTrending.value = true
   try {
       // 调用热点文章API
@@ -485,6 +697,9 @@ const fetchTrendingArticles = async () => {
       }))
       resultTitle.value = '🔥 热点文章'
 
+    // 清除错误状态
+    clearError()
+
     // 保存文章数据到localStorage
     saveArticlesToStorage()
 
@@ -494,9 +709,10 @@ const fetchTrendingArticles = async () => {
       saveQuotaToStorage()
       ElMessage.success(`获取成功，热点文章剩余${remainingTrendingQuota.value}次`)
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取热点文章失败:', error)
-    ElMessage.error('获取热点文章失败，请稍后重试')
+    errorMessage.value = error.response?.data?.message || '获取热点文章失败，请检查网络连接或稍后重试'
+    articles.value = [] // 清空文章数组
   } finally {
     isLoadingTrending.value = false
   }
@@ -506,29 +722,57 @@ const fetchTrendingArticles = async () => {
 const fetchCategoryArticles = async () => {
   if (!selectedCategory.value || !canFetchCategory.value || isLoadingCategory.value) return
 
+  clearError()
+  lastAction.value = fetchCategoryArticles
   isLoadingCategory.value = true
   try {
-      // 调用主题文章API
-      const response = await articleApi.getArticlesByCategory(selectedCategory.value, 9)
-      // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
-      articles.value = (response.data || []).map((article: any) => ({
-        ...article,
-        difficulty: article.difficultyLevel || '',
-        wordCount: article.wordCount || article.word_count || 0
-      }))
+    let response
+    
+    // 根据是否使用高级筛选选择API
+    if (advancedFilters.value.useAdvanced) {
+      // 构建参数，根据GNews API限制，不能同时使用language和country
+      const params: any = {
+        category: selectedCategory.value,
+        limit: 9,
+        fromDate: advancedFilters.value.fromDate,
+        toDate: advancedFilters.value.toDate,
+        sortBy: advancedFilters.value.sortBy
+      }
+      
+      // 优先使用语言参数，如果同时设置了国家和语言，只使用语言
+      if (advancedFilters.value.language) {
+        params.language = advancedFilters.value.language
+      } else if (advancedFilters.value.country) {
+        params.country = advancedFilters.value.country
+      }
+      
+      // 使用增强版API
+      response = await articleApi.getArticlesByCategoryAdvanced(params)
+    } else {
+      // 使用基础版API
+      response = await articleApi.getArticlesByCategory(selectedCategory.value, 9)
+    }
+    
+    // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
+    articles.value = (response.data || []).map((article: any) => ({
+      ...article,
+      difficulty: article.difficultyLevel || '',
+      wordCount: article.wordCount || article.word_count || 0
+    }))
 
     // 设置结果标题（根据选择的主题显示对应的中文名称）
-    const categoryMap: Record<string, string> = {
-      technology: '科技',
-      health: '健康',
-      business: '商业',
-      education: '教育',
-      entertainment: '娱乐',
-      sports: '体育',
-      travel: '旅行',
-      food: '美食'
+    const categoryLabel = CATEGORY_MAP[selectedCategory.value] || selectedCategory.value
+    const languageLabel = getLanguageLabel(advancedFilters.value.language)
+    const countryLabel = getCountryLabel(advancedFilters.value.country)
+    
+    if (advancedFilters.value.useAdvanced) {
+      resultTitle.value = `${categoryLabel}主题文章 (${languageLabel} - ${countryLabel})`
+    } else {
+      resultTitle.value = `${categoryLabel}主题文章`
     }
-    resultTitle.value = `${categoryMap[selectedCategory.value] || selectedCategory.value}主题文章`
+
+    // 清除错误状态
+    clearError()
 
     // 保存文章数据到localStorage
     saveArticlesToStorage()
@@ -544,9 +788,10 @@ const fetchCategoryArticles = async () => {
     // 输出更详细的错误信息，帮助诊断400 Bad Request问题
     if (error.response) {
       console.error('错误详情:', error.response.data)
-      console.error('请求参数:', { category: selectedCategory.value, count: 6 })
+      console.error('请求参数:', { category: selectedCategory.value, count: 9 })
     }
-    ElMessage.error('获取主题文章失败，请稍后重试')
+    errorMessage.value = error.response?.data?.message || '获取主题文章失败，请尝试调整筛选条件'
+    articles.value = [] // 清空文章数组
   } finally {
     isLoadingCategory.value = false
   }
@@ -558,18 +803,55 @@ const fetchCustomTopicArticles = async () => {
     return
   }
 
+  clearError()
+  lastAction.value = fetchCustomTopicArticles
   isLoadingCustomTopic.value = true
   try {
-      // 调用自定义主题文章API
-      // 注意：这里使用了getArticlesByCategory作为临时实现，实际项目中可能需要一个专门的API
-      const response = await articleApi.getArticlesByCategory(customTopic.value, 9)
-      // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
-      articles.value = (response.data || []).map((article: any) => ({
-        ...article,
-        difficulty: article.difficultyLevel || '',
-        wordCount: article.wordCount || article.word_count || 0
-      }))
+    let response
+    
+    // 根据是否使用高级筛选选择API
+    if (advancedFilters.value.useAdvanced) {
+      // 构建参数，根据GNews API限制，不能同时使用language和country
+      const params: any = {
+        keyword: customTopic.value,
+        limit: 9,
+        fromDate: advancedFilters.value.fromDate,
+        toDate: advancedFilters.value.toDate,
+        sortBy: advancedFilters.value.sortBy
+      }
+      
+      // 优先使用语言参数，如果同时设置了国家和语言，只使用语言
+      if (advancedFilters.value.language) {
+        params.language = advancedFilters.value.language
+      } else if (advancedFilters.value.country) {
+        params.country = advancedFilters.value.country
+      }
+      
+      // 使用增强版API
+      response = await articleApi.searchArticlesAdvanced(params)
+    } else {
+      // 使用基础版API
+      response = await articleApi.searchArticles(customTopic.value, 9)
+    }
+    
+    // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
+    articles.value = (response.data || []).map((article: any) => ({
+      ...article,
+      difficulty: article.difficultyLevel || '',
+      wordCount: article.wordCount || article.word_count || 0
+    }))
+    
+    // 设置结果标题
+    if (advancedFilters.value.useAdvanced) {
+      const languageLabel = getLanguageLabel(advancedFilters.value.language)
+      const countryLabel = getCountryLabel(advancedFilters.value.country)
+      resultTitle.value = `🔍 "${customTopic.value}" 主题文章 (${languageLabel} - ${countryLabel})`
+    } else {
       resultTitle.value = `🔍 "${customTopic.value}" 主题文章`
+    }
+
+    // 清除错误状态
+    clearError()
 
     // 保存文章数据到localStorage
     saveArticlesToStorage()
@@ -577,7 +859,8 @@ const fetchCustomTopicArticles = async () => {
     ElMessage.success(`"${customTopic.value}" 主题文章搜索成功`)
   } catch (error: any) {
     console.error('获取自定义主题文章失败:', error)
-    ElMessage.error('获取自定义主题文章失败，请稍后重试')
+    errorMessage.value = error.response?.data?.message || '获取自定义主题文章失败，请尝试其他关键词'
+    articles.value = [] // 清空文章数组
   } finally {
     isLoadingCustomTopic.value = false
   }
@@ -627,25 +910,128 @@ const fetchCustomTopicArticles = async () => {
 
 .action-buttons {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 24px;
+  justify-content: center;
+}
+
+/* 高级筛选面板样式 */
+.advanced-filters {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.filters-title h4 {
+  margin: 0 0 8px 0;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.filter-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.help-icon {
+  color: #409eff;
+  cursor: help;
+  font-size: 14px;
+}
+
+.filters-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.filter-item label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #606266;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.option-flag {
+  font-size: 16px;
+  min-width: 20px;
+}
+
+.option-label {
+  font-weight: 500;
+  color: #303133;
+}
+
+.option-desc {
+  font-size: 12px;
+  color: #909399;
+  margin-left: auto;
+}
+
+.advanced-toggle {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.advanced-toggle .el-button {
+  color: #409eff;
+  font-size: 14px;
+}
+
+.advanced-toggle .el-button:hover {
+  color: #66b1ff;
 }
 
 /* 统一按钮样式 */
 .discovery-button {
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  position: relative;
+  /* 移除可能影响高度的样式，让 TactileButton 的样式生效 */
   min-width: 160px;
+}
+
+/* 确保所有按钮容器高度一致 */
+.action-buttons .button-with-tag {
+  height: 52px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
 }
 
 .discovery-button:hover {
@@ -656,7 +1042,9 @@ const fetchCustomTopicArticles = async () => {
 /* 按钮和标签容器 */
 .button-with-tag {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  height: 52px; /* 与 TactileButton lg 尺寸的 min-height 保持一致 */
 }
 
 /* 会员等级标签样式 */
@@ -714,15 +1102,28 @@ const fetchCustomTopicArticles = async () => {
   align-items: center;
 }
 
+/* 热点文章选择器布局 */
+.trending-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  min-width: 200px;
+}
+
 /* 优化主题选择器布局 */
 .category-selector {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   background: #f8f9fa;
   padding: 10px;
   border-radius: 8px;
+  min-width: 300px;
 }
 
 /* 统一输入框和选择器样式 */
@@ -899,15 +1300,21 @@ const fetchCustomTopicArticles = async () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   background: #f8f9fa;
   padding: 10px;
   border-radius: 8px;
+  min-width: 320px;
 }
 
 /* 文章结果区域样式 */
-.articles-result {
+/* 内容展示区 */
+.content-area {
   margin-top: 30px;
+}
+
+.articles-result {
+  margin-top: 0;
 }
 
 .result-title {
@@ -992,19 +1399,164 @@ const fetchCustomTopicArticles = async () => {
   margin-bottom: 24px;
 }
 
-/* 空状态样式 */
-.empty-state {
+/* 错误状态样式 */
+.error-state {
   text-align: center;
   padding: 60px 20px;
-  color: #909399;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.error-icon-wrapper {
+  margin-bottom: 20px;
+}
+
+.error-icon {
+  font-size: 64px;
+  color: #f56c6c;
+}
+
+.error-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 12px 0;
+}
+
+.error-message {
+  font-size: 14px;
+  color: #606266;
+  margin: 0 0 24px 0;
+}
+
+.error-suggestions {
   background: #f8f9fa;
   border-radius: 8px;
+  padding: 20px;
+  margin: 0 auto 24px;
+  max-width: 500px;
+  text-align: left;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #606266;
+}
+
+.suggestion-item:last-child {
+  margin-bottom: 0;
+}
+
+.suggestion-item .el-icon {
+  color: #409eff;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* 空状态样式 */
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  padding: 40px 20px;
+  background: #ffffff;
+  border: 1px solid #e4e7ed;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.empty-content {
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.empty-icon-wrapper {
+  margin-bottom: 24px;
 }
 
 .empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.3;
+  font-size: 80px;
+  color: #e1e6eb;
+  opacity: 0.8;
+}
+
+.empty-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 12px 0;
+}
+
+.empty-description {
+  font-size: 16px;
+  color: #606266;
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.empty-actions .el-button {
+  min-width: 160px;
+  height: 44px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.upgrade-prompt {
+  margin-top: 24px;
+}
+
+.divider-text {
+  color: #909399;
+  font-size: 14px;
+  padding: 0 16px;
+}
+
+.upgrade-prompt .el-button {
+  margin-top: 16px;
+  height: 40px;
+  border-radius: 6px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .empty-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .empty-actions .el-button {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .empty-title {
+    font-size: 20px;
+  }
+  
+  .empty-description {
+    font-size: 14px;
+  }
 }
 
 /* 加载状态样式 */
@@ -1060,11 +1612,12 @@ const fetchCustomTopicArticles = async () => {
     gap: 16px;
   }
 
-  .category-selector, .custom-search {
+  .trending-selector, .category-selector, .custom-search {
     width: 100%;
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    min-width: auto;
   }
 
   .category-selector .el-select, .custom-search .el-input {

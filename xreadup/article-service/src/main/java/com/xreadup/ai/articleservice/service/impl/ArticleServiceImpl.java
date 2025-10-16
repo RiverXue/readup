@@ -14,8 +14,6 @@ import com.xreadup.ai.articleservice.model.vo.ArticleVO;
 import com.xreadup.ai.articleservice.service.ArticleService;
 import com.xreadup.ai.articleservice.service.AiIntegrationService;
 import com.xreadup.ai.articleservice.service.GnewsService;
-import com.xreadup.ai.articleservice.model.dto.ArticleAnalysisRequest;
-import com.xreadup.ai.articleservice.client.dto.ArticleAnalysisResponse;
 import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
 import com.xreadup.ai.articleservice.model.common.ApiResponse;
 import com.xreadup.ai.articleservice.model.dto.GnewsResponse;
@@ -26,7 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -1103,5 +1103,246 @@ public class ArticleServiceImpl implements ArticleService {
         LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
         wrapper.ge(Article::getCreateTime, LocalDate.now().atStartOfDay());
         return articleMapper.selectCount(wrapper);
+    }
+    
+    @Override
+    public List<ArticleVO> searchArticlesByKeyword(String keyword, int limit) {
+        try {
+            log.info("开始搜索文章，关键词: {}, 数量限制: {}", keyword, limit);
+            
+            // 使用GnewsService搜索文章
+            List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.searchArticlesByKeyword(keyword, limit);
+            
+            if (gnewsArticles.isEmpty()) {
+                log.warn("GNews API未返回任何文章，关键词: {}", keyword);
+                return Collections.emptyList();
+            }
+            
+            log.info("从GNews API获取到 {} 篇关于 '{}' 的文章", gnewsArticles.size(), keyword);
+            
+            // 转换并保存文章
+            List<ArticleVO> articles = new ArrayList<>();
+            for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+                try {
+                    // 检查文章是否已存在
+                    LambdaQueryWrapper<Article> existingWrapper = new LambdaQueryWrapper<>();
+                    existingWrapper.eq(Article::getUrl, gnewsArticle.getUrl());
+                    Article existingArticle = articleMapper.selectOne(existingWrapper);
+                    
+                    if (existingArticle != null) {
+                        // 文章已存在，直接转换
+                        ArticleVO vo = convertToArticleVO(existingArticle);
+                        articles.add(vo);
+                        continue;
+                    }
+                    
+                    // 创建新文章
+                    Article article = new Article();
+                    article.setTitle(gnewsArticle.getTitle());
+                    article.setDescription(gnewsArticle.getDescription());
+                    article.setUrl(gnewsArticle.getUrl());
+                    article.setImage(gnewsArticle.getImage());
+                    article.setSource(gnewsArticle.getSource().getName());
+                    article.setPublishedAt(gnewsArticle.getPublishedAt());
+                    article.setCategory("custom"); // 标记为自定义主题
+                    article.setContentEn(""); // 初始为空，后续通过AI服务填充
+                    article.setContentCn(""); // 初始为空，后续通过AI服务填充
+                    article.setWordCount(0); // 初始为0，后续通过AI服务计算
+                    article.setDifficultyLevel(""); // 初始为空，后续通过AI服务评估
+                    article.setReadCount(0);
+                    article.setCreateTime(LocalDateTime.now());
+                    article.setUpdateTime(LocalDateTime.now());
+                    
+                    // 保存到数据库
+                    articleMapper.insert(article);
+                    
+                    // 转换为VO
+                    ArticleVO vo = convertToArticleVO(article);
+                    articles.add(vo);
+                    
+                    log.info("成功保存自定义主题文章: {}", article.getTitle());
+                    
+                } catch (Exception e) {
+                    log.error("处理文章时出错: {}", gnewsArticle.getTitle(), e);
+                }
+            }
+            
+            log.info("搜索完成，共处理 {} 篇文章", articles.size());
+            return articles;
+            
+        } catch (Exception e) {
+            log.error("搜索文章失败，关键词: {}", keyword, e);
+            return Collections.emptyList();
+        }
+    }
+    
+    /**
+     * 将Article实体转换为ArticleVO
+     */
+    private ArticleVO convertToArticleVO(Article article) {
+        ArticleVO vo = new ArticleVO();
+        vo.setId(article.getId());
+        vo.setTitle(article.getTitle());
+        vo.setDescription(article.getDescription());
+        vo.setUrl(article.getUrl());
+        vo.setImage(article.getImage());
+        vo.setSource(article.getSource());
+        vo.setPublishedAt(article.getPublishedAt());
+        vo.setCategory(article.getCategory());
+        vo.setContentEn(article.getContentEn());
+        vo.setContentCn(article.getContentCn());
+        vo.setWordCount(article.getWordCount());
+        vo.setDifficultyLevel(article.getDifficultyLevel());
+        vo.setReadCount(article.getReadCount());
+        vo.setCreateTime(article.getCreateTime());
+        return vo;
+    }
+    
+    @Override
+    public List<ArticleVO> searchArticlesByKeyword(String keyword, int limit, String language, 
+            String country, String fromDate, String toDate, String sortBy) {
+        try {
+            log.info("开始增强搜索文章，关键词: {}, 语言: {}, 国家: {}, 时间范围: {} - {}, 排序: {}", 
+                    keyword, language, country, fromDate, toDate, sortBy);
+            
+            // 使用GnewsService增强搜索
+            List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.searchArticlesByKeyword(
+                    keyword, limit, language, country, fromDate, toDate, sortBy);
+            
+            if (gnewsArticles.isEmpty()) {
+                log.warn("GNews API未返回任何文章，关键词: {}", keyword);
+                return Collections.emptyList();
+            }
+            
+            log.info("从GNews API获取到 {} 篇关于 '{}' 的文章", gnewsArticles.size(), keyword);
+            
+            // 转换并保存文章
+            List<ArticleVO> articles = new ArrayList<>();
+            for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+                try {
+                    // 检查文章是否已存在
+                    LambdaQueryWrapper<Article> existingWrapper = new LambdaQueryWrapper<>();
+                    existingWrapper.eq(Article::getUrl, gnewsArticle.getUrl());
+                    Article existingArticle = articleMapper.selectOne(existingWrapper);
+                    
+                    if (existingArticle != null) {
+                        // 文章已存在，直接转换
+                        ArticleVO vo = convertToArticleVO(existingArticle);
+                        articles.add(vo);
+                        continue;
+                    }
+                    
+                    // 创建新文章
+                    Article article = new Article();
+                    article.setTitle(gnewsArticle.getTitle());
+                    article.setDescription(gnewsArticle.getDescription());
+                    article.setUrl(gnewsArticle.getUrl());
+                    article.setImage(gnewsArticle.getImage());
+                    article.setSource(gnewsArticle.getSource().getName());
+                    article.setPublishedAt(gnewsArticle.getPublishedAt());
+                    article.setCategory("custom"); // 标记为自定义主题
+                    article.setContentEn(""); // 初始为空，后续通过AI服务填充
+                    article.setContentCn(""); // 初始为空，后续通过AI服务填充
+                    article.setWordCount(0); // 初始为0，后续通过AI服务计算
+                    article.setDifficultyLevel(""); // 初始为空，后续通过AI服务评估
+                    article.setReadCount(0);
+                    article.setCreateTime(LocalDateTime.now());
+                    article.setUpdateTime(LocalDateTime.now());
+                    
+                    // 保存到数据库
+                    articleMapper.insert(article);
+                    
+                    // 转换为VO
+                    ArticleVO vo = convertToArticleVO(article);
+                    articles.add(vo);
+                    
+                    log.info("成功保存增强搜索文章: {}", article.getTitle());
+                    
+                } catch (Exception e) {
+                    log.error("处理文章时出错: {}", gnewsArticle.getTitle(), e);
+                }
+            }
+            
+            log.info("增强搜索完成，共处理 {} 篇文章", articles.size());
+            return articles;
+            
+        } catch (Exception e) {
+            log.error("增强搜索文章失败，关键词: {}", keyword, e);
+            return Collections.emptyList();
+        }
+    }
+    
+    @Override
+    public List<ArticleVO> getArticlesByCategory(String category, int limit, String language, 
+            String country, String fromDate, String toDate, String sortBy) {
+        try {
+            log.info("开始增强分类文章，分类: {}, 语言: {}, 国家: {}, 时间范围: {} - {}, 排序: {}", 
+                    category, language, country, fromDate, toDate, sortBy);
+            
+            // 使用GnewsService增强分类获取
+            List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchArticlesByCategory(
+                    category, limit, language, country, fromDate, toDate, sortBy);
+            
+            if (gnewsArticles.isEmpty()) {
+                log.warn("GNews API未返回任何文章，分类: {}", category);
+                return Collections.emptyList();
+            }
+            
+            log.info("从GNews API获取到 {} 篇 {} 分类文章", gnewsArticles.size(), category);
+            
+            // 转换并保存文章
+            List<ArticleVO> articles = new ArrayList<>();
+            for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+                try {
+                    // 检查文章是否已存在
+                    LambdaQueryWrapper<Article> existingWrapper = new LambdaQueryWrapper<>();
+                    existingWrapper.eq(Article::getUrl, gnewsArticle.getUrl());
+                    Article existingArticle = articleMapper.selectOne(existingWrapper);
+                    
+                    if (existingArticle != null) {
+                        // 文章已存在，直接转换
+                        ArticleVO vo = convertToArticleVO(existingArticle);
+                        articles.add(vo);
+                        continue;
+                    }
+                    
+                    // 创建新文章
+                    Article article = new Article();
+                    article.setTitle(gnewsArticle.getTitle());
+                    article.setDescription(gnewsArticle.getDescription());
+                    article.setUrl(gnewsArticle.getUrl());
+                    article.setImage(gnewsArticle.getImage());
+                    article.setSource(gnewsArticle.getSource().getName());
+                    article.setPublishedAt(gnewsArticle.getPublishedAt());
+                    article.setCategory(category); // 使用实际分类
+                    article.setContentEn(""); // 初始为空，后续通过AI服务填充
+                    article.setContentCn(""); // 初始为空，后续通过AI服务填充
+                    article.setWordCount(0); // 初始为0，后续通过AI服务计算
+                    article.setDifficultyLevel(""); // 初始为空，后续通过AI服务评估
+                    article.setReadCount(0);
+                    article.setCreateTime(LocalDateTime.now());
+                    article.setUpdateTime(LocalDateTime.now());
+                    
+                    // 保存到数据库
+                    articleMapper.insert(article);
+                    
+                    // 转换为VO
+                    ArticleVO vo = convertToArticleVO(article);
+                    articles.add(vo);
+                    
+                    log.info("成功保存增强分类文章: {}", article.getTitle());
+                    
+                } catch (Exception e) {
+                    log.error("处理文章时出错: {}", gnewsArticle.getTitle(), e);
+                }
+            }
+            
+            log.info("增强分类文章完成，共处理 {} 篇文章", articles.size());
+            return articles;
+            
+        } catch (Exception e) {
+            log.error("增强分类文章失败，分类: {}", category, e);
+            return Collections.emptyList();
+        }
     }
 }

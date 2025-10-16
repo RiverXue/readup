@@ -52,11 +52,13 @@
         <span class="filter-label">分类:</span>
         <el-radio-group v-model="filters.category" size="small" @change="handleFilterChange">
           <el-radio-button label="">全部</el-radio-button>
-          <el-radio-button label="tech">科技</el-radio-button>
-          <el-radio-button label="business">商业</el-radio-button>
-          <el-radio-button label="culture">文化</el-radio-button>
-          <el-radio-button label="education">教育</el-radio-button>
-          <el-radio-button label="health">健康</el-radio-button>
+          <el-radio-button 
+            v-for="option in getCategoryOptions()" 
+            :key="option.value"
+            :label="option.value"
+          >
+            {{ option.label }}
+          </el-radio-button>
         </el-radio-group>
       </div>
       
@@ -146,6 +148,119 @@
             </div>
           </div>
           
+          <!-- 高级筛选切换 -->
+          <div class="advanced-toggle">
+            <el-button 
+              type="text" 
+              @click="advancedFilters.useAdvanced = !advancedFilters.useAdvanced"
+              :icon="advancedFilters.useAdvanced ? 'ArrowUp' : 'ArrowDown'"
+            >
+              {{ advancedFilters.useAdvanced ? '隐藏高级筛选' : '显示高级筛选' }}
+            </el-button>
+          </div>
+
+          <!-- 高级筛选面板 -->
+          <div class="advanced-filters" v-if="advancedFilters.useAdvanced">
+            <div class="filters-header">
+              <div class="filters-title">
+                <h4>高级筛选</h4>
+                <div class="filter-tip">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>注意：语言和国家不能同时使用，优先使用语言筛选</span>
+                </div>
+              </div>
+            </div>
+            <div class="filters-content">
+              <div class="filter-row">
+                <div class="filter-item">
+                  <label>
+                    语言
+                    <el-tooltip content="控制新闻的语言，如英语、中文、法语等" placement="top">
+                      <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <el-select v-model="advancedFilters.language" placeholder="选择语言" size="small">
+                    <el-option 
+                      v-for="option in getLanguageOptions()" 
+                      :key="option.value"
+                      :label="getLanguageLabel(option.value)"
+                      :value="option.value"
+                    >
+                      <div class="option-content">
+                        <span class="option-flag">{{ option.flag }}</span>
+                        <span class="option-label">{{ option.label }}</span>
+                        <span class="option-desc">{{ option.description }}</span>
+                      </div>
+                    </el-option>
+                  </el-select>
+                </div>
+                <div class="filter-item">
+                  <label>
+                    国家（可选）
+                    <el-tooltip content="可选：控制新闻来源的国家。不选择则获取所有国家的新闻" placement="top">
+                      <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                    </el-tooltip>
+                  </label>
+                  <el-select 
+                    v-model="advancedFilters.country" 
+                    placeholder="不限国家" 
+                    clearable 
+                    size="small"
+                    :disabled="!!advancedFilters.language"
+                  >
+                    <el-option 
+                      v-for="option in getCountryOptions()" 
+                      :key="option.value"
+                      :label="getCountryLabel(option.value)"
+                      :value="option.value"
+                    >
+                      <div class="option-content">
+                        <span class="option-flag">{{ option.flag }}</span>
+                        <span class="option-label">{{ option.label }}</span>
+                        <span class="option-desc">{{ option.description }}</span>
+                      </div>
+                    </el-option>
+                  </el-select>
+                </div>
+                <div class="filter-item">
+                  <label>排序</label>
+                  <el-select v-model="advancedFilters.sortBy" placeholder="选择排序" size="small">
+                    <el-option 
+                      v-for="option in getSortOptions()" 
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
+                </div>
+              </div>
+              <div class="filter-row">
+                <div class="filter-item">
+                  <label>开始日期</label>
+                  <el-date-picker
+                    v-model="advancedFilters.fromDate"
+                    type="datetime"
+                    placeholder="选择开始日期"
+                    size="small"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    value-format="YYYY-MM-DDTHH:mm:ssZ"
+                  />
+                </div>
+                <div class="filter-item">
+                  <label>结束日期</label>
+                  <el-date-picker
+                    v-model="advancedFilters.toDate"
+                    type="datetime"
+                    placeholder="选择结束日期"
+                    size="small"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    value-format="YYYY-MM-DDTHH:mm:ssZ"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 重置筛选按钮 -->
           <el-button type="primary" @click="resetFilters" class="reset-button">重置筛选</el-button>
         </div>
@@ -262,10 +377,16 @@ import {
   Menu, 
   Search, 
   ArrowRight, 
-  ArrowLeft 
+  ArrowLeft,
+  ArrowUp,
+  ArrowDown,
+  InfoFilled,
+  QuestionFilled
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { debounce } from 'lodash-es'
+import { getCategoryOptions } from '@/utils/categoryConfig'
+import { getLanguageOptions, getCountryOptions, getSortOptions, getLanguageLabel, getCountryLabel, getSortLabel, getLanguageDescription, getCountryDescription } from '@/utils/gnewsConfig'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -313,6 +434,16 @@ const filters = reactive({
   readTimeRange: [0, 30]
 })
 
+// 高级筛选选项
+const advancedFilters = reactive({
+  language: 'en',
+  country: '',
+  sortBy: 'publishedAt',
+  fromDate: '',
+  toDate: '',
+  useAdvanced: false
+})
+
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
@@ -353,6 +484,15 @@ const resetFilters = () => {
   filters.readTimeRange = [0, 30]
   sortBy.value = 'newest'
   searchQuery.value = ''
+  
+  // 重置高级筛选
+  advancedFilters.language = 'en'
+  advancedFilters.country = ''
+  advancedFilters.sortBy = 'publishedAt'
+  advancedFilters.fromDate = ''
+  advancedFilters.toDate = ''
+  advancedFilters.useAdvanced = false
+  
   pagination.currentPage = 1
   fetchArticles()
 }
@@ -914,6 +1054,111 @@ onMounted(() => {
     0 6px 16px rgba(0, 122, 255, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* 高级筛选面板样式 */
+.advanced-filters {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.filters-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.filters-title h4 {
+  margin: 0 0 6px 0;
+  color: #303133;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filter-tip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #909399;
+  font-size: 11px;
+}
+
+.help-icon {
+  color: #409eff;
+  cursor: help;
+  font-size: 12px;
+}
+
+.filters-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+  flex: 1;
+}
+
+.filter-item label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #606266;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.option-flag {
+  font-size: 14px;
+  min-width: 16px;
+}
+
+.option-label {
+  font-weight: 500;
+  color: #303133;
+  font-size: 12px;
+}
+
+.option-desc {
+  font-size: 10px;
+  color: #909399;
+  margin-left: auto;
+}
+
+.advanced-toggle {
+  text-align: center;
+  margin: 12px 0;
+}
+
+.advanced-toggle .el-button {
+  color: #409eff;
+  font-size: 12px;
+}
+
+.advanced-toggle .el-button:hover {
+  color: #66b1ff;
 }
 
 /* 右侧文章列表 */

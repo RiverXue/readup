@@ -97,4 +97,40 @@ public interface ArticleService {
      * @return 更新是否成功
      */
     ApiResponse<Boolean> updateContentCn(String contentEn, String contentCn);
+    
+    /**
+     * 根据关键词搜索文章（用于自定义主题）
+     * @param keyword 搜索关键词
+     * @param limit 文章数量限制
+     * @return 文章列表
+     */
+    List<ArticleVO> searchArticlesByKeyword(String keyword, int limit);
+    
+    /**
+     * 根据关键词搜索文章（增强版，支持多语言、多国家、时间范围、排序）
+     * @param keyword 搜索关键词
+     * @param limit 文章数量限制
+     * @param language 语言代码
+     * @param country 国家代码
+     * @param fromDate 开始日期
+     * @param toDate 结束日期
+     * @param sortBy 排序方式
+     * @return 文章列表
+     */
+    List<ArticleVO> searchArticlesByKeyword(String keyword, int limit, String language, 
+            String country, String fromDate, String toDate, String sortBy);
+    
+    /**
+     * 根据分类获取文章（增强版，支持多语言、多国家、时间范围、排序）
+     * @param category 分类
+     * @param limit 文章数量限制
+     * @param language 语言代码
+     * @param country 国家代码
+     * @param fromDate 开始日期
+     * @param toDate 结束日期
+     * @param sortBy 排序方式
+     * @return 文章列表
+     */
+    List<ArticleVO> getArticlesByCategory(String category, int limit, String language, 
+            String country, String fromDate, String toDate, String sortBy);
 }

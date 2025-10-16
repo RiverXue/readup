@@ -157,7 +157,32 @@ export const articleApi = {
   getTrendingArticles: (limit: number) => api.post('/api/article/discover/trending', {}, { params: { limit } }),
 
   // 获取分类文章
-  getArticlesByCategory: (category: string, limit: number) => api.post('/api/article/discover/category', {}, { params: { category, limit } })
+  getArticlesByCategory: (category: string, limit: number) => api.post('/api/article/discover/category', {}, { params: { category, limit } }),
+
+  // 搜索文章（自定义主题）
+  searchArticles: (keyword: string, limit: number) => api.post('/api/article/discover/search', {}, { params: { keyword, limit } }),
+
+  // 增强搜索文章（支持多语言、多国家、时间范围、排序）
+  searchArticlesAdvanced: (params: {
+    keyword: string;
+    limit: number;
+    language?: string;
+    country?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+  }) => api.post('/api/article/discover/search/advanced', {}, { params }),
+
+  // 增强分类文章（支持多语言、多国家、时间范围、排序）
+  getArticlesByCategoryAdvanced: (params: {
+    category: string;
+    limit: number;
+    language?: string;
+    country?: string;
+    fromDate?: string;
+    toDate?: string;
+    sortBy?: string;
+  }) => api.post('/api/article/discover/category/advanced', {}, { params })
 }
 
 

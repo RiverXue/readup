@@ -6,6 +6,7 @@ import { Reading, Collection, TrendCharts, Calendar, Clock, Message, Search, Ref
 import ArticleDiscovery from '@/components/ArticleDiscovery.vue'
 import TactileButton from '@/components/common/TactileButton.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
+import { CATEGORY_MAP } from '@/utils/categoryConfig'
 
 const userStore = useUserStore()
 
@@ -417,19 +418,8 @@ const filters = ref({
 
 const totalArticles = ref(0)
 
-// 分类中英文映射
-const categoryMap: Record<string, string> = {
-  'technology': '科技',
-
-  'business': '商业',
-  'culture': '文化',
-  'education': '教育',
-  'health': '健康',
-  'sports': '体育',
-  'entertainment': '娱乐',
-  'travel': '旅行',
-  'food': '美食'
-}
+// 使用统一的分类映射
+const categoryMap = CATEGORY_MAP
 
 // 创建反向映射（中文到英文）
 const reverseCategoryMap: Record<string, string> = {}

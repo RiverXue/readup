@@ -10,7 +10,6 @@ import com.xreadup.ai.articleservice.model.common.PageResult;
 import com.xreadup.ai.articleservice.model.vo.ArticleDetailVO;
 import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -88,6 +87,44 @@ public class ArticleController {
                description = "获取当前热点新闻文章")
     public ApiResponse<Object> discoverTrending(@RequestParam(defaultValue = "10") int limit) {
         return ApiResponse.success(articleService.refreshTopHeadlines(limit));
+    }
+    
+    @PostMapping("/discover/search")
+    @Operation(summary = "【自定义搜索】根据关键词搜索文章", 
+               description = "根据用户输入的关键词搜索相关文章")
+    public ApiResponse<Object> searchArticles(@RequestParam String keyword,
+                                             @RequestParam(defaultValue = "10") int limit) {
+        return ApiResponse.success(articleService.searchArticlesByKeyword(keyword, limit));
+    }
+    
+    @PostMapping("/discover/search/advanced")
+    @Operation(summary = "【增强搜索】根据关键词搜索文章（支持多语言、多国家、时间范围、排序）", 
+               description = "根据用户输入的关键词搜索相关文章，支持高级筛选选项")
+    public ApiResponse<Object> searchArticlesAdvanced(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) String sortBy) {
+        return ApiResponse.success(articleService.searchArticlesByKeyword(
+                keyword, limit, language, country, fromDate, toDate, sortBy));
+    }
+    
+    @PostMapping("/discover/category/advanced")
+    @Operation(summary = "【增强分类】根据分类获取文章（支持多语言、多国家、时间范围、排序）", 
+               description = "根据分类获取文章，支持高级筛选选项")
+    public ApiResponse<Object> getArticlesByCategoryAdvanced(
+            @RequestParam String category,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) String sortBy) {
+        return ApiResponse.success(articleService.getArticlesByCategory(
+                category, limit, language, country, fromDate, toDate, sortBy));
     }
     
     /**
