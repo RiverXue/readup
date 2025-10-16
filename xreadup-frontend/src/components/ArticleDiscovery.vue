@@ -342,6 +342,20 @@
         </div>
       </div>
 
+      <!-- 加载状态 -->
+      <div class="loading-state" v-else-if="isLoadingTrending || isLoadingCategory || isLoadingCustomTopic">
+        <el-skeleton :count="6" :loading="true" animated>
+          <template #template>
+            <div class="article-skeleton">
+              <div class="skeleton-cover" />
+              <div class="skeleton-title" />
+              <div class="skeleton-desc" />
+              <div class="skeleton-meta" />
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
+
       <!-- 错误状态 -->
       <div class="error-state" v-else-if="hasError">
         <div class="error-icon-wrapper">
@@ -373,7 +387,7 @@
       </div>
 
       <!-- 空状态 -->
-      <div class="empty-state" v-else-if="articles.length === 0 && !hasError">
+      <div class="empty-state" v-else>
         <div class="empty-content">
           <div class="empty-icon-wrapper">
             <el-icon class="empty-icon"><Document /></el-icon>
@@ -404,20 +418,6 @@
             </el-button>
           </div>
         </div>
-      </div>
-
-      <!-- 加载状态 -->
-      <div class="loading-state" v-else>
-        <el-skeleton :count="6" :loading="true" animated>
-          <template #template>
-            <div class="article-skeleton">
-              <div class="skeleton-cover" />
-              <div class="skeleton-title" />
-              <div class="skeleton-desc" />
-              <div class="skeleton-meta" />
-            </div>
-          </template>
-        </el-skeleton>
       </div>
     </div>
   </div>
