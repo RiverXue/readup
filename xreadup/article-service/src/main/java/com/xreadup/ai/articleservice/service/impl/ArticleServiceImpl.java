@@ -1218,7 +1218,17 @@ public class ArticleServiceImpl implements ArticleService {
             
             // 转换并保存文章
             List<ArticleVO> articles = new ArrayList<>();
+            int processedCount = 0;
+            int existingCount = 0;
+            int failedScrapeCount = 0;
+            
             for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+                processedCount++;
+                String url = gnewsArticle.getUrl();
+                String title = gnewsArticle.getTitle();
+                
+                log.info("处理第{}篇增强搜索文章: {} - {}", processedCount, url, title);
+                
                 try {
                     // 检查文章是否已存在
                     LambdaQueryWrapper<Article> existingWrapper = new LambdaQueryWrapper<>();
@@ -1227,10 +1237,25 @@ public class ArticleServiceImpl implements ArticleService {
                     
                     if (existingArticle != null) {
                         // 文章已存在，直接转换
+                        existingCount++;
                         ArticleVO vo = convertToArticleVO(existingArticle);
                         articles.add(vo);
+                        log.info("增强搜索文章已存在，跳过({}/{}): {} - {}", processedCount, gnewsArticles.size(), title, url);
                         continue;
                     }
+                    
+                    // 使用Readability4J获取文章全文
+                    log.info("尝试使用Readability4J获取增强搜索文章全文: {}", url);
+                    Optional<String> fullContentOptional = scraperService.scrapeArticleContent(url);
+                    
+                    if (fullContentOptional.isEmpty()) {
+                        failedScrapeCount++;
+                        log.warn("未能获取增强搜索文章全文，跳过存储({}/{}): {} - {}", processedCount, gnewsArticles.size(), title, url);
+                        continue;
+                    }
+                    
+                    String fullContent = fullContentOptional.get();
+                    log.info("成功获取增强搜索文章全文，长度: {} 字符", fullContent.length());
                     
                     // 创建新文章
                     Article article = new Article();
@@ -1241,7 +1266,7 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setSource(gnewsArticle.getSource().getName());
                     article.setPublishedAt(gnewsArticle.getPublishedAt());
                     article.setCategory("custom"); // 标记为自定义主题
-                    article.setContentEn(""); // 初始为空，后续通过AI服务填充
+                    article.setContentEn(fullContent); // 使用Readability4J获取的全文
                     article.setContentCn(""); // 初始为空，后续通过AI服务填充
                     article.setWordCount(0); // 初始为0，后续通过AI服务计算
                     article.setDifficultyLevel(""); // 初始为空，后续通过AI服务评估
@@ -1259,9 +1284,12 @@ public class ArticleServiceImpl implements ArticleService {
                     log.info("成功保存增强搜索文章: {}", article.getTitle());
                     
                 } catch (Exception e) {
-                    log.error("处理文章时出错: {}", gnewsArticle.getTitle(), e);
+                    log.error("处理增强搜索文章时出错: {}", gnewsArticle.getTitle(), e);
                 }
             }
+            
+            log.info("增强搜索完成，共处理 {} 篇文章，已存在 {} 篇，爬取失败 {} 篇", 
+                    articles.size(), existingCount, failedScrapeCount);
             
             log.info("增强搜索完成，共处理 {} 篇文章", articles.size());
             return articles;
@@ -1292,7 +1320,17 @@ public class ArticleServiceImpl implements ArticleService {
             
             // 转换并保存文章
             List<ArticleVO> articles = new ArrayList<>();
+            int processedCount = 0;
+            int existingCount = 0;
+            int failedScrapeCount = 0;
+            
             for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+                processedCount++;
+                String url = gnewsArticle.getUrl();
+                String title = gnewsArticle.getTitle();
+                
+                log.info("处理第{}篇增强分类文章: {} - {}", processedCount, url, title);
+                
                 try {
                     // 检查文章是否已存在
                     LambdaQueryWrapper<Article> existingWrapper = new LambdaQueryWrapper<>();
@@ -1301,10 +1339,25 @@ public class ArticleServiceImpl implements ArticleService {
                     
                     if (existingArticle != null) {
                         // 文章已存在，直接转换
+                        existingCount++;
                         ArticleVO vo = convertToArticleVO(existingArticle);
                         articles.add(vo);
+                        log.info("增强分类文章已存在，跳过({}/{}): {} - {}", processedCount, gnewsArticles.size(), title, url);
                         continue;
                     }
+                    
+                    // 使用Readability4J获取文章全文
+                    log.info("尝试使用Readability4J获取增强分类文章全文: {}", url);
+                    Optional<String> fullContentOptional = scraperService.scrapeArticleContent(url);
+                    
+                    if (fullContentOptional.isEmpty()) {
+                        failedScrapeCount++;
+                        log.warn("未能获取增强分类文章全文，跳过存储({}/{}): {} - {}", processedCount, gnewsArticles.size(), title, url);
+                        continue;
+                    }
+                    
+                    String fullContent = fullContentOptional.get();
+                    log.info("成功获取增强分类文章全文，长度: {} 字符", fullContent.length());
                     
                     // 创建新文章
                     Article article = new Article();
@@ -1315,7 +1368,7 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setSource(gnewsArticle.getSource().getName());
                     article.setPublishedAt(gnewsArticle.getPublishedAt());
                     article.setCategory(category); // 使用实际分类
-                    article.setContentEn(""); // 初始为空，后续通过AI服务填充
+                    article.setContentEn(fullContent); // 使用Readability4J获取的全文
                     article.setContentCn(""); // 初始为空，后续通过AI服务填充
                     article.setWordCount(0); // 初始为0，后续通过AI服务计算
                     article.setDifficultyLevel(""); // 初始为空，后续通过AI服务评估
@@ -1333,9 +1386,12 @@ public class ArticleServiceImpl implements ArticleService {
                     log.info("成功保存增强分类文章: {}", article.getTitle());
                     
                 } catch (Exception e) {
-                    log.error("处理文章时出错: {}", gnewsArticle.getTitle(), e);
+                    log.error("处理增强分类文章时出错: {}", gnewsArticle.getTitle(), e);
                 }
             }
+            
+            log.info("增强分类文章完成，共处理 {} 篇文章，已存在 {} 篇，爬取失败 {} 篇", 
+                    articles.size(), existingCount, failedScrapeCount);
             
             log.info("增强分类文章完成，共处理 {} 篇文章", articles.size());
             return articles;
