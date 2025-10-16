@@ -344,16 +344,27 @@
 
       <!-- 加载状态 -->
       <div class="loading-state" v-else-if="isLoadingTrending || isLoadingCategory || isLoadingCustomTopic">
-        <el-skeleton :count="6" :loading="true" animated>
-          <template #template>
-            <div class="article-skeleton">
-              <div class="skeleton-cover" />
-              <div class="skeleton-title" />
-              <div class="skeleton-desc" />
-              <div class="skeleton-meta" />
+        <div class="loading-content">
+          <div class="loading-header">
+            <div class="loading-title"></div>
+          </div>
+          <div class="loading-grid">
+            <div class="loading-card" v-for="n in 6" :key="n">
+              <div class="loading-card-content">
+                <div class="loading-image"></div>
+                <div class="loading-text">
+                  <div class="loading-card-title"></div>
+                  <div class="loading-card-desc"></div>
+                  <div class="loading-card-desc short"></div>
+                  <div class="loading-card-meta">
+                    <div class="loading-meta-item"></div>
+                    <div class="loading-meta-item"></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </template>
-        </el-skeleton>
+          </div>
+        </div>
       </div>
 
       <!-- 错误状态 -->
@@ -1567,41 +1578,171 @@ const fetchCustomTopicArticles = async () => {
   padding: 40px 0;
 }
 
-.article-skeleton {
-  padding: 20px;
-  border-radius: 8px;
-  background: #f5f7fa;
+.loading-content {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.skeleton-cover {
+.loading-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.loading-title {
+  width: 200px;
+  height: 28px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.8) 0%, 
+    rgba(248, 250, 252, 0.6) 50%, 
+    rgba(241, 245, 249, 0.8) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 14px;
+  margin: 0 auto;
+  animation: shimmer 2s ease-in-out infinite;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  padding: 0 20px;
+}
+
+.loading-card {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.9) 50%, 
+    rgba(241, 245, 249, 0.95) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.loading-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.loading-card-content {
+  padding: 20px;
+}
+
+.loading-image {
   width: 100%;
   height: 180px;
-  background: #e4e7ed;
-  border-radius: 4px;
+  background: linear-gradient(135deg, 
+    rgba(240, 244, 248, 0.8) 0%, 
+    rgba(226, 232, 240, 0.6) 50%, 
+    rgba(240, 244, 248, 0.8) 100%);
+  border-radius: 12px;
   margin-bottom: 16px;
+  animation: shimmer 2s ease-in-out infinite;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.skeleton-title {
-  width: 80%;
-  height: 20px;
-  background: #e4e7ed;
-  border-radius: 4px;
+.loading-text {
+  padding: 0 4px;
+}
+
+.loading-card-title {
+  width: 85%;
+  height: 22px;
+  background: linear-gradient(135deg, 
+    rgba(240, 244, 248, 0.8) 0%, 
+    rgba(226, 232, 240, 0.6) 50%, 
+    rgba(240, 244, 248, 0.8) 100%);
+  border-radius: 6px;
   margin-bottom: 12px;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
-.skeleton-desc {
+.loading-card-desc {
   width: 100%;
-  height: 40px;
-  background: #e4e7ed;
+  height: 16px;
+  background: linear-gradient(135deg, 
+    rgba(240, 244, 248, 0.6) 0%, 
+    rgba(226, 232, 240, 0.4) 50%, 
+    rgba(240, 244, 248, 0.6) 100%);
   border-radius: 4px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
-.skeleton-meta {
-  width: 40%;
-  height: 16px;
-  background: #e4e7ed;
+.loading-card-desc.short {
+  width: 70%;
+}
+
+.loading-card-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.loading-meta-item {
+  width: 60px;
+  height: 14px;
+  background: linear-gradient(135deg, 
+    rgba(240, 244, 248, 0.5) 0%, 
+    rgba(226, 232, 240, 0.3) 50%, 
+    rgba(240, 244, 248, 0.5) 100%);
   border-radius: 4px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0.8;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .loading-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 16px;
+  }
+  
+  .loading-card-content {
+    padding: 16px;
+  }
+  
+  .loading-image {
+    height: 160px;
+  }
+  
+  .loading-title {
+    width: 150px;
+    height: 24px;
+  }
 }
 
 /* 响应式设计优化 */
