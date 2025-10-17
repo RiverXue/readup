@@ -16,9 +16,6 @@
             <router-link to="/" class="nav-link">首页</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/article/1" class="nav-link">文章阅读</router-link>
-          </li>
-          <li class="nav-item">
             <router-link to="/reading-list" class="nav-link">阅读列表</router-link>
           </li>
           <li class="nav-item" v-if="userStore.isLoggedIn">
@@ -28,7 +25,10 @@
             <router-link to="/report" class="nav-link">学习报告</router-link>
           </li>
           <li class="nav-item" v-if="userStore.isLoggedIn">
-            <router-link to="/subscription" class="nav-link">💎 会员</router-link>
+            <router-link to="/ai-assistant" class="nav-link">AI学导</router-link>
+          </li>
+          <li class="nav-item" v-if="userStore.isLoggedIn">
+            <router-link to="/subscription" class="nav-link">会员订阅</router-link>
           </li>
         </ul>
       </nav>

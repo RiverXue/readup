@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.function.Function;
 
 /**
@@ -182,27 +183,63 @@ public class AiToolService {
     }
 
     /**
-     * 智能对话（简化版 - 不使用Function Calling）
+     * 智能对话（个性化阅读提升版 - 基于用户学习数据）
+     * <p>
+     * 基于用户学习画像和文章内容，提供个性化的英语阅读提升建议
+     * 使用article.description减少token消耗，结合用户学习历史提供精准指导
+     * </p>
      */
     public String intelligentChat(String question, String articleContext) {
+        // 分析文章难度和主题
+        String articleDifficulty = analyzeArticleDifficulty(articleContext);
+        String articleTheme = extractArticleTheme(articleContext);
+        
+        // 解析文章上下文，提取用户学习数据
+        Map<String, Object> contextMap = parseArticleContext(articleContext);
+        String userProfile = extractUserProfile(contextMap);
+        
         String prompt = String.format("""
-            你是英语学习助手，帮助中国学生理解英文文章。
+            你是Rayda老师，一位经验丰富的英语学习导师，专门帮助中国学生提高英语阅读能力。
             
-            文章：%s
-            问题：%s
+            📚 当前学习情境：
+            - 文章主题：%s
+            - 文章难度：%s
+            - 学生问题：%s
             
-            要求：
-            1. 用中文回答，简洁明了
-            2. 涉及单词时提供音标、释义、例句
-            3. 需要翻译时直接提供
-            4. 给出学习建议
-            """, articleContext != null ? articleContext : "无文章内容", question);
+            👤 学生学习画像：
+            %s
+            
+            🎯 个性化教学要求（基于XReadUp平台功能）：
+            1. 结合平台的三级词库系统，建议学生使用"点击查词"功能学习生词
+            2. 推荐使用"双语对照阅读"功能，提高阅读理解能力
+            3. 建议利用"生词本"功能，系统化积累词汇
+            4. 鼓励使用"每日打卡"功能，建立学习习惯
+            5. 推荐使用"学习报告"功能，跟踪学习进度
+            6. 建议使用"AI摘要"和"语法解析"功能，深入理解文章
+            7. 推荐使用"听写练习"功能，巩固词汇记忆
+            8. 建议使用"复习系统"功能，按照艾宾浩斯遗忘曲线复习
+            
+            💡 回答格式：
+            - 直接回答核心问题
+            - 结合ReadUp平台功能给出具体建议
+            - 推荐使用平台的具体功能来提升学习效果
+            - 基于学习数据提供个性化学习路径
+            - 鼓励学生充分利用平台的学习工具
+            """, 
+            articleTheme, 
+            articleDifficulty, 
+            question,
+            userProfile);
 
         try {
-            log.info("AI对话请求 - 问题: {}, 文章长度: {}", question, articleContext != null ? articleContext.length() : 0);
+            log.info("AI对话请求 - 问题: {}, 文章长度: {}, 难度: {}, 主题: {}", 
+                question, 
+                articleContext != null ? articleContext.length() : 0,
+                articleDifficulty,
+                articleTheme);
             
             String response = chatClient.prompt()
-                .system("你是英语学习助手，帮助中国学生理解英文文章。用中文回答，语言友好易懂。")
+                .system("你是Rayda老师，一位专业的英语学习导师，擅长帮助中国学生提高英语阅读能力。用中文回答，语言友好专业，注重教学效果。")
                 .user(prompt)
                 .call()
                 .content();
@@ -214,6 +251,42 @@ public class AiToolService {
             log.error("AI对话失败", e);
             return "抱歉，我遇到了一些技术问题，暂时无法回答这个问题。请稍后再试，或者尝试重新提问。";
         }
+    }
+    
+    /**
+     * 分析文章难度
+     */
+    private String analyzeArticleDifficulty(String articleContent) {
+        if (articleContent == null || articleContent.trim().isEmpty()) {
+            return "未知难度";
+        }
+        
+        // 简单的难度分析逻辑
+        int wordCount = articleContent.split("\\s+").length;
+        int avgWordLength = articleContent.replaceAll("\\s+", "").length() / wordCount;
+        
+        if (wordCount < 200 || avgWordLength < 4) {
+            return "初级 (A2-B1)";
+        } else if (wordCount < 500 || avgWordLength < 5) {
+            return "中级 (B1-B2)";
+        } else {
+            return "高级 (B2-C1)";
+        }
+    }
+    
+    /**
+     * 提取文章主题
+     */
+    private String extractArticleTheme(String articleContent) {
+        if (articleContent == null || articleContent.trim().isEmpty()) {
+            return "无主题信息";
+        }
+        
+        // 简单的主题提取逻辑（取前100个字符作为主题）
+        String preview = articleContent.length() > 100 ? 
+            articleContent.substring(0, 100) + "..." : 
+            articleContent;
+        return preview;
     }
 
     /**
@@ -368,5 +441,73 @@ public class AiToolService {
         public void setQuestionType(String questionType) { this.questionType = questionType; }
         public String getDifficulty() { return difficulty; }
         public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+    }
+    
+    /**
+     * 解析文章上下文，提取用户学习数据
+     */
+    private Map<String, Object> parseArticleContext(String articleContext) {
+        Map<String, Object> contextMap = new HashMap<>();
+        
+        try {
+            if (articleContext != null && !articleContext.isEmpty()) {
+                ObjectMapper mapper = new ObjectMapper();
+                contextMap = mapper.readValue(articleContext, Map.class);
+            }
+        } catch (Exception e) {
+            log.warn("解析文章上下文失败", e);
+        }
+        
+        return contextMap;
+    }
+    
+    /**
+     * 提取用户学习画像信息
+     */
+    private String extractUserProfile(Map<String, Object> contextMap) {
+        StringBuilder profile = new StringBuilder();
+        
+        try {
+            // 提取用户学习数据
+            Object userProfileObj = contextMap.get("userProfile");
+            if (userProfileObj instanceof Map) {
+                Map<String, Object> userProfile = (Map<String, Object>) userProfileObj;
+                
+                profile.append("- 学习天数：").append(userProfile.getOrDefault("learningDays", 0)).append("天\n");
+                profile.append("- 阅读文章数：").append(userProfile.getOrDefault("totalArticlesRead", 0)).append("篇\n");
+                profile.append("- 词汇量：").append(userProfile.getOrDefault("vocabularyCount", 0)).append("个\n");
+                profile.append("- 平均阅读时长：").append(userProfile.getOrDefault("averageReadTime", 0)).append("分钟\n");
+                profile.append("- 当前水平：").append(userProfile.getOrDefault("currentLevel", "beginner")).append("\n");
+                
+                // 提取偏好分类
+                Object categoriesObj = userProfile.get("preferredCategories");
+                if (categoriesObj instanceof List) {
+                    List<String> categories = (List<String>) categoriesObj;
+                    if (!categories.isEmpty()) {
+                        profile.append("- 偏好分类：").append(String.join("、", categories)).append("\n");
+                    }
+                }
+                
+                // 提取薄弱环节
+                Object weakAreasObj = userProfile.get("weakAreas");
+                if (weakAreasObj instanceof List) {
+                    List<String> weakAreas = (List<String>) weakAreasObj;
+                    if (!weakAreas.isEmpty()) {
+                        profile.append("- 薄弱环节：").append(String.join("、", weakAreas)).append("\n");
+                    }
+                }
+            }
+            
+            // 提取文章信息
+            profile.append("- 文章标题：").append(contextMap.getOrDefault("title", "未知")).append("\n");
+            profile.append("- 文章分类：").append(contextMap.getOrDefault("category", "未知")).append("\n");
+            profile.append("- 文章难度：").append(contextMap.getOrDefault("difficulty", "未知")).append("\n");
+            
+        } catch (Exception e) {
+            log.warn("提取用户学习画像失败", e);
+            profile.append("- 学习数据：无法获取\n");
+        }
+        
+        return profile.toString();
     }
 }

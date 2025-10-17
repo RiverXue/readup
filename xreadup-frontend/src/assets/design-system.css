@@ -648,6 +648,8 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
+  /* 默认背景色 - 蓝色渐变 */
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
 }
 
 .capsule-tag:hover {
@@ -1466,8 +1468,8 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* 全局Element Plus标签样式覆盖 */
-.el-tag {
+/* 全局Element Plus标签样式覆盖 - 排除胶囊标签 */
+.el-tag:not(.capsule-tag) {
   background: linear-gradient(135deg, 
     rgba(255, 255, 255, 0.1) 0%, 
     rgba(255, 255, 255, 0.05) 100%) !important;

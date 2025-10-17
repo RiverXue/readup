@@ -163,11 +163,11 @@
             <el-tag
               size="large"
               :type="getDifficultyType(article.difficulty)"
-              class="difficulty-tag"
+              class="capsule-tag capsule-tag--difficulty"
             >
               {{ article.difficulty || '未知难度' }}
             </el-tag>
-            <el-tag size="large" type="info" class="category-tag">
+            <el-tag size="large" type="info" class="capsule-tag capsule-tag--category">
               {{ article.category || '未分类' }}
             </el-tag>
           </div>
@@ -311,36 +311,36 @@
         <!-- 免费用户：双栏并排显示 -->
         <div v-else class="premium-bilingual-layout">
           <!-- 英文原文 -->
-    <div class="english-section">
-      <div class="section-header">
-        <h3>📖 英文原文</h3>
-        <div class="article-actions">
-          <el-button
-            v-if="!isTTSSpeaking()"
-            @click="handleSpeakArticle"
-            size="small"
-            type="primary"
-            title="朗读全文"
-          >
-            朗读
-          </el-button>
-          <el-button
-            v-else
-            @click="handleStopSpeaking"
-            size="small"
-            type="danger"
-            title="停止朗读"
-          >
-            停止
-          </el-button>
-        </div>
-      </div>
-      <div class="english-content" @click="onWordClick" @dblclick="onWordDoubleClick">
-        <template v-for="(item, index) in contentItems" :key="index">
-          <!-- 段落 -->
-          <p v-if="item.type === 'paragraph'" class="paragraph" :class="{ 'highlighted': highlightedParagraphIndex === index }" :data-paragraph-index="index">
-            {{ item.content }}
-          </p>
+          <div class="english-section">
+            <div class="section-header">
+              <h3>📖 英文原文</h3>
+              <div class="article-actions">
+                <el-button
+                  v-if="!isTTSSpeaking()"
+                  @click="handleSpeakArticle"
+                  size="small"
+                  type="primary"
+                  title="朗读全文"
+                >
+                  朗读
+                </el-button>
+                <el-button
+                  v-else
+                  @click="handleStopSpeaking"
+                  size="small"
+                  type="danger"
+                  title="停止朗读"
+                >
+                  停止
+                </el-button>
+              </div>
+            </div>
+            <div class="english-content" @click="onWordClick" @dblclick="onWordDoubleClick">
+              <template v-for="(item, index) in contentItems" :key="index">
+                <!-- 段落 -->
+                <p v-if="item.type === 'paragraph'" class="paragraph" :class="{ 'highlighted': highlightedParagraphIndex === index }" :data-paragraph-index="index">
+                  {{ item.content }}
+                </p>
 
                 <!-- AI句子解析结果（嵌入在段落下方） -->
                 <div v-else-if="item.type === 'ai-parse'" class="inline-parse-card" :class="isPremiumUser ? 'premium-card' : 'free-card'">
@@ -426,60 +426,154 @@
 
     </div>
 
-    <!-- AI助手对话框 -->
-    <el-dialog v-model="aiDialogVisible" title="💬 AI助手" width="500px">
-      <div class="ai-chat">
-        <!-- 快速问题建议 -->
-        <div class="suggested-questions" v-if="!aiAnswer">
-          <div class="question-chips">
-            <el-tag 
-              v-for="question in suggestedQuestions" 
-              :key="question.id"
-              @click="askSuggestedQuestion(question.text)"
-              class="question-chip"
-              size="small"
-            >
-              {{ question.text }}
-            </el-tag>
+    <!-- AI学习助手对话框 -->
+    <!-- 现代化AI助手面板 -->
+    <div v-if="aiDialogVisible" class="ai-assistant-panel">
+      <!-- 遮罩层 -->
+      <div class="ai-panel-overlay" @click="aiDialogVisible = false"></div>
+
+      <!-- 主面板 -->
+      <div class="ai-panel-container">
+        <!-- 头部 -->
+        <div class="ai-panel-header">
+          <div class="header-left">
+            <div class="ai-avatar">
+              <el-icon><Star /></el-icon>
+            </div>
+            <div class="header-info">
+              <h3>🎓 AI学习助手</h3>
+              <p>基于您的学习数据为您定制</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <el-button type="text" @click="clearChat" :disabled="aiLoading" size="small">
+              <el-icon><Delete /></el-icon>
+              清空
+            </el-button>
+            <el-button type="text" @click="aiDialogVisible = false" size="small">
+              <el-icon><Close /></el-icon>
+            </el-button>
+          </div>
+        </div>
+
+        <!-- 学习上下文卡片 -->
+        <div class="context-card" v-if="article.title">
+          <div class="context-header">
+            <el-icon><Document /></el-icon>
+            <span>当前学习内容</span>
+          </div>
+          <div class="article-preview">
+            <h4>{{ article.title }}</h4>
+            <div class="article-meta">
+              <el-tag :type="getDifficultyType(article.difficulty)" size="small" class="capsule-tag capsule-tag--difficulty">
+                {{ article.difficulty || '未知难度' }}
+              </el-tag>
+              <el-tag type="info" size="small" class="capsule-tag capsule-tag--category">
+                {{ article.category || '未分类' }}
+              </el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="ai-panel-content">
+          <!-- 个性化问题推荐 -->
+          <div class="smart-questions-section" v-if="!aiAnswer && chatHistory.length === 0">
+            <div class="section-title">
+              <el-icon><Lightbulb /></el-icon>
+              <span>🎯 个性化阅读提升</span>
+            </div>
+            <div class="question-grid">
+              <div
+                v-for="question in smartQuestions"
+                :key="question.id"
+                @click="askSuggestedQuestion(question.text)"
+                class="smart-question-card"
+                :class="question.type"
+              >
+                <div class="question-icon">{{ question.icon }}</div>
+                <div class="question-content">
+                  <div class="question-text">{{ question.text }}</div>
+                  <div class="question-type">{{ getQuestionTypeLabel(question.type) }}</div>
+                </div>
+                <div class="question-arrow">
+                  <el-icon><ArrowRight /></el-icon>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 对话区域 -->
+          <div class="chat-section" v-else>
+            <!-- 消息历史 -->
+            <div class="messages-container" v-if="chatHistory.length > 0">
+              <div
+                v-for="message in chatHistory"
+                :key="message.id"
+                class="message"
+                :class="message.type"
+              >
+                <div class="message-avatar">
+                  <el-avatar :size="32">
+                    <el-icon v-if="message.type === 'user'"><User /></el-icon>
+                    <el-icon v-else><Star /></el-icon>
+                  </el-avatar>
+                </div>
+                <div class="message-content">
+                  <div class="message-text" v-html="formatAIAnswer(message.content)"></div>
+                  <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI回答区域 -->
+            <div v-if="aiAnswer && chatHistory.length === 0" class="ai-answer">
+              <div class="answer-header">
+                <el-icon><Star /></el-icon>
+                <span>AI回答</span>
+              </div>
+              <div class="answer-content" v-html="formatAIAnswer(aiAnswer)"></div>
+            </div>
           </div>
         </div>
 
         <!-- 输入区域 -->
-        <el-input
-          v-model="aiQuestion"
-          type="textarea"
-          :rows="3"
-          placeholder="问我关于这篇文章的问题..."
-          maxlength="200"
-          show-word-limit
-          :disabled="aiLoading"
-        />
-        
-        <div class="chat-actions">
-          <el-button type="text" @click="clearChat" :disabled="aiLoading" size="small">
-            清空
-          </el-button>
-          <el-button type="primary" @click="submitAIQuestion" :loading="aiLoading">
-            发送
-          </el-button>
-        </div>
-
-        <!-- AI回答 -->
-        <div v-if="aiAnswer" class="ai-answer">
-          <div v-html="formatAIAnswer(aiAnswer)"></div>
+        <div class="ai-panel-input">
+          <div class="input-container">
+            <el-input
+              v-model="aiQuestion"
+              type="textarea"
+              :rows="2"
+              placeholder="问我任何关于这篇文章的问题..."
+              @keyup.enter.ctrl="submitAIQuestion"
+              :disabled="aiLoading"
+              class="question-input"
+            />
+            <el-button
+              type="primary"
+              @click="submitAIQuestion"
+              :loading="aiLoading"
+              class="send-button"
+            >
+              <el-icon><ArrowRight /></el-icon>
+            </el-button>
+          </div>
+          <div class="input-tips">
+            <span>按 Ctrl+Enter 快速发送</span>
+          </div>
         </div>
       </div>
-    </el-dialog>
+    </div>
 
     <!-- 单词查询弹窗 -->
     <el-dialog v-model="wordDialogVisible" title="📚 单词详情" width="400px">
       <div v-if="wordDetail" class="word-detail">
-            <div style="text-align: center;">
-              <h3 class="word">{{ wordDetail.word }}</h3>
-            </div>
-            <div v-if="wordDetail.phonetic" style="text-align: center;">
-              <div class="phonetic" style="margin: 0 auto;">[{{ wordDetail.phonetic }}]</div>
-              <el-button
+        <div style="text-align: center;">
+          <h3 class="word">{{ wordDetail.word }}</h3>
+        </div>
+        <div v-if="wordDetail.phonetic" style="text-align: center;">
+          <div class="phonetic" style="margin: 0 auto;">[{{ wordDetail.phonetic }}]</div>
+          <el-button
             v-if="ttsControlRef"
             type="text"
             size="small"
@@ -490,20 +584,20 @@
           >
             🔊
           </el-button>
-            </div>
-            <div class="meaning" v-html="formatMeaning(wordDetail.meaning)"></div>
-            <div class="example" v-if="wordDetail.example">
-              <strong>例句：</strong><span v-html="formatExample(wordDetail.example)"></span>
-            </div>
-            <div class="context" v-if="wordDetail.context">
-              <strong>语境：</strong>{{ wordDetail.context }}
-            </div>
-            <div class="actions">
-              <el-button type="primary" size="small" @click="addWordToVocabulary">
-                📚 已同步添加到生词本
-              </el-button>
-            </div>
-          </div>
+        </div>
+        <div class="meaning" v-html="formatMeaning(wordDetail.meaning)"></div>
+        <div class="example" v-if="wordDetail.example">
+          <strong>例句：</strong><span v-html="formatExample(wordDetail.example)"></span>
+        </div>
+        <div class="context" v-if="wordDetail.context">
+          <strong>语境：</strong>{{ wordDetail.context }}
+        </div>
+        <div class="actions">
+          <el-button type="primary" size="small" @click="addWordToVocabulary">
+            📚 已同步添加到生词本
+          </el-button>
+        </div>
+      </div>
     </el-dialog>
 
     <!-- 首次使用引导弹窗 -->
@@ -564,10 +658,44 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { aiApi, articleApi, vocabularyApi, learningApi, request as api } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
-import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Search, ArrowLeft, ArrowRight, CircleClose, Trophy, Star, StarFilled, Reading, View, Clock } from '@element-plus/icons-vue'
+import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Search, ArrowLeft, ArrowRight, CircleClose, Trophy, Star, StarFilled, Reading, View, Clock, User, Delete } from '@element-plus/icons-vue'
 import { subscriptionApi } from '@/utils/api'
 import type { UsageQuota } from '@/types/subscription'
 import QuizComponent from '@/components/QuizComponent.vue'
+
+// 报告服务API - 学习统计
+const reportApi = {
+  // 获取学习仪表盘数据（综合统计）
+  getDashboard: (userId: number) =>
+    api.get(`/api/report/dashboard?userId=${userId}`),
+
+  // 获取阅读时长统计
+  getReadingTime: (userId: number) =>
+    api.get(`/api/report/reading-time?userId=${userId}`),
+
+  // 获取词汇增长曲线
+  getVocabularyGrowth: (userId: number, days: number = 30) =>
+    api.get(`/api/report/growth-curve?userId=${userId}&days=${days}`),
+
+  // 获取今日学习日报
+  getTodaySummary: (userId: number) =>
+    api.get(`/api/report/today/summary?userId=${userId}`),
+
+  // 获取学习成就统计
+  getAchievement: (userId: number) =>
+    api.get(`/api/report/streak/achievement?userId=${userId}`)
+}
+
+// 词汇统计API
+const vocabularyStatsApi = {
+  // 获取词汇统计
+  getStats: (userId: number) =>
+    api.get(`/api/vocabulary/stats/${userId}`),
+
+  // 获取用户生词本
+  getMyWords: (userId: number) =>
+    api.get(`/api/user/vocabulary/my-words?userId=${userId}`)
+}
 import TTSControl from '@/components/common/TTSControl.vue'
 import { tts } from '@/utils/tts'
 
@@ -791,13 +919,438 @@ const aiQuestion = ref('')
 const aiAnswer = ref('')
 const aiLoading = ref(false)
 
-// 推荐问题（针对英语阅读学习）
-const suggestedQuestions = ref([
-  { id: 1, text: '这篇文章讲了什么？' },
-  { id: 2, text: '这个单词是什么意思？' },
-  { id: 3, text: '请翻译这个句子' },
-  { id: 4, text: '这个语法点怎么理解？' }
-])
+// 个性化阅读提升问题（基于用户学习数据）
+const smartQuestions = ref<Array<{
+  id: number
+  text: string
+  icon: string
+  type: string
+}>>([])
+
+// 用户学习画像数据
+const userProfile = ref({
+  learningDays: 0,
+  totalArticlesRead: 0,
+  vocabularyCount: 0,
+  averageReadTime: 0,
+  totalReadTime: 0,
+  readingStreak: 0,
+  preferredCategories: [] as string[],
+  currentLevel: 'beginner',
+  weakAreas: [] as string[],
+  // 词汇学习数据
+  newWords: 0,
+  learningWords: 0,
+  masteredWords: 0,
+  averageDifficulty: 'B1'
+})
+
+// 优化AI回答质量
+const optimizeAIResponse = (response: string, question: string, context: any) => {
+  let optimizedResponse = response.trim()
+
+  // 检查回答是否与问题相关
+  if (!isResponseRelevant(optimizedResponse, question, context)) {
+    console.warn('AI回答与问题不相关，尝试重新生成')
+    return `抱歉，我的回答可能不够准确。让我重新为您分析：
+
+基于文章《${context.title}》，${question}
+
+请尝试更具体地描述您想了解的内容，比如：
+- 文章的具体段落或句子
+- 您关心的特定方面
+- 您的英语学习目标
+
+这样我就能为您提供更精准的帮助。`
+  }
+
+  // 添加个性化阅读提升建议
+  if (context.questionType === 'personalized-progress') {
+    optimizedResponse += `\n\n🎯 个性化建议：基于您${context.userProfile.learningDays}天的学习经验，建议重点关注这些要点。`
+  } else if (context.questionType === 'category-improvement') {
+    optimizedResponse += `\n\n📈 分类提升：根据您${context.userProfile.preferredCategories.join('、')}类文章的阅读经验，建议采用这些策略。`
+  } else if (context.questionType === 'vocabulary-expansion') {
+    optimizedResponse += `\n\n💡 词汇扩展：基于您${context.userProfile.vocabularyCount}个词汇的学习基础（已掌握${context.userProfile.masteredWords}个），建议将这些新表达加入生词本。`
+  } else if (context.questionType === 'reading-efficiency') {
+    optimizedResponse += `\n\n⏱️ 效率提升：根据您平均${context.userProfile.averageReadTime}分钟的阅读习惯，建议采用这些优化策略。`
+  } else if (context.questionType === 'weakness-targeting') {
+    optimizedResponse += `\n\n💪 薄弱提升：针对您的薄弱环节${context.userProfile.weakAreas.join('、')}，这篇文章能帮助您针对性提升。`
+  } else if (context.questionType === 'next-learning-path') {
+    optimizedResponse += `\n\n📚 学习路径：根据您已阅读${context.userProfile.totalArticlesRead}篇文章的经验，建议接下来重点学习这些内容。`
+  } else if (context.questionType === 'achievement-based') {
+    optimizedResponse += `\n\n🏆 成就激励：恭喜您连续学习${context.userProfile.readingStreak}天！继续保持这个学习节奏，您一定能取得更大进步。`
+  } else if (context.questionType === 'vocabulary-consolidation') {
+    optimizedResponse += `\n\n🔄 词汇巩固：您还有${context.userProfile.learningWords}个词汇在学习中，建议结合这篇文章的内容来巩固这些词汇。`
+  }
+
+  // 添加难度提示
+  if (context.difficulty && context.difficulty !== '未知难度') {
+    optimizedResponse += `\n\n📊 文章难度：${context.difficulty}`
+  }
+
+  return optimizedResponse
+}
+
+// 检查AI回答是否与问题相关
+const isResponseRelevant = (response: string, question: string, context: any) => {
+  const responseLower = response.toLowerCase()
+  const questionLower = question.toLowerCase()
+
+  // 检查是否包含通用拒绝回答
+  const genericRejections = [
+    '抱歉，我无法',
+    '我不能',
+    '我无法回答',
+    '我不确定',
+    '我不了解'
+  ]
+
+  if (genericRejections.some(rejection => responseLower.includes(rejection))) {
+    return false
+  }
+
+  // 检查回答长度是否合理
+  if (response.length < 20) {
+    return false
+  }
+
+  // 检查是否包含文章相关内容
+  if (context.title && !responseLower.includes(context.title.toLowerCase().split(' ')[0])) {
+    // 如果问题明确要求分析文章，但回答中没有提到文章标题的第一个词，可能不相关
+    if (questionLower.includes('文章') || questionLower.includes('这篇')) {
+      return false
+    }
+  }
+
+  return true
+}
+
+// 获取问题类型标签
+const getQuestionTypeLabel = (type: string) => {
+  const typeLabels: Record<string, string> = {
+    'personalized-progress': '个性化进度',
+    'category-improvement': '分类提升',
+    'vocabulary-expansion': '词汇扩展',
+    'reading-efficiency': '阅读效率',
+    'weakness-targeting': '薄弱提升',
+    'next-learning-path': '学习路径',
+    'achievement-based': '成就激励',
+    'vocabulary-consolidation': '词汇巩固'
+  }
+  return typeLabels[type] || '阅读提升'
+}
+
+// 分析用户问题类型
+const analyzeQuestionType = (question: string) => {
+  const lowerQuestion = question.toLowerCase()
+
+  if (lowerQuestion.includes('突破') || lowerQuestion.includes('水平') || lowerQuestion.includes('进步')) {
+    return 'personalized-progress'
+  } else if (lowerQuestion.includes('分类') || lowerQuestion.includes('类型') || lowerQuestion.includes('主题')) {
+    return 'category-improvement'
+  } else if (lowerQuestion.includes('词汇') || lowerQuestion.includes('单词') || lowerQuestion.includes('表达')) {
+    return 'vocabulary-expansion'
+  } else if (lowerQuestion.includes('效率') || lowerQuestion.includes('速度') || lowerQuestion.includes('时间')) {
+    return 'reading-efficiency'
+  } else if (lowerQuestion.includes('薄弱') || lowerQuestion.includes('提升') || lowerQuestion.includes('改进')) {
+    return 'weakness-targeting'
+  } else if (lowerQuestion.includes('接下来') || lowerQuestion.includes('学习') || lowerQuestion.includes('路径')) {
+    return 'next-learning-path'
+  } else {
+    return 'personalized-progress'
+  }
+}
+
+// 获取用户学习数据
+const loadUserProfile = async () => {
+  if (!userStore.isLoggedIn || !userStore.userInfo?.id) return
+
+  try {
+    // 获取用户学习天数（异步）
+    const learningDays = await getUserLearningDays()
+
+    // 获取用户阅读统计（需要调用report-service API）
+    const readingStats = await getUserReadingStats()
+
+    // 获取用户词汇统计（需要调用user-service API）
+    const vocabularyStats = await getUserVocabularyStats()
+
+    // 评估用户当前水平
+    const currentLevel = assessUserLevel(learningDays, readingStats.totalArticles, vocabularyStats.count)
+
+    // 识别用户薄弱环节
+    const weakAreas = identifyWeakAreas(vocabularyStats.reviewStatus)
+
+    userProfile.value = {
+      learningDays,
+      totalArticlesRead: readingStats.totalArticles || 0,
+      vocabularyCount: vocabularyStats.count || 0,
+      averageReadTime: readingStats.averageReadTime || 0,
+      totalReadTime: readingStats.totalReadTime || 0,
+      readingStreak: readingStats.readingStreak || 0,
+      preferredCategories: readingStats.preferredCategories || [],
+      currentLevel,
+      weakAreas,
+      // 词汇学习数据
+      newWords: vocabularyStats.newWords || 0,
+      learningWords: vocabularyStats.learningWords || 0,
+      masteredWords: vocabularyStats.masteredWords || 0,
+      averageDifficulty: vocabularyStats.averageDifficulty || 'B1'
+    }
+
+    console.log('📊 用户学习画像加载完成:', userProfile.value)
+  } catch (error) {
+    console.error('加载用户学习数据失败:', error)
+  }
+}
+
+// 获取用户学习天数（使用与导航栏相同的方法）
+const getUserLearningDays = async () => {
+  if (!userStore.userInfo?.id) return 0
+
+  try {
+    // 使用与导航栏相同的API获取连续打卡天数
+    const userId = userStore.userInfo.id.toString()
+    const checkInResponse = await learningApi.dailyCheckIn(userId)
+
+    if (checkInResponse.data !== undefined) {
+      console.log('从打卡API获取学习天数:', checkInResponse.data)
+      return checkInResponse.data
+    }
+
+    // 如果API调用失败，返回0
+    return 0
+  } catch (error) {
+    console.warn('获取学习天数失败:', error)
+    return 0
+  }
+}
+
+// 获取用户阅读统计
+const getUserReadingStats = async () => {
+  try {
+    if (!userStore.userInfo?.id) {
+      return { totalArticles: 0, averageReadTime: 0, preferredCategories: [], totalReadTime: 0, readingStreak: 0 }
+    }
+
+    // 调用report-service的API获取真实数据
+    const dashboardResponse = await reportApi.getDashboard(Number(userStore.userInfo.id))
+    const readingTimeResponse = await reportApi.getReadingTime(Number(userStore.userInfo.id))
+
+    if (dashboardResponse.data && readingTimeResponse.data) {
+      const dashboard = dashboardResponse.data
+      const readingTime = readingTimeResponse.data
+
+      return {
+        totalArticles: readingTime.totalArticles || dashboard.totalArticlesRead || 0,
+        averageReadTime: readingTime.averageReadTimeMinutes || 0,
+        preferredCategories: dashboard.preferredCategories || [],
+        totalReadTime: readingTime.totalReadTimeMinutes || 0,
+        readingStreak: dashboard.readingStreak || 0
+      }
+    }
+
+    // 如果report-service API失败，尝试使用learningApi作为备选
+    try {
+      const readingTimeRes = await learningApi.getReadingTimeStats(Number(userStore.userInfo.id))
+      if (readingTimeRes?.data) {
+        return {
+          totalArticles: readingTimeRes.data.totalArticles || 0,
+          averageReadTime: readingTimeRes.data.averageReadTimeMinutes || 0,
+          preferredCategories: [],
+          totalReadTime: readingTimeRes.data.totalReadTimeMinutes || 0,
+          readingStreak: 0
+        }
+      }
+    } catch (learningError) {
+      console.warn('learningApi备选方案也失败:', learningError)
+    }
+
+    // 如果所有API调用失败，返回默认值
+    return { totalArticles: 0, averageReadTime: 0, preferredCategories: [], totalReadTime: 0, readingStreak: 0 }
+  } catch (error) {
+    console.warn('获取用户阅读统计失败:', error)
+    return { totalArticles: 0, averageReadTime: 0, preferredCategories: [], totalReadTime: 0, readingStreak: 0 }
+  }
+}
+
+// 获取用户词汇统计
+const getUserVocabularyStats = async () => {
+  try {
+    if (!userStore.userInfo?.id) {
+      return {
+        count: 0,
+        reviewStatus: { new: 0, learning: 0, mastered: 0 },
+        totalWords: 0,
+        newWords: 0,
+        learningWords: 0,
+        masteredWords: 0,
+        averageDifficulty: 'B1'
+      }
+    }
+
+    // 调用user-service的API获取真实数据
+    const statsResponse = await vocabularyStatsApi.getStats(Number(userStore.userInfo.id))
+    const myWordsResponse = await vocabularyStatsApi.getMyWords(Number(userStore.userInfo.id))
+
+    if (statsResponse.data && myWordsResponse.data) {
+      const stats = statsResponse.data
+      const words = myWordsResponse.data
+
+      // 统计复习状态
+      const reviewStatus = {
+        new: words.filter((word: any) => word.reviewStatus === 'new').length,
+        learning: words.filter((word: any) => word.reviewStatus === 'learning').length,
+        mastered: words.filter((word: any) => word.reviewStatus === 'mastered').length
+      }
+
+      return {
+        count: stats.totalWords || words.length || 0,
+        reviewStatus,
+        totalWords: stats.totalWords || 0,
+        newWords: stats.newWords || 0,
+        learningWords: stats.learningWords || 0,
+        masteredWords: stats.masteredWords || 0,
+        averageDifficulty: stats.averageDifficulty || 'B1'
+      }
+    }
+
+    // 如果API调用失败，返回默认值
+    return {
+      count: 0,
+      reviewStatus: { new: 0, learning: 0, mastered: 0 },
+      totalWords: 0,
+      newWords: 0,
+      learningWords: 0,
+      masteredWords: 0,
+      averageDifficulty: 'B1'
+    }
+  } catch (error) {
+    console.warn('获取用户词汇统计失败:', error)
+    return {
+      count: 0,
+      reviewStatus: { new: 0, learning: 0, mastered: 0 },
+      totalWords: 0,
+      newWords: 0,
+      learningWords: 0,
+      masteredWords: 0,
+      averageDifficulty: 'B1'
+    }
+  }
+}
+
+// 评估用户当前水平
+const assessUserLevel = (learningDays: number, articlesRead: number, vocabCount: number) => {
+  if (learningDays < 7 || articlesRead < 5) return 'beginner'
+  if (learningDays < 30 || articlesRead < 20) return 'intermediate'
+  if (learningDays < 90 || articlesRead < 50) return 'advanced'
+  return 'expert'
+}
+
+// 识别用户薄弱环节
+const identifyWeakAreas = (reviewStatus: any) => {
+  const areas = []
+
+  // 基于词汇复习状态识别薄弱环节
+  if (reviewStatus.new > 20) areas.push('新词汇掌握')
+  if (reviewStatus.learning > 30) areas.push('词汇复习')
+  if (reviewStatus.mastered < 50) areas.push('词汇巩固')
+
+  // 基于学习数据识别薄弱环节
+  const totalWords = reviewStatus.new + reviewStatus.learning + reviewStatus.mastered
+  if (totalWords > 0) {
+    const masteryRate = reviewStatus.mastered / totalWords
+    if (masteryRate < 0.3) areas.push('词汇掌握率低')
+    if (reviewStatus.learning / totalWords > 0.5) areas.push('学习进度缓慢')
+  }
+
+  return areas
+}
+
+// 生成个性化问题
+const generatePersonalizedQuestions = () => {
+  const profile = userProfile.value
+  const questions = []
+
+  // 基于用户数据生成个性化问题
+  questions.push({
+    id: 1,
+    text: `基于您已学习${profile.learningDays}天，这篇文章如何帮您突破${profile.currentLevel}水平？`,
+    icon: '🎯',
+    type: 'personalized-progress'
+  })
+
+  if (profile.preferredCategories.length > 0) {
+    questions.push({
+      id: 2,
+      text: `根据您${profile.preferredCategories.join('、')}类文章的阅读经验，如何提高理解这类文章的能力？`,
+      icon: '📈',
+      type: 'category-improvement'
+    })
+  }
+
+  questions.push({
+    id: 3,
+    text: `基于您${profile.vocabularyCount}个词汇的学习基础（掌握${profile.masteredWords}个），这篇文章能帮您掌握哪些新表达？`,
+    icon: '💡',
+    type: 'vocabulary-expansion'
+  })
+
+  if (profile.averageReadTime > 0) {
+    questions.push({
+      id: 4,
+      text: `根据您平均${profile.averageReadTime}分钟的阅读习惯，如何优化阅读效率？`,
+      icon: '⏱️',
+      type: 'reading-efficiency'
+    })
+  }
+
+  if (profile.weakAreas.length > 0) {
+    questions.push({
+      id: 5,
+      text: `基于您的薄弱环节${profile.weakAreas.join('、')}，这篇文章如何针对性提升？`,
+      icon: '💪',
+      type: 'weakness-targeting'
+    })
+  }
+
+  // 基于学习成就生成问题
+  if (profile.readingStreak > 0) {
+    questions.push({
+      id: 6,
+      text: `恭喜您连续学习${profile.readingStreak}天！基于这个学习节奏，这篇文章如何帮您保持进步？`,
+      icon: '🏆',
+      type: 'achievement-based'
+    })
+  } else {
+    questions.push({
+      id: 6,
+      text: `根据您已阅读${profile.totalArticlesRead}篇文章的经验，接下来该重点学习什么？`,
+      icon: '📚',
+      type: 'next-learning-path'
+    })
+  }
+
+  // 基于词汇学习状态生成问题
+  if (profile.learningWords > 10) {
+    questions.push({
+      id: 7,
+      text: `您还有${profile.learningWords}个词汇在学习中，这篇文章如何帮您巩固这些词汇？`,
+      icon: '🔄',
+      type: 'vocabulary-consolidation'
+    })
+  }
+
+  smartQuestions.value = questions
+}
+
+// 对话历史
+const chatHistory = ref<Array<{
+  id: string
+  type: 'user' | 'ai'
+  content: string
+  timestamp: number
+}>>([])
 
 // 生词本计数
 const vocabCount = ref(0)
@@ -913,9 +1466,9 @@ const englishParagraphs = computed(() => {
 
     // 检查是否是段落结束的标志
     if ((content[i] === '.' || content[i] === '?' || content[i] === '!') &&
-        i + 3 < content.length &&
-        /\s{2,}/.test(content.substring(i+1, i+3)) &&
-        /[A-Z]/.test(content[i + 2])) {
+      i + 3 < content.length &&
+      /\s{2,}/.test(content.substring(i+1, i+3)) &&
+      /[A-Z]/.test(content[i + 2])) {
 
       // 收集当前段落
       naturalParagraphs.push(currentParagraph.trim())
@@ -1127,8 +1680,10 @@ const loadArticle = async () => {
     // 初始化内容项
     updateContentItems()
 
-    // 加载用户生词本数量
+    // 加载用户学习数据并生成个性化问题
     if (userStore.isLoggedIn) {
+      await loadUserProfile()
+      generatePersonalizedQuestions()
       loadVocabCount()
       loadSubscriptionInfo()
     }
@@ -1392,10 +1947,10 @@ const generateQuiz = async () => {
     try {
       console.log('📚 尝试从数据库加载已保存的测验题...')
       const savedRes = await aiApi.getSavedQuiz(articleId)
-      
+
       if (savedRes?.data && Array.isArray(savedRes.data) && savedRes.data.length > 0) {
         console.log('✅ 成功从数据库加载测验题:', savedRes.data.length, '道题')
-        
+
         // 转换为交互式测验题格式
         quizQuestions.value = savedRes.data.map((q: any, index: number) => ({
           id: q.id || String(index + 1),
@@ -1591,9 +2146,16 @@ const getWordCount = () => {
 
 // 问AI助手
 const askAI = () => {
-  aiDialogVisible.value = true
-  aiQuestion.value = ''
-  aiAnswer.value = ''
+  // 跳转到独立的AI助手页面，并传递当前文章信息
+  router.push({
+    name: 'ai-assistant',
+    query: {
+      articleId: article.value?.id,
+      title: article.value?.title,
+      difficulty: article.value?.difficulty,
+      category: article.value?.category
+    }
+  })
 }
 
 // 点击推荐问题
@@ -1606,6 +2168,16 @@ const askSuggestedQuestion = (questionText: string) => {
 const clearChat = () => {
   aiQuestion.value = ''
   aiAnswer.value = ''
+  chatHistory.value = []
+}
+
+// 格式化时间
+const formatTime = (timestamp: number) => {
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 const submitAIQuestion = async () => {
@@ -1633,8 +2205,33 @@ const submitAIQuestion = async () => {
     })
 
     console.time('AI助手对话请求耗时')
-    // 传递文章上下文给AI助手
-    const res = (await aiApi.chat(aiQuestion.value, Number(userStore.userInfo.id), article.value.enContent)) as any
+
+    // 构建个性化阅读提升上下文（使用description减少token）
+    const articleContext = {
+      // 文章基础信息（使用description替代contentEn）
+      title: article.value.title,
+      description: (article.value as any).description || article.value.enContent.substring(0, 200),
+      category: article.value.category,
+      difficulty: article.value.difficulty,
+
+      // 用户学习画像
+      userProfile: userProfile.value,
+
+      // 问题类型分析
+      questionType: analyzeQuestionType(aiQuestion.value)
+    }
+
+    console.log('📚 传递给AI的个性化上下文:', {
+      title: articleContext.title,
+      category: articleContext.category,
+      difficulty: articleContext.difficulty,
+      descriptionLength: articleContext.description.length,
+      userLevel: articleContext.userProfile.currentLevel,
+      questionType: articleContext.questionType
+    })
+
+    // 传递精简的文章上下文给AI助手
+    const res = (await aiApi.chat(aiQuestion.value, Number(userStore.userInfo.id), JSON.stringify(articleContext))) as any
     console.timeEnd('AI助手对话请求耗时')
 
     console.log('✅ AI助手对话请求成功，结果:', {
@@ -1655,7 +2252,7 @@ const submitAIQuestion = async () => {
     }
 
     // 处理AI助手的响应
-    const aiResponse = res.data.answer
+    let aiResponse = res.data.answer
     if (!aiResponse || aiResponse.trim() === '') {
       console.warn('AI返回空响应')
       aiAnswer.value = '抱歉，我暂时无法回答这个问题。请尝试换个方式提问，或者稍后再试。'
@@ -1663,9 +2260,31 @@ const submitAIQuestion = async () => {
       return
     }
 
-    // 设置AI回答
+    // 优化AI回答质量
+    aiResponse = optimizeAIResponse(aiResponse, aiQuestion.value, articleContext)
+
+    // 添加用户问题到对话历史
+    chatHistory.value.push({
+      id: Date.now().toString(),
+      type: 'user',
+      content: aiQuestion.value,
+      timestamp: Date.now()
+    })
+
+    // 添加AI回答到对话历史
+    chatHistory.value.push({
+      id: (Date.now() + 1).toString(),
+      type: 'ai',
+      content: aiResponse,
+      timestamp: Date.now()
+    })
+
+    // 设置AI回答（用于兼容旧版本显示）
     aiAnswer.value = aiResponse
-    
+
+    // 清空输入框
+    aiQuestion.value = ''
+
     // 如果有后续问题建议，可以在这里处理
     if (res.data.followUpQuestion) {
       console.log('后续问题建议:', res.data.followUpQuestion)
@@ -1687,7 +2306,7 @@ const submitAIQuestion = async () => {
         }
       }
     )
-    
+
     // 根据错误类型提供不同的错误信息
     let errorMessage = 'AI助手暂时无法回答，请稍后重试'
     if (err.response?.status === 401) {
@@ -1699,7 +2318,7 @@ const submitAIQuestion = async () => {
     } else if (err.code === 'NETWORK_ERROR' || err.message?.includes('Network Error')) {
       errorMessage = '网络连接失败，请检查网络后重试'
     }
-    
+
     aiAnswer.value = errorMessage
     ElMessage.error(errorMessage)
     setAiState('error', errorMessage)
@@ -1986,12 +2605,12 @@ onUnmounted(async () => {
 
   // 只有当阅读时间超过2秒且用户已登录时才记录
   if (readTimeSec.value >= 2 &&
-      userStore.isLoggedIn &&
-      userStore.userInfo?.id &&
-      article.value &&
-      article.value.id &&
-      Number.isInteger(Number(article.value.id)) &&
-      Number(article.value.id) > 0) {
+    userStore.isLoggedIn &&
+    userStore.userInfo?.id &&
+    article.value &&
+    article.value.id &&
+    Number.isInteger(Number(article.value.id)) &&
+    Number(article.value.id) > 0) {
     try {
       const userId = Number(userStore.userInfo.id)
       const articleId = Number(article.value.id)
@@ -2540,6 +3159,8 @@ onUnmounted(async () => {
   padding: 8px 16px;
 }
 
+/* 标签样式现在使用全局设计系统中的胶囊标签样式 */
+
 .meta-stats {
   display: flex;
   gap: 20px;
@@ -2881,44 +3502,526 @@ onUnmounted(async () => {
   line-height: 1.6;
 }
 
-/* AI聊天样式 */
-.ai-chat {
+/* 现代化AI助手面板样式 */
+.ai-assistant-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-panel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.ai-panel-container {
+  position: relative;
+  width: 90%;
+  max-width: 800px;
+  height: 80vh;
+  max-height: 700px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  overflow: hidden;
+  animation: slideInUp 0.3s ease-out;
 }
 
-.suggested-questions {
-  margin-bottom: 10px;
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.question-chips {
+.ai-panel-header {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-avatar {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.header-info h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.header-info p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.header-actions {
+  display: flex;
   gap: 8px;
 }
 
-.question-chip {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.question-chip:hover {
-  background-color: #409eff;
+.header-actions .el-button {
   color: white;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.chat-actions {
+.header-actions .el-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 学习上下文卡片 */
+.context-card {
+  margin: 16px 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
+  flex-shrink: 0;
+}
+
+.context-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.article-preview h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+  line-height: 1.4;
+}
+
+.article-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 主内容区域 */
+.ai-panel-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 智能问题推荐区域 */
+.smart-questions-section {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+/* 对话区域 */
+.chat-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: #fafbfc;
+}
+
+/* 输入区域 */
+.ai-panel-input {
+  padding: 16px 24px;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  flex-shrink: 0;
+}
+
+.input-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.question-input {
+  flex: 1;
+}
+
+.send-button {
+  height: 40px;
+  width: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.input-tips {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.context-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.article-preview h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.article-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 智能问题推荐 */
+.smart-questions {
+  padding: 20px;
+  background: white;
+  border-bottom: 1px solid #ebeef5;
+  max-height: 300px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.questions-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(90, 200, 250, 0.1) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+.questions-header .el-icon {
+  font-size: 18px;
+  color: #007AFF;
+}
+
+.questions-header span:first-of-type {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.questions-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-left: 26px;
+}
+
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* 滚动条样式 */
+.question-grid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.question-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.question-grid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.question-grid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.smart-question-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+  border: 1px solid rgba(0, 122, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  min-height: 60px;
+}
+
+.smart-question-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.smart-question-card:hover::before {
+  left: 100%;
+}
+
+.smart-question-card:hover {
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(90, 200, 250, 0.1) 100%);
+  border-color: rgba(0, 122, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.15);
+}
+
+.question-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.question-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.question-text {
+  line-height: 1.3;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.question-type {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: rgba(0, 122, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+.question-arrow {
+  color: var(--text-tertiary);
+  transition: all 0.3s ease;
+}
+
+.smart-question-card:hover .question-arrow {
+  color: #007AFF;
+  transform: translateX(4px);
+}
+
+/* 对话容器 */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  background: white;
+}
+
+.message {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  flex-shrink: 0;
+}
+
+.message-content {
+  flex: 1;
+  max-width: 70%;
+}
+
+.message.user .message-content {
+  text-align: right;
+}
+
+.message-text {
+  padding: 12px 16px;
+  border-radius: 12px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.message.user .message-text {
+  background: #409eff;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.message.ai .message-text {
+  background: #f5f7fa;
+  color: #303133;
+  border-bottom-left-radius: 4px;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+/* 输入区域 */
+.input-area {
+  padding: 16px 20px;
+  background: white;
+  border-top: 1px solid #ebeef5;
+}
+
+.question-input {
+  margin-bottom: 12px;
+}
+
+.input-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* AI回答区域 */
 .ai-answer {
-  padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
-  margin-top: 15px;
+  padding: 20px;
+  background: white;
+  border-top: 1px solid #ebeef5;
+}
+
+.answer-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.answer-content {
+  line-height: 1.6;
+  color: #606266;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .ai-panel-container {
+    width: 95%;
+    height: 90vh;
+    max-height: none;
+  }
+
+  .question-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .message-content {
+    max-width: 85%;
+  }
+
+  .ai-panel-header {
+    padding: 16px 20px;
+  }
+
+  .context-card {
+    margin: 12px 20px;
+  }
+
+  .smart-questions-section {
+    padding: 16px 20px;
+  }
+
+  .messages-container {
+    padding: 16px 20px;
+  }
+
+  .ai-panel-input {
+    padding: 12px 20px;
+  }
 }
 
 /* 首次使用引导样式 */
@@ -3528,32 +4631,33 @@ onUnmounted(async () => {
 }
 
 .control-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center !important;
-    width: 100%;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center !important;
+  width: 100%;
+  padding: 0 !important;
+  margin: 0 !important;
+}
 
-  .control-buttons .el-button {
-    min-width: 90px !important;
-    width: 90px !important;
-    border-radius: 8px !important;
-    transition: all 0.3s ease !important;
-    font-size: 12px !important;
-    padding: 6px 8px !important;
-    margin: 0 auto !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-  }
+.control-buttons .el-button {
+  min-width: 90px !important;
+  width: 90px !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+  font-size: 12px !important;
+  padding: 6px 8px !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+}
 
-  /* 段落高亮样式 */
-  .paragraph.highlighted {
-    background-color: #e6f7ff;
-    transition: background-color 0.3s ease;
-  }
+/* 段落高亮样式 */
+.paragraph.highlighted {
+  background-color: #e6f7ff;
+  transition: background-color 0.3s ease;
+}
 </style>
+

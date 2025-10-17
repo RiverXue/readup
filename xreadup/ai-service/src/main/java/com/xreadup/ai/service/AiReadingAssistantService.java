@@ -85,21 +85,23 @@ public class AiReadingAssistantService {
     }
     
     /**
-     * 根据用户问题生成合适的后续问题建议
+     * 根据用户问题生成合适的后续问题建议（教育导向版）
      */
     private String generateFollowUpQuestion(String question) {
         String lowerQuestion = question.toLowerCase();
         
-        if (lowerQuestion.contains("单词") || lowerQuestion.contains("word") || lowerQuestion.contains("意思")) {
-            return "您还想了解其他单词吗？";
-        } else if (lowerQuestion.contains("翻译") || lowerQuestion.contains("translate")) {
-            return "需要我翻译其他句子吗？";
-        } else if (lowerQuestion.contains("语法") || lowerQuestion.contains("grammar")) {
-            return "还有其他语法问题吗？";
-        } else if (lowerQuestion.contains("文章") || lowerQuestion.contains("article") || lowerQuestion.contains("内容")) {
-            return "想了解文章的更多内容吗？";
+        if (lowerQuestion.contains("单词") || lowerQuestion.contains("word") || lowerQuestion.contains("意思") || lowerQuestion.contains("词汇")) {
+            return "💡 您还想学习这篇文章中的其他重点词汇吗？我可以帮您分析词汇的用法和搭配。";
+        } else if (lowerQuestion.contains("翻译") || lowerQuestion.contains("translate") || lowerQuestion.contains("句子")) {
+            return "📝 需要我帮您翻译其他句子吗？或者分析句子的语法结构？";
+        } else if (lowerQuestion.contains("语法") || lowerQuestion.contains("grammar") || lowerQuestion.contains("结构")) {
+            return "🔍 还有其他语法点需要解释吗？我可以帮您分析更复杂的语法现象。";
+        } else if (lowerQuestion.contains("文章") || lowerQuestion.contains("article") || lowerQuestion.contains("内容") || lowerQuestion.contains("主题")) {
+            return "📚 想深入了解这篇文章的写作技巧、作者观点或相关话题吗？";
+        } else if (lowerQuestion.contains("理解") || lowerQuestion.contains("理解") || lowerQuestion.contains("意思")) {
+            return "🎯 需要我帮您分析文章的深层含义或写作手法吗？";
         } else {
-            return "还有其他问题吗？";
+            return "🤔 还有其他关于这篇文章的问题吗？我很乐意继续帮助您学习！";
         }
     }
 

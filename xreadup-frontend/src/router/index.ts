@@ -7,6 +7,7 @@ import LoginPage from '../views/LoginPage.vue'
 import RegisterView from '../views/RegisterView.vue'
 import SubscriptionPage from '../views/SubscriptionPage.vue'
 import ArticleListView from '../views/ArticleListView.vue'
+import AIAssistantView from '../views/AIAssistantView.vue'
 import AdminLogin from '../views/admin/AdminLogin.vue'
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import UserManagement from '../views/admin/UserManagement.vue'
@@ -44,6 +45,12 @@ const router = createRouter({
       path: '/report',
       name: 'report',
       component: ReportPage,
+      meta: { requiresAuth: true }
+    },
+    { 
+      path: '/ai-assistant',
+      name: 'ai-assistant',
+      component: AIAssistantView,
       meta: { requiresAuth: true }
     },
     { 

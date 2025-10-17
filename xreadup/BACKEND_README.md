@@ -40,6 +40,8 @@ XReadUp 后端是一个基于 **Spring Cloud 微服务架构** 的智能英语�
 - **🔥 超高性能**: 词汇查询响应时间从 500ms 降至 10ms，性能提升 **97%**
 - **🧠 智能策略**: 三级词库缓存策略，缓存命中率达 **90%+**
 - **🤖 AI 集成**: 深度集成 Function Calling，支持智能对话和上下文理解
+- **🎓 AI 学习导师**: Rayda老师专业英语学习导师，提供个性化学习指导
+- **📊 智能用户画像**: 多维度学习数据分析，智能识别薄弱环节和优势
 - **🏗️ 微服务架构**: 6 个独立微服务，支持水平扩展和独立部署
 - ** 企业级**: 完整的监控、日志、配置中心和服务治理
 
@@ -301,7 +303,7 @@ public class EbbinghausService {
 
 ### 5. 🤖 AI Service (AI 服务)
 
-**核心职责**: Function Calling、智能对话、NLP处理、多引擎翻译
+**核心职责**: Function Calling、智能对话、NLP处理、多引擎翻译、AI学习导师、用户画像分析
 
 **AI 功能矩阵**:
 ```
@@ -320,6 +322,18 @@ public class EbbinghausService {
 ├── ArticleAnalysisService - 文章AI分析
 ├── SentenceParseService - 句子语法分析
 └── SummaryGenerationService - 智能摘要生成
+
+🎓 AI Learning Tutor (Rayda老师)
+├── AiReadingAssistantService - 智能学习导师
+├── PersonalizedChatService - 个性化对话服务
+├── LearningDiagnosisService - 学习诊断服务
+└── SmartQuestionService - 智能问题推荐
+
+📊 User Profile Analysis
+├── LearningLevelAssessment - 学习水平评估
+├── WeakAreaIdentification - 薄弱环节识别
+├── StrengthAnalysis - 优势能力分析
+└── RecommendationGeneration - 学习建议生成
 ```
 
 **Function Calling 实现**:
@@ -330,7 +344,7 @@ public class AiReadingAssistantController {
     
     @PostMapping("/chat")
     public ApiResponse<AiChatResponse> chat(@RequestBody AiChatRequest request) {
-        // 支持 Function Calling 的智能对话
+        // Rayda老师智能对话 - 支持个性化学习指导
         return ApiResponse.success(aiReadingAssistantService.chatWithAssistant(request));
     }
     
@@ -338,6 +352,132 @@ public class AiReadingAssistantController {
     public ApiResponse<Object> lookupWord(@PathVariable String word) {
         // Function Calling 工具: 单词查询
         return ApiResponse.success(aiReadingAssistantService.lookupWord(word));
+    }
+}
+```
+
+**🎓 Rayda老师学习导师实现**:
+```java
+@Service
+public class AiReadingAssistantService {
+    
+    /**
+     * Rayda老师智能对话 - 基于用户学习画像的个性化指导
+     */
+    public AiChatResponse chatWithAssistant(AiChatRequest request) {
+        try {
+            // 解析用户学习画像数据
+            Map<String, Object> contextMap = parseArticleContext(request.getArticleContext());
+            String userProfile = extractUserProfile(contextMap);
+            
+            // Rayda老师专业提示词
+            String prompt = String.format("""
+                你是Rayda老师，一位经验丰富的英语学习导师，专门帮助中国学生提高英语阅读能力。
+                
+                📚 当前学习情境：
+                - 文章主题：%s
+                - 文章难度：%s
+                - 学生问题：%s
+                
+                👤 学生学习画像：
+                %s
+                
+                🎯 个性化教学要求：
+                1. 基于学生的学习历史提供个性化建议
+                2. 结合学生的薄弱环节进行针对性指导
+                3. 根据学生的学习水平调整回答深度
+                4. 提供具体可操作的学习策略
+                5. 鼓励学生并建立学习信心
+                """, 
+                articleTheme, articleDifficulty, question, userProfile);
+            
+            // 调用AI模型生成个性化回答
+            String response = chatClient.prompt()
+                .system("你是Rayda老师，一位专业的英语学习导师，擅长帮助中国学生提高英语阅读能力。")
+                .user(prompt)
+                .call()
+                .content();
+            
+            return buildChatResponse(response, request.getQuestion());
+        } catch (Exception e) {
+            log.error("Rayda老师对话失败", e);
+            return buildErrorResponse();
+        }
+    }
+}
+```
+
+**📊 用户画像分析实现**:
+```java
+@Service
+public class UserProfileAnalysisService {
+    
+    /**
+     * 学习水平评估算法
+     */
+    public String assessUserLevel(int learningDays, int articlesRead, int vocabCount) {
+        if (learningDays >= 90 && articlesRead >= 50 && vocabCount >= 1000) return "expert";
+        if (learningDays >= 60 && articlesRead >= 30 && vocabCount >= 500) return "advanced";
+        if (learningDays >= 30 && articlesRead >= 15 && vocabCount >= 200) return "intermediate";
+        return "beginner";
+    }
+    
+    /**
+     * 薄弱环节识别算法 - 多维度分析
+     */
+    public List<String> identifyWeakAreas(Map<String, Object> reviewStatus, UserProfile profile) {
+        List<String> weakAreas = new ArrayList<>();
+        
+        // 基于词汇数据识别
+        if (reviewStatus != null && !reviewStatus.isEmpty()) {
+            int total = reviewStatus.values().stream()
+                .mapToInt(v -> (Integer) v)
+                .sum();
+            
+            if (total > 0) {
+                int newWords = (Integer) reviewStatus.getOrDefault("new", 0);
+                int learningWords = (Integer) reviewStatus.getOrDefault("learning", 0);
+                int reviewWords = (Integer) reviewStatus.getOrDefault("review", 0);
+                
+                if (newWords > total * 0.2) weakAreas.add("新词掌握");
+                if (learningWords > total * 0.3) weakAreas.add("词汇巩固");
+                if (reviewWords > total * 0.15) weakAreas.add("复习频率");
+            }
+        }
+        
+        // 基于学习数据识别
+        if (profile.getLearningDays() < 14) weakAreas.add("学习坚持性");
+        if (profile.getTotalArticlesRead() < 10) weakAreas.add("阅读练习");
+        if (profile.getVocabularyCount() < 100) weakAreas.add("词汇积累");
+        if (profile.getReadingStreak() < 5) weakAreas.add("学习习惯");
+        if (profile.getAverageReadTime() < 15) weakAreas.add("阅读专注力");
+        
+        return weakAreas.stream().distinct().collect(Collectors.toList());
+    }
+    
+    /**
+     * 学习建议生成算法
+     */
+    public List<String> generateRecommendations(UserProfile profile) {
+        List<String> recommendations = new ArrayList<>();
+        
+        // 基于薄弱环节生成具体建议
+        for (String weakArea : profile.getWeakAreas()) {
+            switch (weakArea) {
+                case "学习坚持性":
+                    recommendations.add("建议每天固定时间学习，建立学习习惯");
+                    break;
+                case "阅读练习":
+                    recommendations.add("建议每周阅读2-3篇文章，提高阅读理解能力");
+                    break;
+                case "词汇积累":
+                    recommendations.add("建议每天学习10-15个新单词，扩大词汇量");
+                    break;
+                // ... 更多建议
+            }
+        }
+        
+        return recommendations;
     }
 }
 ```
