@@ -2,7 +2,6 @@ package com.xreadup.ai.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xreadup.ai.model.dto.*;
-import com.xreadup.ai.service.AiToolService.QuizQuestion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,31 +35,71 @@ public class AiReadingAssistantService {
     private AiToolService aiToolService;
 
     /**
-     * AI对话助手（增强版 - 集成工具调用）
+     * AI对话助手（增强版 - 简化工具调用）
      */
     public AiChatResponse chatWithAssistant(AiChatRequest request) {
         try {
             log.info("AI对话请求 - 用户: {}, 问题: {}", request.getUserId(), request.getQuestion());
             
-            // 使用新的智能对话功能
+            // 验证输入参数
+            if (request.getQuestion() == null || request.getQuestion().trim().isEmpty()) {
+                log.warn("AI对话请求问题为空");
+                AiChatResponse emptyResponse = new AiChatResponse();
+                emptyResponse.setAnswer("请提出一个具体的问题，我会尽力帮助您！");
+                emptyResponse.setFollowUpQuestion("您可以问我关于文章内容、单词解释、语法问题等。");
+                emptyResponse.setDifficulty("B1");
+                return emptyResponse;
+            }
+            
+            // 使用简化的智能对话功能
             String response = aiToolService.intelligentChat(
-                request.getQuestion(), 
+                request.getQuestion().trim(), 
                 request.getArticleContext()
             );
 
+            // 验证AI响应
+            if (response == null || response.trim().isEmpty()) {
+                log.warn("AI返回空响应");
+                response = "抱歉，我暂时无法回答这个问题。请尝试换个方式提问，或者稍后再试。";
+            }
+
             AiChatResponse chatResponse = new AiChatResponse();
             chatResponse.setAnswer(response);
-            chatResponse.setFollowUpQuestion("你对这个话题还有其他问题吗？我可以帮你查词、翻译或生成测验题！");
+            
+            // 根据问题类型生成不同的后续问题建议
+            String followUpQuestion = generateFollowUpQuestion(request.getQuestion());
+            chatResponse.setFollowUpQuestion(followUpQuestion);
             chatResponse.setDifficulty("B1");
 
-            log.info("AI智能对话响应成功生成");
+            log.info("AI智能对话响应成功生成 - 响应长度: {}", response.length());
             return chatResponse;
 
         } catch (Exception e) {
             log.error("AI对话失败", e);
             AiChatResponse errorResponse = new AiChatResponse();
-            errorResponse.setAnswer("抱歉，我现在无法回答这个问题。请稍后再试。");
+            errorResponse.setAnswer("抱歉，我遇到了一些技术问题。请稍后再试，或者尝试重新提问。如果问题持续存在，请联系技术支持。");
+            errorResponse.setFollowUpQuestion("您可以尝试问一些简单的问题，比如'这篇文章讲了什么？'或'这个单词是什么意思？'");
+            errorResponse.setDifficulty("B1");
             return errorResponse;
+        }
+    }
+    
+    /**
+     * 根据用户问题生成合适的后续问题建议
+     */
+    private String generateFollowUpQuestion(String question) {
+        String lowerQuestion = question.toLowerCase();
+        
+        if (lowerQuestion.contains("单词") || lowerQuestion.contains("word") || lowerQuestion.contains("意思")) {
+            return "您还想了解其他单词的意思吗？或者需要我解释文章中的语法点？";
+        } else if (lowerQuestion.contains("翻译") || lowerQuestion.contains("translate")) {
+            return "您需要我翻译其他句子吗？或者想了解文章的语法结构？";
+        } else if (lowerQuestion.contains("语法") || lowerQuestion.contains("grammar")) {
+            return "您还有其他语法问题吗？或者想了解文章中的重点词汇？";
+        } else if (lowerQuestion.contains("文章") || lowerQuestion.contains("article") || lowerQuestion.contains("内容")) {
+            return "您想了解文章的更多细节吗？或者需要我解释其中的重点词汇？";
+        } else {
+            return "您还有其他问题吗？我可以帮您解释单词、翻译句子、分析语法等。";
         }
     }
 

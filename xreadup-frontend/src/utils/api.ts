@@ -216,10 +216,11 @@ export const aiApi = {
     api.post('/api/ai/parse', { sentence, articleId }),
 
   // AI对话（支持Function Calling）
-  chat: (question: string, userId: number) => {
+  chat: (question: string, userId: number, articleContext?: string) => {
     return api.post('/api/ai/assistant/chat', {
       question,
-      userId
+      userId,
+      articleContext: articleContext || ''
     });
   },
 

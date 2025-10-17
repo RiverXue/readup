@@ -27,8 +27,6 @@ public class AiToolService {
     @Autowired
     private ChatClient chatClient;
 
-    @Autowired
-    private TencentTranslateService translateService;
 
     /**
      * 单词查询工具
@@ -184,34 +182,40 @@ public class AiToolService {
     }
 
     /**
-     * 智能对话（集成工具调用）
+     * 智能对话（简化版 - 不使用Function Calling）
      */
     public String intelligentChat(String question, String articleContext) {
         String prompt = String.format("""
             你是一个专业的英语学习助手。请根据以下文章内容回答用户问题。
-            你可以使用以下工具：
-            - wordLookupTool: 查询单词详细信息（包括释义、例句、同义词）
-            - translationTool: 翻译文本内容
             
             文章内容：%s
             用户问题：%s
             
             回答要求：
             1. 简洁明了，适合英语学习者
-            2. 如果涉及生词，请调用wordLookupTool工具获取详细信息
-            3. 如果需要翻译，请调用translationTool工具
+            2. 如果涉及生词，请提供详细的单词解释（包括音标、释义、例句）
+            3. 如果需要翻译，请直接提供翻译结果
             4. 给出实用学习建议
-            """, articleContext, question);
+            5. 回答要具体、有用，避免泛泛而谈
+            
+            请直接回答用户问题，不要使用任何工具调用。
+            """, articleContext != null ? articleContext : "无文章内容", question);
 
         try {
-            return chatClient.prompt()
-                .functions("wordLookupTool", "translationTool") // 显式指定可用的Function Calling工具
+            log.info("AI对话请求 - 问题: {}, 文章长度: {}", question, articleContext != null ? articleContext.length() : 0);
+            
+            String response = chatClient.prompt()
+                .system("你是一个专业的英语学习助手，擅长帮助用户理解英语文章、解释单词、提供学习建议。请用中文回答，语言要友好、专业、易懂。")
                 .user(prompt)
                 .call()
                 .content();
+            
+            log.info("AI对话响应成功 - 响应长度: {}", response != null ? response.length() : 0);
+            return response != null ? response : "抱歉，我暂时无法回答这个问题，请稍后再试。";
+            
         } catch (Exception e) {
             log.error("AI对话失败", e);
-            return "抱歉，我现在无法回答这个问题。请稍后再试。";
+            return "抱歉，我遇到了一些技术问题，暂时无法回答这个问题。请稍后再试，或者尝试重新提问。";
         }
     }
 

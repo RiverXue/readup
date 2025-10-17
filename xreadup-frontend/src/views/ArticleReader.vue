@@ -1591,7 +1591,8 @@ const submitAIQuestion = async () => {
     })
 
     console.time('AI助手对话请求耗时')
-    const res = (await aiApi.chat(aiQuestion.value, Number(userStore.userInfo.id))) as any
+    // 传递文章上下文给AI助手
+    const res = (await aiApi.chat(aiQuestion.value, Number(userStore.userInfo.id), article.value.enContent)) as any
     console.timeEnd('AI助手对话请求耗时')
 
     console.log('✅ AI助手对话请求成功，结果:', {
