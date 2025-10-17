@@ -426,25 +426,93 @@
 
     </div>
 
-    <!-- AI助手对话框 -->
-    <el-dialog v-model="aiDialogVisible" title="💬 AI助手" width="500px">
-      <div class="ai-chat">
-        <el-input
-          v-model="aiQuestion"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入你的问题..."
-          maxlength="200"
-          show-word-limit
-        />
-        <div class="chat-actions">
-          <el-button type="primary" @click="submitAIQuestion" :loading="aiLoading">
-            发送问题
-          </el-button>
+    <!-- AI学习助手对话框 -->
+    <el-dialog v-model="aiDialogVisible" title="🎓 AI学习助手" width="600px" class="ai-assistant-dialog">
+      <div class="ai-learning-assistant">
+        <!-- 助手头部信息 -->
+        <div class="assistant-header">
+          <div class="assistant-avatar">
+            <el-avatar :size="40" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <el-icon><User /></el-icon>
+            </el-avatar>
+          </div>
+          <div class="assistant-info">
+            <h3>AI学习助手</h3>
+            <p>您的专属英语学习伙伴</p>
+          </div>
+          <div class="assistant-status">
+            <el-icon><CircleCheck /></el-icon>
+            <span>在线</span>
+          </div>
         </div>
-        <div v-if="aiAnswer" class="ai-answer">
-          <h4>AI回答：</h4>
-          <div v-html="formatAIAnswer(aiAnswer)"></div>
+
+        <!-- 学习上下文 -->
+        <div class="learning-context" v-if="article">
+          <div class="article-info">
+            <h4>📚 当前学习内容</h4>
+            <p class="article-title">{{ article.title }}</p>
+            <div class="learning-tips">
+              <el-tag type="info" size="small">💡 可以问我关于单词、语法、翻译、理解等问题</el-tag>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快速问题建议 -->
+        <div class="suggested-questions" v-if="!aiAnswer">
+          <h5>💡 推荐问题</h5>
+          <div class="question-chips">
+            <el-tag 
+              v-for="question in suggestedQuestions" 
+              :key="question.id"
+              @click="askSuggestedQuestion(question.text)"
+              class="question-chip"
+              effect="plain"
+            >
+              {{ question.text }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 对话区域 -->
+        <div class="chat-container">
+          <!-- 用户问题 -->
+          <div v-if="aiQuestion && aiAnswer" class="user-question">
+            <div class="question-bubble">
+              <strong>您的问题：</strong>{{ aiQuestion }}
+            </div>
+          </div>
+
+          <!-- AI回答 -->
+          <div v-if="aiAnswer" class="ai-answer">
+            <div class="answer-header">
+              <el-icon><ChatLineRound /></el-icon>
+              <span>AI助手的回答</span>
+            </div>
+            <div class="answer-content" v-html="formatAIAnswer(aiAnswer)"></div>
+          </div>
+
+          <!-- 输入区域 -->
+          <div class="input-area">
+            <el-input
+              v-model="aiQuestion"
+              type="textarea"
+              :rows="2"
+              placeholder="问我任何关于这篇文章的问题..."
+              @keyup.enter.ctrl="submitAIQuestion"
+              class="question-input"
+              :disabled="aiLoading"
+            />
+            <div class="input-actions">
+              <el-button type="text" @click="clearChat" :disabled="aiLoading">
+                <el-icon><Delete /></el-icon>
+                清空
+              </el-button>
+              <el-button type="primary" @click="submitAIQuestion" :loading="aiLoading">
+                <el-icon><Send /></el-icon>
+                发送
+              </el-button>
+            </div>
+          </div>
         </div>
       </div>
     </el-dialog>
@@ -768,6 +836,16 @@ const aiDialogVisible = ref(false)
 const aiQuestion = ref('')
 const aiAnswer = ref('')
 const aiLoading = ref(false)
+
+// 推荐问题
+const suggestedQuestions = ref([
+  { id: 1, text: '这篇文章的主要观点是什么？' },
+  { id: 2, text: '有哪些重要的词汇需要学习？' },
+  { id: 3, text: '请解释这个句子的语法结构' },
+  { id: 4, text: '这篇文章的写作风格有什么特点？' },
+  { id: 5, text: '请帮我翻译这个段落' },
+  { id: 6, text: '作者使用了哪些修辞手法？' }
+])
 
 // 生词本计数
 const vocabCount = ref(0)
@@ -1562,6 +1640,18 @@ const getWordCount = () => {
 // 问AI助手
 const askAI = () => {
   aiDialogVisible.value = true
+  aiQuestion.value = ''
+  aiAnswer.value = ''
+}
+
+// 点击推荐问题
+const askSuggestedQuestion = (questionText: string) => {
+  aiQuestion.value = questionText
+  submitAIQuestion()
+}
+
+// 清空对话
+const clearChat = () => {
   aiQuestion.value = ''
   aiAnswer.value = ''
 }
@@ -2839,22 +2929,168 @@ onUnmounted(async () => {
   line-height: 1.6;
 }
 
-/* AI聊天样式 */
-.ai-chat {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+/* AI学习助手样式 */
+.ai-assistant-dialog .el-dialog__body {
+  padding: 0;
 }
 
-.chat-actions {
-  text-align: right;
+.ai-learning-assistant {
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+}
+
+.assistant-header {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.assistant-avatar {
+  margin-right: 15px;
+}
+
+.assistant-info h3 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.assistant-info p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.assistant-status {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.learning-context {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.article-info h4 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 16px;
+}
+
+.article-title {
+  margin: 0 0 10px 0;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.learning-tips {
+  margin-top: 10px;
+}
+
+.suggested-questions {
+  padding: 15px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.suggested-questions h5 {
+  margin: 0 0 10px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.question-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.question-chip {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.question-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.user-question {
+  margin-bottom: 15px;
+}
+
+.question-bubble {
+  background: #e3f2fd;
+  padding: 12px 16px;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  max-width: 80%;
+  margin-left: auto;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .ai-answer {
+  margin-bottom: 20px;
+}
+
+.answer-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.answer-content {
+  background: #f8f9fa;
   padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
-  margin-top: 15px;
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #495057;
+}
+
+.input-area {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.question-input {
+  margin-bottom: 10px;
+}
+
+.input-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.input-actions .el-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* 首次使用引导样式 */
