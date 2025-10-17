@@ -85,25 +85,21 @@ public class AiReadingAssistantService {
     }
     
     /**
-     * 根据用户问题生成合适的后续问题建议（教学导向）
+     * 根据用户问题生成合适的后续问题建议
      */
     private String generateFollowUpQuestion(String question) {
         String lowerQuestion = question.toLowerCase();
         
         if (lowerQuestion.contains("单词") || lowerQuestion.contains("word") || lowerQuestion.contains("意思")) {
-            return "💡 学习建议：您还想了解其他重点词汇吗？或者我可以帮您分析这些单词在文章中的用法和搭配。";
+            return "您还想了解其他单词吗？";
         } else if (lowerQuestion.contains("翻译") || lowerQuestion.contains("translate")) {
-            return "💡 学习建议：您需要我翻译其他句子吗？或者想了解这些句子的语法结构和表达技巧？";
+            return "需要我翻译其他句子吗？";
         } else if (lowerQuestion.contains("语法") || lowerQuestion.contains("grammar")) {
-            return "💡 学习建议：您还有其他语法问题吗？或者想了解文章中的重点词汇和表达方式？";
+            return "还有其他语法问题吗？";
         } else if (lowerQuestion.contains("文章") || lowerQuestion.contains("article") || lowerQuestion.contains("内容")) {
-            return "💡 学习建议：您想了解文章的写作技巧吗？或者需要我帮您分析文章的结构和逻辑？";
-        } else if (lowerQuestion.contains("理解") || lowerQuestion.contains("understand")) {
-            return "💡 学习建议：您想测试一下理解程度吗？或者需要我提供一些相关的练习题目？";
-        } else if (lowerQuestion.contains("学习") || lowerQuestion.contains("learn") || lowerQuestion.contains("study")) {
-            return "💡 学习建议：您想制定一个学习计划吗？或者需要我推荐一些相关的学习资源？";
+            return "想了解文章的更多内容吗？";
         } else {
-            return "💡 学习建议：您还有其他问题吗？我可以帮您解释单词、翻译句子、分析语法、提供学习建议等。";
+            return "还有其他问题吗？";
         }
     }
 
