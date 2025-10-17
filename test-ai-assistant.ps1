@@ -52,8 +52,18 @@ foreach ($question in $testQuestions) {
             Write-Host "📄 回答内容: $($response.data.answer)" -ForegroundColor White
             Write-Host "💡 后续问题: $($response.data.followUpQuestion)" -ForegroundColor Yellow
             Write-Host "📊 难度等级: $($response.data.difficulty)" -ForegroundColor Magenta
+            Write-Host "🔍 响应结构验证:" -ForegroundColor Cyan
+            Write-Host "  - success: $($response.success)" -ForegroundColor Gray
+            Write-Host "  - code: $($response.code)" -ForegroundColor Gray
+            Write-Host "  - message: $($response.message)" -ForegroundColor Gray
+            Write-Host "  - data存在: $($response.data -ne $null)" -ForegroundColor Gray
+            Write-Host "  - answer长度: $($response.data.answer.Length)" -ForegroundColor Gray
         } else {
-            Write-Host "❌ 响应失败: $($response.message)" -ForegroundColor Red
+            Write-Host "❌ 响应失败!" -ForegroundColor Red
+            Write-Host "  - success: $($response.success)" -ForegroundColor Red
+            Write-Host "  - code: $($response.code)" -ForegroundColor Red
+            Write-Host "  - message: $($response.message)" -ForegroundColor Red
+            Write-Host "  - data存在: $($response.data -ne $null)" -ForegroundColor Red
         }
     }
     catch {

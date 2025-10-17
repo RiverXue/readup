@@ -1596,21 +1596,37 @@ const submitAIQuestion = async () => {
     console.timeEnd('AI助手对话请求耗时')
 
     console.log('✅ AI助手对话请求成功，结果:', {
-      answerLength: (res.data?.answer || res.answer)?.length || 0,
+      success: res.success,
+      code: res.code,
+      message: res.message,
+      hasData: !!res.data,
+      answerLength: res.data?.answer?.length || 0,
       fullResponse: res
     })
 
-    // 处理AI助手的响应，特别是包含工具调用的情况
-    const aiResponse = res.data?.answer || res.answer || res.data || 'AI助手未返回有效响应'
+    // 检查响应是否成功
+    if (!res.success || !res.data) {
+      console.error('AI助手响应失败:', res.message || '未知错误')
+      aiAnswer.value = res.message || 'AI助手暂时无法回答，请稍后再试'
+      setAiState('error', 'AI助手响应失败')
+      return
+    }
 
-    // 检查是否包含JSON格式的工具调用
-    if (typeof aiResponse === 'string' && aiResponse.includes('```json') && aiResponse.includes('```')) {
-      // 对于包含工具调用的响应，我们需要特殊处理
-      // 但为了简单起见，我们仍然显示原始响应，因为这可能是后端设计的交互方式
-      aiAnswer.value = aiResponse
-    } else {
-      // 确保aiAnswer是字符串类型
-      aiAnswer.value = typeof aiResponse === 'string' ? aiResponse : JSON.stringify(aiResponse)
+    // 处理AI助手的响应
+    const aiResponse = res.data.answer
+    if (!aiResponse || aiResponse.trim() === '') {
+      console.warn('AI返回空响应')
+      aiAnswer.value = '抱歉，我暂时无法回答这个问题。请尝试换个方式提问，或者稍后再试。'
+      setAiState('error', 'AI返回空响应')
+      return
+    }
+
+    // 设置AI回答
+    aiAnswer.value = aiResponse
+    
+    // 如果有后续问题建议，可以在这里处理
+    if (res.data.followUpQuestion) {
+      console.log('后续问题建议:', res.data.followUpQuestion)
     }
     setAiState('success', 'AI回答已生成')
   } catch (error) {
@@ -1624,12 +1640,27 @@ const submitAIQuestion = async () => {
           contentPreview: article.value.enContent.substring(0, 50),
           errorCode: err.code,
           errorName: err.name,
-          url: err.config?.url
+          url: err.config?.url,
+          status: err.response?.status
         }
       }
     )
-    ElMessage.error('AI助手暂时无法回答，请稍后重试')
-    setAiState('error', 'AI助手暂时无法回答')
+    
+    // 根据错误类型提供不同的错误信息
+    let errorMessage = 'AI助手暂时无法回答，请稍后重试'
+    if (err.response?.status === 401) {
+      errorMessage = '请先登录以使用AI助手功能'
+    } else if (err.response?.status === 403) {
+      errorMessage = '您的AI功能权限不足，请升级订阅'
+    } else if (err.response?.status >= 500) {
+      errorMessage = 'AI服务暂时不可用，请稍后再试'
+    } else if (err.code === 'NETWORK_ERROR' || err.message?.includes('Network Error')) {
+      errorMessage = '网络连接失败，请检查网络后重试'
+    }
+    
+    aiAnswer.value = errorMessage
+    ElMessage.error(errorMessage)
+    setAiState('error', errorMessage)
   } finally {
     aiLoading.value = false
     if (aiState.value.phase === 'loading') setAiState('idle', '准备就绪')
