@@ -250,7 +250,7 @@
             不巩固
           </TactileButton>
         </div>
-        
+
         <!-- 删除按钮 - 右下角垃圾桶图标 -->
         <div class="word-delete-btn">
           <el-button
@@ -267,22 +267,22 @@
 
     <!-- 叠层视图 -->
     <div v-if="viewMode === 'stack'" class="word-stack-container">
-      
+
       <!-- 左侧导航按钮 -->
       <div class="stack-nav-left">
         <div v-if="isSpeedReviewMode" class="speed-nav-buttons">
-          <TactileButton 
-            @click="previousSpeedReviewCard" 
+          <TactileButton
+            @click="previousSpeedReviewCard"
             :disabled="currentSpeedReviewIndex === 0"
-            variant="secondary" 
+            variant="secondary"
             size="sm"
             class="speed-nav-btn"
           >
             ← 上一张
           </TactileButton>
-          <TactileButton 
-            @click="exitSpeedReview" 
-            variant="danger" 
+          <TactileButton
+            @click="exitSpeedReview"
+            variant="danger"
             size="sm"
             class="speed-nav-btn exit-btn"
           >
@@ -292,9 +292,9 @@
             退出
           </TactileButton>
         </div>
-        <el-button 
+        <el-button
           v-else
-          @click="previousStackCard" 
+          @click="previousStackCard"
           :disabled="currentStackIndex === 0"
           class="stack-nav-btn"
           circle
@@ -302,11 +302,11 @@
           <el-icon><ArrowLeft /></el-icon>
           </el-button>
       </div>
-      
+
       <!-- 单词堆叠区域 -->
       <div class="word-stack" :class="{ 'is-speed-review': isSpeedReviewMode }">
-        <div 
-          v-for="(word, index) in visibleStackWords" 
+        <div
+          v-for="(word, index) in visibleStackWords"
           :key="word.id"
           class="word-card-stack"
           :style="getStackCardStyle(index)"
@@ -443,7 +443,7 @@
                 不巩固
               </TactileButton>
             </div>
-            
+
             <!-- 删除按钮 - 右下角垃圾桶图标 -->
             <div class="word-delete-btn">
               <el-button
@@ -462,26 +462,26 @@
       <!-- 右侧导航按钮 -->
       <div class="stack-nav-right">
         <div v-if="isSpeedReviewMode" class="speed-nav-buttons">
-          <TactileButton 
-            @click="markSpeedReviewAsMastered" 
-            variant="success" 
+          <TactileButton
+            @click="markSpeedReviewAsMastered"
+            variant="success"
             size="sm"
             class="speed-nav-btn"
           >
             ✓ 已掌握
           </TactileButton>
-          <TactileButton 
-            @click="skipSpeedReviewWord" 
-            variant="warning" 
+          <TactileButton
+            @click="skipSpeedReviewWord"
+            variant="warning"
             size="sm"
             class="speed-nav-btn"
           >
             ⏭ 跳过
           </TactileButton>
         </div>
-        <el-button 
+        <el-button
           v-else
-          @click="nextStackCard" 
+          @click="nextStackCard"
           :disabled="currentStackIndex >= filteredWords.length - 1"
           class="stack-nav-btn"
           circle
@@ -489,7 +489,7 @@
           <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
-      
+
         <!-- 底部进度显示 -->
         <div class="stack-progress-bottom">
           <span class="stack-progress">
@@ -854,7 +854,7 @@ const shouldReviewWord = (word: WordItem) => {
   if (word.noLongerReview) {
     return false
   }
-  
+
   // 检查nextReviewTime字段，与后端 DATE_ADD(CURDATE(), INTERVAL 1 DAY) 逻辑一致
   if (word.nextReviewTime) {
     // 使用明天的开始时间进行比较，与后端 <= DATE_ADD(CURDATE(), INTERVAL 1 DAY) 一致
@@ -863,7 +863,7 @@ const shouldReviewWord = (word: WordItem) => {
     tomorrow.setHours(0, 0, 0, 0)
     return new Date(word.nextReviewTime) < tomorrow
   }
-  
+
   // 如果没有nextReviewTime，根据reviewStatus判断
   return word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing'
 }
@@ -873,12 +873,12 @@ const speedReviewWordsCount = computed(() => {
   // 使用统一的shouldReviewWord逻辑
   if (words.value.length > 0) {
     const locallyNeedingReview = words.value.filter((word: WordItem) => shouldReviewWord(word)).length
-    
+
     if (locallyNeedingReview > 0) {
       return locallyNeedingReview
     }
   }
-  
+
   // 如果没有本地数据，返回0
   return 0
 })
@@ -899,41 +899,41 @@ const visibleStackWords = computed(() => {
     const dynamicStackSize = Math.min(remainingWords, 8)
     const end = start + dynamicStackSize
     const result = speedReviewWords.value.slice(start, end)
-    
+
     // 调试日志：显示可见堆叠单词数量
     console.log('速刷模式 - visibleStackWords数量:', result.length)
     console.log('速刷模式 - speedReviewWords总数量:', speedReviewWords.value.length)
     console.log('速刷模式 - currentSpeedReviewIndex:', currentSpeedReviewIndex.value)
     console.log('速刷模式 - isSpeedReviewMode:', isSpeedReviewMode.value)
-    
+
     return result
   }
-  
+
   // 普通模式按状态优先级排序
   const sortedWords = [...filteredWords.value].sort((a, b) => {
     const statusOrder = { 'unreviewed': 0, 'reviewing': 1, 'mastered': 2, 'overdue': 0 }
     return statusOrder[a.reviewStatus] - statusOrder[b.reviewStatus]
   })
-  
+
   const start = currentStackIndex.value
   // 动态计算堆叠数量：根据实际单词数量，最多显示8张（包括当前张）
   const remainingWords = sortedWords.length - start
   const dynamicStackSize = Math.min(remainingWords, 8) // 最多显示8张，包括当前张
   const end = start + dynamicStackSize
   const result = sortedWords.slice(start, end)
-  
+
   // 调试日志：显示普通模式数量
   console.log('普通模式 - visibleStackWords数量:', result.length)
   console.log('普通模式 - filteredWords总数量:', filteredWords.value.length)
   console.log('普通模式 - isSpeedReviewMode:', isSpeedReviewMode.value)
-  
+
   return result
 })
 
 // 叠层卡片样式
 const getStackCardStyle = (index: number) => {
   const totalStackSize = visibleStackWords.value.length // 使用实际的堆叠数量
-  
+
   if (index === 0) {
     // 当前卡片：完全可见，无偏移，确保在最上层
     return {
@@ -948,12 +948,12 @@ const getStackCardStyle = (index: number) => {
       transition: 'all 0.3s ease'
     }
   }
-  
+
   // 叠层卡片：左右展开更多张卡片，模拟真实卡片堆叠
   // 计算左右展开的卡片数量
   const leftCards = Math.min(Math.floor(totalStackSize / 2), 4) // 左侧最多4张
   const rightCards = Math.min(Math.floor((totalStackSize - 1) / 2), 4) // 右侧最多4张
-  
+
   // 根据卡片位置计算偏移
   let horizontalOffset = 0
   if (index <= leftCards) {
@@ -966,21 +966,21 @@ const getStackCardStyle = (index: number) => {
     // 中间卡片：轻微交替偏移
     horizontalOffset = index % 2 === 1 ? -15 : 15
   }
-  
+
   const verticalOffset = index * 12 // 增加垂直偏移，模拟更厚的卡片
   const zIndex = totalStackSize - index // 根据实际堆叠数量调整z-index
-  
+
   // 根据偏移方向调整旋转角度
-  const rotation = horizontalOffset > 0 ? 2.5 + (horizontalOffset - 25) * 0.05 : 
-                   horizontalOffset < 0 ? -2.5 + (horizontalOffset + 25) * 0.05 : 
+  const rotation = horizontalOffset > 0 ? 2.5 + (horizontalOffset - 25) * 0.05 :
+                   horizontalOffset < 0 ? -2.5 + (horizontalOffset + 25) * 0.05 :
                    index % 2 === 1 ? 1.5 : -1.5
-  
+
   // 优化阴影计算，避免张数过多时阴影过重
   const maxShadowOffset = 60 // 最大阴影偏移量
   const shadowOffset = Math.min(verticalOffset, maxShadowOffset)
   const shadowBlur = Math.min(verticalOffset * 1.2, 80) // 限制阴影模糊范围
   const shadowOpacity = Math.max(0.05, 0.15 - index * 0.02) // 随层级递减阴影透明度
-  
+
   return {
     transform: `translateY(${verticalOffset}px) translateX(${horizontalOffset}px) rotate(${rotation}deg)`,
     zIndex: zIndex,
@@ -1006,7 +1006,7 @@ const nextStackCard = () => {
       currentCard.style.transform = 'translateX(120%) rotate(20deg) scale(0.8)'
       currentCard.style.opacity = '0'
     }
-    
+
     // 延迟切换卡片，让动画完成
     setTimeout(() => {
       currentStackIndex.value++
@@ -1027,7 +1027,7 @@ const previousStackCard = () => {
       currentCard.style.transform = 'translateX(-120%) rotate(-20deg) scale(0.8)'
       currentCard.style.opacity = '0'
     }
-    
+
     // 延迟切换卡片，让动画完成
     setTimeout(() => {
       currentStackIndex.value--
@@ -1054,13 +1054,13 @@ const resetCardAnimation = () => {
     element.style.transition = ''
     element.style.transform = ''
     element.style.opacity = ''
-    
+
     // 为新出现的卡片添加淡入动画
     if (index === 0) {
       element.style.opacity = '0'
       element.style.transform = 'translateY(20px) scale(0.95)'
       element.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-      
+
       // 触发淡入动画
       setTimeout(() => {
         element.style.opacity = '1'
@@ -1147,14 +1147,14 @@ const startWordSpeedReview = async () => {
     // 调试日志：显示映射后的数量
     console.log('映射后的速刷单词数量:', wordsToReview.length)
     console.log('映射前的API数据数量:', todayReviews.length)
-    
+
     // 检查是否有重复的单词ID
     const uniqueIds = new Set(wordsToReview.map(w => w.id))
     console.log('唯一ID数量:', uniqueIds.size)
     console.log('总单词数量:', wordsToReview.length)
     if (uniqueIds.size !== wordsToReview.length) {
       console.warn('发现重复的单词ID！')
-      const duplicateIds = wordsToReview.filter((word, index) => 
+      const duplicateIds = wordsToReview.filter((word, index) =>
         wordsToReview.findIndex(w => w.id === word.id) !== index
       )
       console.log('重复的单词:', duplicateIds)
@@ -1164,7 +1164,7 @@ const startWordSpeedReview = async () => {
       ElMessage.info('暂无需要速刷的单词')
       return
     }
-    
+
     // 初始化速刷状态
     speedReviewWords.value = wordsToReview
     console.log('最终speedReviewWords数量:', speedReviewWords.value.length)
@@ -1175,12 +1175,12 @@ const startWordSpeedReview = async () => {
       skipped: 0,
       startTime: new Date()
     }
-    
+
     // 切换到叠层视图
     viewMode.value = 'stack'
     currentStackIndex.value = 0
     isSpeedReviewMode.value = true
-    
+
     // 自动滚动到堆叠视图
     await nextTick()
     const stackContainer = document.querySelector('.word-stack-container')
@@ -1193,9 +1193,9 @@ const startWordSpeedReview = async () => {
         behavior: 'smooth'
       })
     }
-    
+
     ElMessage.success(`开始单词速刷，共 ${wordsToReview.length} 个单词`)
-    
+
   } catch (error) {
     // 发生错误时，也尝试从本地获取复习单词作为备选
     if (words.value.length > 0) {
@@ -1219,12 +1219,12 @@ const startWordSpeedReview = async () => {
           skipped: 0,
           startTime: new Date()
         }
-        
+
         // 切换到叠层视图
         viewMode.value = 'stack'
         currentStackIndex.value = 0
         isSpeedReviewMode.value = true
-        
+
         // 自动滚动到堆叠视图
         await nextTick()
         const stackContainer = document.querySelector('.word-stack-container')
@@ -1236,7 +1236,7 @@ const startWordSpeedReview = async () => {
             behavior: 'smooth'
           })
         }
-        
+
         ElMessage.success(`开始单词速刷，共 ${localReviewWords.length} 个单词`)
       } else {
         ElMessage.error('获取速刷内容失败，请稍后再试')
@@ -1252,31 +1252,31 @@ const startWordSpeedReview = async () => {
 const markSpeedReviewAsMastered = async () => {
   const currentWord = speedReviewWords.value[currentSpeedReviewIndex.value]
   if (!currentWord) return
-  
+
   const userId = userStore.userInfo?.id
   if (!userId) {
     ElMessage.warning('请先登录')
     return
   }
-  
+
   try {
     // 更新单词状态为已掌握 - 使用统一的API
     await learningApi.recordReviewResult(String(userId), Number(currentWord.id), true)
-    
+
     // 更新统计
     speedReviewStats.value.mastered++
     // 立即减少待复习数量（跳过不算，但已掌握算）
     if (stats.value.reviewWords > 0) {
       stats.value.reviewWords = stats.value.reviewWords - 1
     }
-    
+
     // 刷新单词列表和统计
     await loadWords()
     await loadStats()
-    
+
     // 切换到下一张
     nextSpeedReviewCard()
-    
+
   } catch (error) {
     ElMessage.error('标记失败')
   }
@@ -1285,27 +1285,27 @@ const markSpeedReviewAsMastered = async () => {
 const skipSpeedReviewWord = async () => {
   const currentWord = speedReviewWords.value[currentSpeedReviewIndex.value]
   if (!currentWord) return
-  
+
   const userId = userStore.userInfo?.id
   if (!userId) {
     ElMessage.warning('请先登录')
     return
   }
-  
+
   try {
     // 跳过单词，标记为学习中 - 使用统一的API
     await learningApi.recordReviewResult(String(userId), Number(currentWord.id), false)
-    
+
     // 更新统计
     speedReviewStats.value.skipped++
-    
+
     // 刷新单词列表和统计
     await loadWords()
     await loadStats()
-    
+
     // 切换到下一张
     nextSpeedReviewCard()
-    
+
   } catch (error) {
     ElMessage.error('跳过失败')
   }
@@ -1338,10 +1338,10 @@ const exitSpeedReview = () => {
 }
 
 const finishSpeedReview = () => {
-  const duration = speedReviewStats.value.startTime 
+  const duration = speedReviewStats.value.startTime
     ? Math.round((new Date().getTime() - speedReviewStats.value.startTime.getTime()) / 1000 / 60)
     : 0
-  
+
   ElMessageBox.alert(
     `速刷完成！\n\n总单词数: ${speedReviewStats.value.total}\n已掌握: ${speedReviewStats.value.mastered}\n跳过: ${speedReviewStats.value.skipped}\n用时: ${duration} 分钟`,
     '速刷完成',
@@ -1350,7 +1350,7 @@ const finishSpeedReview = () => {
       type: 'success'
     }
   )
-  
+
   // 退出速刷模式
   isSpeedReviewMode.value = false
   viewMode.value = 'grid'
@@ -1594,7 +1594,7 @@ const loadWords = async () => {
               const cleanDateStr = nextReviewTime.replace('T', ' ')
                 // 移除可能存在的毫秒部分和时区信息
                 .split('.')[0].split('Z')[0].split('+')[0]
-              
+
               // 验证清理后的日期是否有效
               const testDate = new Date(cleanDateStr)
               if (!isNaN(testDate.getTime())) {
@@ -1842,7 +1842,7 @@ const formatNextReviewTime = (nextReviewTime: string): string => {
       try {
         // 首先尝试直接解析ISO格式
         reviewDate = new Date(nextReviewTime)
-        
+
         // 如果解析失败或日期无效，尝试手动解析
         if (isNaN(reviewDate.getTime())) {
           // 替换T为空格，使格式更易解析
@@ -1914,7 +1914,7 @@ const formatCreatedTime = (createdTime: string): string => {
       const cleanDateStr = createdTime.replace('T', ' ')
         // 移除可能存在的毫秒部分和时区信息
         .split('.')[0].split('Z')[0].split('+')[0]
-      
+
       // 验证清理后的日期是否有效
       createdDate = new Date(cleanDateStr)
       if (isNaN(createdDate.getTime())) {
@@ -2661,7 +2661,7 @@ const showDictationHint = () => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-3xl);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -2696,7 +2696,7 @@ const showDictationHint = () => {
 
 .vocabulary-container h2:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -2704,11 +2704,11 @@ const showDictationHint = () => {
 }
 
 @keyframes liquidFlow {
-  0%, 100% { 
+  0%, 100% {
     opacity: 0.1;
     transform: scale(1);
   }
-  50% { 
+  50% {
     opacity: 0.2;
     transform: scale(1.02);
   }
@@ -2729,7 +2729,7 @@ const showDictationHint = () => {
   padding: var(--space-8);
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.05),
@@ -2758,7 +2758,7 @@ const showDictationHint = () => {
 
 .stats-wrapper:hover {
   transform: translateY(-4px);
-  box-shadow: 
+  box-shadow:
     0 16px 48px rgba(0, 0, 0, 0.18),
     0 4px 16px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08),
@@ -2897,7 +2897,7 @@ const showDictationHint = () => {
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-2xl);
   border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
+  box-shadow:
     0 6px 24px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -2920,7 +2920,7 @@ const showDictationHint = () => {
 
 .filters:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -3030,9 +3030,9 @@ const showDictationHint = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(64, 158, 255, 0.2) 0%, 
-    rgba(64, 158, 255, 0.1) 50%, 
+  background: linear-gradient(135deg,
+    rgba(64, 158, 255, 0.2) 0%,
+    rgba(64, 158, 255, 0.1) 50%,
     rgba(100, 200, 255, 0.15) 100%);
   border-radius: 20px;
   opacity: 0.8;
@@ -3057,9 +3057,9 @@ const showDictationHint = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(255, 193, 7, 0.08) 0%, 
-    rgba(255, 193, 7, 0.05) 50%, 
+  background: linear-gradient(135deg,
+    rgba(255, 193, 7, 0.08) 0%,
+    rgba(255, 193, 7, 0.05) 50%,
     rgba(255, 235, 59, 0.06) 100%);
   border-radius: 20px;
   opacity: 1;
@@ -3084,9 +3084,9 @@ const showDictationHint = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(103, 194, 58, 0.2) 0%, 
-    rgba(103, 194, 58, 0.1) 50%, 
+  background: linear-gradient(135deg,
+    rgba(103, 194, 58, 0.2) 0%,
+    rgba(103, 194, 58, 0.1) 50%,
     rgba(120, 220, 100, 0.15) 100%);
   border-radius: 20px;
   opacity: 0.8;
@@ -3095,7 +3095,7 @@ const showDictationHint = () => {
 
 /* 现代进入动画：保持三色配色，增强玻璃态效果 */
 @keyframes glow-in-blue {
-  to { 
+  to {
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05),
@@ -3105,7 +3105,7 @@ const showDictationHint = () => {
 }
 
 @keyframes glow-in-orange {
-  to { 
+  to {
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
       0 2px 8px rgba(0, 0, 0, 0.05),
@@ -3115,10 +3115,10 @@ const showDictationHint = () => {
 }
 
 @keyframes glow-in-green {
-  to { 
-    box-shadow: 
+  to {
+    box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.1),
-      0 2px 8px rgba(0, 0, 0, 0.05), 
+      0 2px 8px rgba(0, 0, 0, 0.05),
       0 0 12px 4px rgba(103, 194, 58, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
   }
@@ -3210,8 +3210,8 @@ const showDictationHint = () => {
 .new-progress-bar {
   position: relative;
   height: 6px;
-  background: linear-gradient(90deg, 
-    rgba(0, 0, 0, 0.05) 0%, 
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.05) 0%,
     rgba(0, 0, 0, 0.08) 100%);
   border-radius: 3px;
   overflow: visible;
@@ -3234,9 +3234,9 @@ const showDictationHint = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(255, 255, 255, 0.3) 50%, 
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
     transparent 100%);
   border-radius: 3px;
   animation: shimmer 2s ease-in-out infinite;
@@ -3257,7 +3257,7 @@ const showDictationHint = () => {
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  box-shadow: 
+  box-shadow:
     0 3px 8px rgba(103, 194, 58, 0.4),
     0 1px 3px rgba(0, 0, 0, 0.2);
   border: 2px solid white;
@@ -3267,7 +3267,7 @@ const showDictationHint = () => {
 /* 逾期状态的进度条标记 */
 .progress-overdue {
   background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%) !important;
-  box-shadow: 
+  box-shadow:
     0 3px 8px rgba(245, 108, 108, 0.4),
     0 1px 3px rgba(0, 0, 0, 0.2) !important;
 }
@@ -3479,7 +3479,7 @@ const showDictationHint = () => {
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
@@ -3488,7 +3488,7 @@ const showDictationHint = () => {
 /* 叠层卡片：保持玻璃感但降低透明度 */
 .word-card-stack:not(:first-child) .word-card {
   border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   /* 确保叠层卡片有完整的背景，避免透明 */
@@ -3582,7 +3582,7 @@ const showDictationHint = () => {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-2xl);
-  box-shadow: 
+  box-shadow:
     0 6px 24px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -3606,7 +3606,7 @@ const showDictationHint = () => {
 
 .dictation-card:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -3650,7 +3650,7 @@ const showDictationHint = () => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-2xl);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.05),
@@ -3686,7 +3686,7 @@ const showDictationHint = () => {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-2xl);
-  box-shadow: 
+  box-shadow:
     0 6px 24px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -3710,7 +3710,7 @@ const showDictationHint = () => {
 
 .review-card:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -3746,7 +3746,7 @@ const showDictationHint = () => {
   text-align: center;
   line-height: 1.8;
   font-size: 20px;
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -3758,7 +3758,7 @@ const showDictationHint = () => {
 
 .review-definition:hover {
   transform: translateY(-1px);
-  box-shadow: 
+  box-shadow:
     0 6px 20px rgba(0, 0, 0, 0.12),
     0 2px 6px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
@@ -3807,7 +3807,7 @@ const showDictationHint = () => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-3xl);
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.2),
     0 8px 24px rgba(0, 0, 0, 0.15),
     0 4px 12px rgba(0, 0, 0, 0.1),
@@ -3913,15 +3913,15 @@ const showDictationHint = () => {
   .word-text {
     font-size: 24px;
   }
-  
+
   .word-phonetic {
     font-size: 14px;
   }
-  
+
   .word-meaning {
     font-size: 14px;
   }
-  
+
   .word-example {
     font-size: 12px;
   }

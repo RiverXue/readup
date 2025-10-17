@@ -150,17 +150,14 @@ export const articleApi = {
   // 阅读文章（获取带阅读统计的文章）
   readArticle: (id: string) => api.get(`/api/article/read/${id}`),
 
-  // 搜索文章
-  searchArticles: (keyword: string) => api.get('/api/article/search', { params: { keyword } }),
+  // 搜索文章（自定义主题）
+  searchArticles: (keyword: string, limit: number) => api.post('/api/article/discover/search', {}, { params: { keyword, limit } }),
 
   // 获取热点文章
   getTrendingArticles: (limit: number) => api.post('/api/article/discover/trending', {}, { params: { limit } }),
 
   // 获取分类文章
   getArticlesByCategory: (category: string, limit: number) => api.post('/api/article/discover/category', {}, { params: { category, limit } }),
-
-  // 搜索文章（自定义主题）
-  searchArticles: (keyword: string, limit: number) => api.post('/api/article/discover/search', {}, { params: { keyword, limit } }),
 
   // 增强搜索文章（支持多语言、多国家、时间范围、排序）
   searchArticlesAdvanced: (params: {
@@ -187,7 +184,7 @@ export const articleApi = {
 
 
 
-// AI服务API
+// AI服务API - 精简版（仅保留真正使用的功能）
 export const aiApi = {
   // 分层翻译策略：根据用户等级选择翻译接口
   translate: async (text: string, userId?: number) => {
@@ -210,26 +207,6 @@ export const aiApi = {
     return api.post('/api/ai/tencent-translate/en-to-zh', { text });
   },
 
-  // 增值翻译服务（仅付费用户）
-  smartTranslate: (text: string, targetLang?: string) =>
-    api.post('/api/ai/translate/smart', { text, targetLang }),
-
-  // 全文翻译
-  translateFullText: (content: string, articleId?: string) =>
-    api.post('/api/ai/translate/fulltext', { content, articleId }),
-
-  // 腾讯云英文到中文翻译
-  tencentTranslateEnToZh: (text: string) =>
-    api.post('/api/ai/tencent-translate/en-to-zh', { text }),
-
-  // 腾讯云中文到英文翻译
-  tencentTranslateZhToEn: (text: string) =>
-    api.post('/api/ai/tencent-translate/zh-to-en', { text }),
-
-  // 腾讯云批量翻译
-  tencentTranslateBatch: (data: any) =>
-    api.post('/api/ai/tencent-translate/batch', data),
-
   // AI摘要
   generateSummary: (text: string, articleId: string | number) =>
     api.post('/api/ai/summary', { text, articleId }),
@@ -238,47 +215,12 @@ export const aiApi = {
   parseSentence: (sentence: string, articleId: string | number) =>
     api.post('/api/ai/parse', { sentence, articleId }),
 
-  // 词汇翻译
-  translateWord: (word: string, context: string) =>
-    api.post('/api/ai/translate/word', { word, context }),
-
-  // 获取阅读建议
-  getReadingSuggestions: (articleId: string) =>
-    api.get(`/api/ai/assistant/${articleId}/suggestions`),
-
   // AI对话（支持Function Calling）
   chat: (question: string, userId: number) => {
     return api.post('/api/ai/assistant/chat', {
       question,
       userId
     });
-  },
-
-  // 查询单词（调用二级词库）
-  lookupWord: (word: string, context: string, userId: number) => {
-    return api.post('/api/vocabulary/lookup', {
-      word,
-      context,
-      userId
-    });
-  },
-
-  // 生成测验题（Structured Outputs）
-  generateQuiz: (text: string, articleId: number) => {
-    return api.post('/api/ai/quiz', {
-      text,
-      articleId,
-      questionCount: 3
-    });
-  },
-
-  // 智能AI分析（推荐使用）
-  smartAnalyze: (data: {
-    userId: number;
-    content: string;
-    scenario?: string;
-  }) => {
-    return api.post('/api/ai/smart/analyze', data);
   },
 
   // Function Calling 生成测验（推荐使用）
@@ -289,13 +231,9 @@ export const aiApi = {
     return api.post('/api/ai/assistant/quiz', data);
   },
 
-  // 综合AI分析
-  comprehensiveAnalysis: (data: {
-    articleId: number;
-    userId?: number;
-    text: string;
-  }) => {
-    return api.post('/api/ai/comprehensive', data);
+  // 获取已保存的测验题
+  getSavedQuiz: (articleId: number) => {
+    return api.get(`/api/ai/assistant/quiz/${articleId}`);
   }
 }
 

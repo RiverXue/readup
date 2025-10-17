@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * AI阅读助手控制器
@@ -50,33 +51,28 @@ public class AiReadingAssistantController {
         }
     }
 
-    /**
-     * 查询单词信息（Function Calling工具）
-     */
-    @GetMapping("/word/{word}")
-    @Operation(summary = "查询单词", description = "查询单词的详细信息（Function Calling工具）")
-    public ApiResponse<Object> lookupWord(@PathVariable String word) {
-        try {
-            return ApiResponse.success(aiReadingAssistantService.lookupWord(word));
-        } catch (Exception e) {
-            log.error("查询单词失败: {}", word, e);
-            return ApiResponse.error("查询单词失败");
-        }
-    }
+    // ===== 以下方法已删除（未使用） =====
+    // - lookupWord() - 前端使用 vocabularyApi.lookupWord() 代替
+    // - translate() - 前端使用分层翻译策略代替
 
     /**
-     * 翻译文本（Function Calling工具）
+     * 获取已保存的测验题
      */
-    @PostMapping("/translate")
-    @Operation(summary = "翻译文本", description = "翻译文本内容（Function Calling工具）")
-    public ApiResponse<String> translate(@RequestParam String text, 
-                                        @RequestParam(defaultValue = "zh") String targetLang) {
+    @GetMapping("/quiz/{articleId}")
+    @Operation(summary = "获取已保存测验", description = "获取指定文章已保存的测验题")
+    public ApiResponse<List<QuizQuestion>> getSavedQuiz(@PathVariable Long articleId) {
         try {
-            String translation = aiReadingAssistantService.translateText(text, targetLang);
-            return ApiResponse.success(translation);
+            log.info("获取已保存测验 - 文章ID: {}", articleId);
+            List<QuizQuestion> questions = enhancedAiAnalysisService.getQuizQuestions(articleId);
+            
+            if (questions == null || questions.isEmpty()) {
+                return ApiResponse.success(new ArrayList<>());
+            }
+            
+            return ApiResponse.success(questions);
         } catch (Exception e) {
-            log.error("翻译失败", e);
-            return ApiResponse.error("翻译失败");
+            log.error("获取已保存测验失败", e);
+            return ApiResponse.error("获取已保存测验失败");
         }
     }
 

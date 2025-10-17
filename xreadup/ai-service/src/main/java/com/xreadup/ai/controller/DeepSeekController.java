@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
  * DeepSeek AI控制器 - 进阶AI功能
  * 
@@ -118,85 +116,8 @@ public class DeepSeekController {
         }
     }
 
-    /**
-     * 生成测验题（DeepSeek）
-     * 基于文章内容生成阅读理解测验题并保存到数据库
-     */
-    @PostMapping("/quiz")
-    @Operation(summary = "生成测验题", description = "基于文章内容生成阅读理解测验题并持久化存储")
-    public ApiResponse<List<QuizQuestion>> generateQuiz(@RequestBody QuizGenerationRequest request) {
-        try {
-            // 检查AI测验生成功能是否启用
-            if (!aiConfigService.isAiQuizGenerationEnabled()) {
-                log.warn("AI测验生成功能已禁用，拒绝测验请求: {}", request.getArticleId());
-                return ApiResponse.error("AI测验生成功能当前不可用");
-            }
-            
-            // 检查系统维护模式
-            if (aiConfigService.isMaintenanceMode()) {
-                log.warn("系统处于维护模式，拒绝测验请求: {}", request.getArticleId());
-                return ApiResponse.error("系统正在维护中，请稍后重试");
-            }
-            
-            log.info("开始生成测验题: 文章ID={}", request.getArticleId());
-            List<QuizQuestion> questions = enhancedAiAnalysisService.generateQuiz(request.getText(), request.getQuestionCount());
-            
-            // 保存测验题到数据库
-            enhancedAiAnalysisService.saveQuizQuestions(request.getArticleId(), questions);
-            
-            log.info("测验题生成完成并保存: 生成题目数量={}", questions.size());
-            return ApiResponse.success(questions);
-        } catch (Exception e) {
-            log.error("生成测验题失败: {}", request.getArticleId(), e);
-            return ApiResponse.error("生成测验题失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 学习建议（DeepSeek）
-     * 基于用户学习数据生成个性化学习建议并保存到数据库
-     */
-    @PostMapping("/tip")
-    @Operation(summary = "学习建议", description = "基于用户学习数据生成个性化学习建议并持久化存储")
-    public ApiResponse<String> generateLearningTip(@RequestBody LearningTipRequest request) {
-        try {
-            log.info("开始生成学习建议: 用户ID={}", request.getUserId());
-            String tip = enhancedAiAnalysisService.generateLearningTip(
-                request.getArticleCount(), 
-                request.getWordCount(),
-                request.getLearningDays()
-            );
-            
-            // 保存学习建议到数据库（关联到文章ID）
-            enhancedAiAnalysisService.saveLearningTip(request.getArticleId(), request.getUserId(), tip);
-            
-            log.info("学习建议生成完成并保存: 建议长度={}字符", tip.length());
-            return ApiResponse.success(tip);
-        } catch (Exception e) {
-            log.error("生成学习建议失败: {}", request.getUserId(), e);
-            return ApiResponse.error("生成学习建议失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 综合AI分析（DeepSeek）
-     * 提供全面的文章分析和学习建议并保存到数据库
-     */
-    @PostMapping("/comprehensive")
-    @Operation(summary = "综合AI分析", description = "提供全面的文章分析和学习建议并持久化存储所有结果")
-    public ApiResponse<ComprehensiveAnalysisResponse> comprehensiveAnalysis(@RequestBody ComprehensiveAnalysisRequest request) {
-        try {
-            log.info("开始综合AI分析: 文章ID={}", request.getArticleId());
-            ComprehensiveAnalysisResponse response = enhancedAiAnalysisService.comprehensiveAnalysis(request);
-            
-            // 保存综合分析结果到数据库
-            enhancedAiAnalysisService.saveComprehensiveAnalysis(request.getArticleId(), request.getUserId(), response);
-            
-            log.info("综合AI分析完成并保存: 文章ID={}", request.getArticleId());
-            return ApiResponse.success(response);
-        } catch (Exception e) {
-            log.error("综合AI分析失败: {}", request.getArticleId(), e);
-            return ApiResponse.error("综合AI分析失败: " + e.getMessage());
-        }
-    }
+    // ===== 以下方法已删除（未使用） =====
+    // - generateQuiz() - 前端使用 assistantGenerateQuiz() 代替
+    // - generateLearningTip() - 未使用
+    // - comprehensiveAnalysis() - 未使用
 }

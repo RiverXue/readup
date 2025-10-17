@@ -1204,4 +1204,40 @@ public class EnhancedAiAnalysisService {
             return null;
         }
     }
+
+    /**
+     * 获取已保存的测验题
+     * 
+     * @param articleId 文章ID
+     * @return 测验题列表
+     */
+    public List<QuizQuestion> getQuizQuestions(Long articleId) {
+        try {
+            log.info("获取已保存的测验题，文章ID: {}", articleId);
+            
+            // 查询该文章的分析记录
+            LambdaQueryWrapper<AiAnalysis> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(AiAnalysis::getArticleId, articleId);
+            
+            AiAnalysis analysis = aiAnalysisMapper.selectOne(wrapper);
+            if (analysis == null || analysis.getQuizQuestions() == null || analysis.getQuizQuestions().isEmpty()) {
+                log.info("未找到文章ID为{}的已保存测验题", articleId);
+                return new ArrayList<>();
+            }
+            
+            // 将JSON字符串转换为测验题列表
+            String quizQuestionsJson = analysis.getQuizQuestions();
+            List<QuizQuestion> quizQuestions = objectMapper.readValue(
+                quizQuestionsJson, 
+                objectMapper.getTypeFactory().constructCollectionType(List.class, QuizQuestion.class)
+            );
+            
+            log.info("成功获取文章ID {} 的测验题，数量: {}", articleId, quizQuestions.size());
+            return quizQuestions;
+            
+        } catch (Exception e) {
+            log.error("获取已保存测验题失败，文章ID: {}", articleId, e);
+            return new ArrayList<>();
+        }
+    }
 }

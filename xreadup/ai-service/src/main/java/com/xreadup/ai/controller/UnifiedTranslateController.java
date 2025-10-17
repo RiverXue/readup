@@ -88,58 +88,7 @@ public class UnifiedTranslateController {
         }
     }
 
-    /**
-     * 批量智能翻译
-     */
-    @PostMapping("/batch")
-    @Operation(summary = "批量智能翻译", description = "批量文本智能翻译")
-    public ApiResponse<BatchTranslateResponse> batchTranslate(@Valid @RequestBody BatchTranslateRequest request) {
-        long startTime = Instant.now().toEpochMilli();
-        
-        try {
-            log.info("批量智能翻译: 文本数量: {}", request.getTexts().size());
-            
-            List<TranslatedItem> results = request.getTexts().stream()
-                .map(text -> {
-                    String sourceLang = detectLanguage(text);
-                    String targetLang = determineTargetLanguage(sourceLang, request.getTargetLang());
-                    
-                    try {
-                        String translated = tencentTranslateService.translateText(
-                            text, sourceLang, targetLang
-                        );
-                        
-                        TranslatedItem item = new TranslatedItem();
-                        item.setOriginalText(text);
-                        item.setTranslatedText(translated);
-                        item.setSourceLang(sourceLang);
-                        item.setTargetLang(targetLang);
-                        return item;
-                        
-                    } catch (Exception e) {
-                        log.error("批量翻译单项失败: {}", text, e);
-                        TranslatedItem errorItem = new TranslatedItem();
-                        errorItem.setOriginalText(text);
-                        errorItem.setError(e.getMessage());
-                        return errorItem;
-                    }
-                })
-                .toList();
-            
-            BatchTranslateResponse response = new BatchTranslateResponse();
-            response.setResults(results);
-            response.setTotalCount(results.size());
-            response.setSuccessCount((int) results.stream().filter(r -> r.getError() == null).count());
-            response.setTranslateTime(Instant.now().toEpochMilli() - startTime);
-            
-            log.info("批量翻译完成: 成功 {} / 总 {}", response.getSuccessCount(), response.getTotalCount());
-            return ApiResponse.success(response);
-            
-        } catch (Exception e) {
-            log.error("批量智能翻译失败", e);
-            return ApiResponse.error("批量翻译失败: " + e.getMessage());
-        }
-    }
+    // ===== batchTranslate() 方法已删除（未使用） =====
 
     // 智能语言检测（简化版）
     private String detectLanguage(String text) {
@@ -198,53 +147,7 @@ public class UnifiedTranslateController {
         public void setTargetLang(String targetLang) { this.targetLang = targetLang; }
     }
 
-    public static class BatchTranslateRequest {
-        private List<String> texts;
-        private String targetLang; // 可选
-        
-        // getters and setters
-        public List<String> getTexts() { return texts; }
-        public void setTexts(List<String> texts) { this.texts = texts; }
-        public String getTargetLang() { return targetLang; }
-        public void setTargetLang(String targetLang) { this.targetLang = targetLang; }
-    }
-
-    public static class BatchTranslateResponse {
-        private List<TranslatedItem> results;
-        private int totalCount;
-        private int successCount;
-        private long translateTime;
-        
-        // getters and setters
-        public List<TranslatedItem> getResults() { return results; }
-        public void setResults(List<TranslatedItem> results) { this.results = results; }
-        public int getTotalCount() { return totalCount; }
-        public void setTotalCount(int totalCount) { this.totalCount = totalCount; }
-        public int getSuccessCount() { return successCount; }
-        public void setSuccessCount(int successCount) { this.successCount = successCount; }
-        public long getTranslateTime() { return translateTime; }
-        public void setTranslateTime(long translateTime) { this.translateTime = translateTime; }
-    }
-
-    public static class TranslatedItem {
-        private String originalText;
-        private String translatedText;
-        private String sourceLang;
-        private String targetLang;
-        private String error;
-        
-        // getters and setters
-        public String getOriginalText() { return originalText; }
-        public void setOriginalText(String originalText) { this.originalText = originalText; }
-        public String getTranslatedText() { return translatedText; }
-        public void setTranslatedText(String translatedText) { this.translatedText = translatedText; }
-        public String getSourceLang() { return sourceLang; }
-        public void setSourceLang(String sourceLang) { this.sourceLang = sourceLang; }
-        public String getTargetLang() { return targetLang; }
-        public void setTargetLang(String targetLang) { this.targetLang = targetLang; }
-        public String getError() { return error; }
-        public void setError(String error) { this.error = error; }
-    }
+    // ===== 批量翻译相关的DTO类已删除（未使用） =====
 
     public static class SmartFeatures {
         private int wordCount;

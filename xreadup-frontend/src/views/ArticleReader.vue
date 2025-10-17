@@ -72,6 +72,7 @@
 
           <el-button
             type="info"
+            :loading="loading.quiz"
             @click="generateQuiz"
             class="function-button info-button"
             size="large"
@@ -658,7 +659,8 @@ const showTranslation = ref(false)
 const loading = ref({
   translate: false,
   summary: false,
-  parse: false
+  parse: false,
+  quiz: false
 })
 const aiResult = ref('')
 const aiTitle = ref('')
@@ -1331,7 +1333,7 @@ const aiParseSelection = async () => {
   }
 }
 
-// 生成测验题 - 使用Function Calling接口优化
+// 生成测验题 - 优先从数据库加载，没有则生成新的
 const generateQuiz = async () => {
   // 检查用户是否登录
   if (!userStore.isLoggedIn || !userStore.userInfo?.id) {
@@ -1339,27 +1341,67 @@ const generateQuiz = async () => {
     return
   }
 
-  // 检查AI调用配额
-  if (!userStore.checkAiQuota()) return
+  // 检查文章ID是否有效
+  const articleId = Number(article.value.id)
+  if (isNaN(articleId) || !articleId) {
+    ElMessage.error('文章ID无效，无法生成测验题')
+    return
+  }
+
+  loading.value.quiz = true
+  setAiState('loading', '正在加载测验题，请稍候…')
 
   try {
-    const articleId = Number(article.value.id)
-    console.log('🔄 开始生成测验题请求:', {
+    console.log('🔄 开始加载测验题:', {
       timestamp: new Date().toISOString(),
       userId: userStore.userInfo?.id,
-      articleId: articleId,
-      contentLength: article.value.enContent.length
+      articleId: articleId
     })
 
-    // 检查文章ID是否有效
-    if (isNaN(articleId) || !articleId) {
-      ElMessage.error('文章ID无效，无法生成测验题')
-      return
+    // 首先尝试从数据库加载已保存的测验题
+    try {
+      console.log('📚 尝试从数据库加载已保存的测验题...')
+      const savedRes = await aiApi.getSavedQuiz(articleId)
+      
+      if (savedRes?.data && Array.isArray(savedRes.data) && savedRes.data.length > 0) {
+        console.log('✅ 成功从数据库加载测验题:', savedRes.data.length, '道题')
+        
+        // 转换为交互式测验题格式
+        quizQuestions.value = savedRes.data.map((q: any, index: number) => ({
+          id: q.id || String(index + 1),
+          question: q.question || '问题内容为空',
+          options: q.options && Array.isArray(q.options) && q.options.length > 0
+            ? q.options.map((opt: string) => opt.replace(/^[A-D]\.\s*/, '')) // 移除选项前缀
+            : ['选项A', '选项B', '选项C', '选项D'],
+          answer: q.answer || q.correctAnswerText || q.correctAnswer || 'A',
+          correctAnswer: q.correctAnswerText || q.correctAnswer,
+          correctAnswerText: q.correctAnswerText || q.correctAnswer,
+          explanation: q.explanation || '暂无解析',
+          questionType: q.questionType || 'comprehension',
+          difficulty: q.difficulty || 'medium'
+        }))
+
+        // 切换到测验模式
+        isQuizMode.value = true
+        aiResult.value = ''
+        aiTitle.value = ''
+        setAiState('success', '已加载保存的测验题')
+        ElMessage.success('已加载保存的测验题')
+        return
+      }
+    } catch (savedError) {
+      console.log('📚 数据库中没有保存的测验题，将生成新的:', savedError)
     }
 
-    setAiState('loading', '正在生成测验题，请稍候…')
+    // 如果数据库中没有，则生成新的测验题
+    console.log('🔄 开始生成新的测验题...')
+    setAiState('loading', '正在生成新测验题，请稍候…')
+
+    // 检查AI调用配额
+    if (!userStore.checkAiQuota()) return
+
     console.time('生成测验题请求耗时')
-    // 优先使用Function Calling接口以获得更智能的交互能力
+    // 使用Function Calling接口生成新的测验题
     const res = (await aiApi.assistantGenerateQuiz({
       articleContent: article.value.enContent,
       articleId: articleId
@@ -1400,6 +1442,7 @@ const generateQuiz = async () => {
         aiResult.value = ''
         aiTitle.value = ''
         setAiState('success', '测验题已生成')
+        ElMessage.success('测验题已生成')
       } else {
         // 所有问题都无效，尝试回退到DeepSeek接口
         console.log('Function Calling接口返回的测验题全部无效，尝试DeepSeek接口')
@@ -1415,6 +1458,9 @@ const generateQuiz = async () => {
     console.error('❌ 生成测验题失败:', err.response?.data || err.message || error)
     ElMessage.error('生成测验题失败，请稍后重试')
     setAiState('error', '测验题生成失败，请稍后重试')
+  } finally {
+    loading.value.quiz = false
+    if (aiState.value.phase === 'loading') setAiState('idle', '准备就绪')
   }
 }
 
@@ -1452,6 +1498,7 @@ const tryFallbackQuiz = async () => {
       aiResult.value = ''
       aiTitle.value = ''
       setAiState('success', '测验题已生成')
+      ElMessage.success('测验题已生成')
     } else {
       aiResult.value = '测验题生成暂时不可用，请稍后再试'
       ElMessage.warning('测验题生成服务暂时不可用，请稍后再试')
@@ -1974,6 +2021,7 @@ onUnmounted(async () => {
 /* 主内容区样式 */
 .main-content {
   flex: 1;
+  height: 100vh;
   overflow-y: auto;
   padding: 20px;
   background-color: #fff;
@@ -2514,6 +2562,7 @@ onUnmounted(async () => {
   padding: 30px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
+  min-height: calc(100vh - 200px);
 }
 
 .english-section, .chinese-section {
@@ -2878,6 +2927,7 @@ onUnmounted(async () => {
 
 .sidebar-toggle:hover {
   /* 移除缩放效果，避免错位 */
+  background-color: rgba(64, 169, 255, 0.1);
 }
 
 /* 卡片悬停效果 */
