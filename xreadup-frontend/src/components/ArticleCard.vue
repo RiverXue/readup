@@ -1,6 +1,7 @@
 <template>
-  <div class="airbnb-modern-card" @click="handleClick">
-    <!-- 封面图片区域（仅在有图片且未加载失败时显示） -->
+  <div class="modern-news-card" @click="handleClick">
+
+    <!-- 封面图片区域 -->
     <div class="card-image-container" v-if="article.image && !imageLoadFailed">
       <img 
         :src="article.image" 
@@ -10,21 +11,25 @@
       />
       <div class="image-overlay">
         <div class="source-badge" v-if="article.source">
-          {{ article.source }}
+          {{ formatSourceName(article.source) }}
+        </div>
+        <div class="publish-time" v-if="article.publishedAt">
+          {{ formatPublishTime(article.publishedAt) }}
         </div>
       </div>
     </div>
     
     <!-- 卡片内容 -->
-    <div class="card-content compact">
-      <!-- 分类与难度 -->
-      <div class="compact-meta">
-        <span class="tag category">{{ article.category || '未分类' }}</span>
-        <span class="tag difficulty">{{ getDifficultyText(article.difficulty || '') }}</span>
-        <!-- 当图片加载失败时，在标签区域显示来源信息 -->
-        <span class="tag source" v-if="article.source && imageLoadFailed">
-          {{ article.source }}
-        </span>
+    <div class="card-content" :class="{ 'no-image': !article.image || imageLoadFailed }">
+      <!-- 顶部信息栏 -->
+      <div class="card-header">
+        <div class="source-info" v-if="!article.image || imageLoadFailed">
+          <span class="source-name" v-if="article.source">{{ formatSourceName(article.source) }}</span>
+        </div>
+        <div class="category-tags">
+          <span class="category-tag">{{ article.category || '未分类' }}</span>
+          <span class="difficulty-tag">{{ getDifficultyText(article.difficulty || '') }}</span>
+        </div>
       </div>
 
       <!-- 标题 -->
@@ -35,23 +40,15 @@
         {{ article.description || (article.enContent ? truncateText(article.enContent, 120) + '...' : '暂无描述') }}
       </p>
 
-      <!-- 元信息 -->
-      <div class="card-meta">
-        <div class="meta-item">
-          <span class="meta-icon">⏱️</span>
-          <span>{{ getEstimatedReadTime }}分钟</span>
-        </div>
-        <div class="meta-item" v-if="article.wordCount">
-          <span class="meta-icon">📝</span>
-          <span>{{ formatWordCount(article.wordCount) }}词</span>
-        </div>
-        <!-- 新增：发布时间 -->
-        <div class="meta-item" v-if="article.publishedAt">
-          <span class="meta-icon">📅</span>
-          <span>{{ formatPublishTime(article.publishedAt) }}</span>
+      <!-- 底部元信息 -->
+      <div class="card-footer">
+        <div class="reading-info">
+          <span class="read-time">{{ getEstimatedReadTime }}分钟阅读</span>
+          <span class="word-count" v-if="article.wordCount">{{ formatWordCount(article.wordCount) }}词</span>
+          <span class="discovery-type" v-if="showDiscoveryBadge">{{ getDiscoveryLabel.text }}</span>
+          <span class="publish-time" v-if="(!article.image || imageLoadFailed) && article.publishedAt">{{ formatPublishTime(article.publishedAt) }}</span>
         </div>
       </div>
-      
     </div>
 
     <!-- 智能加载状态 -->
@@ -84,9 +81,14 @@ interface Article {
   [key: string]: any
 }
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   article: Article
-}>()
+  showDiscoveryBadge?: boolean
+  discoveryType?: 'trending' | 'category' | 'custom'
+}>(), {
+  showDiscoveryBadge: false,
+  discoveryType: 'trending'
+})
 
 // 调试信息已移除
 
@@ -97,6 +99,30 @@ const loading = ref(false)
 const truncateText = (text: string, maxLength: number): string => {
   if (!text || text.length <= maxLength) return text
   return text.slice(0, maxLength) + '...'
+}
+
+// 优化来源名称显示
+const formatSourceName = (source: string): string => {
+  if (!source) return ''
+  
+  // 移除常见的后缀
+  let cleanSource = source
+    .replace(/\s*-\s*Breaking News.*$/i, '')
+    .replace(/\s*-\s*Latest News.*$/i, '')
+    .replace(/\s*-\s*News.*$/i, '')
+    .replace(/\s*-\s*Videos.*$/i, '')
+    .replace(/\s*News\s*$/i, '')
+    .replace(/\s*\.com.*$/i, '')
+    .replace(/\s*\.org.*$/i, '')
+    .replace(/\s*\.net.*$/i, '')
+    .trim()
+  
+  // 如果还是太长，截断到合适长度
+  if (cleanSource.length > 20) {
+    cleanSource = cleanSource.slice(0, 20) + '...'
+  }
+  
+  return cleanSource || source.slice(0, 15) + '...'
 }
 
 // 格式化单词数量
@@ -213,6 +239,20 @@ const handleImageError = (event: Event) => {
 }
 
 
+// 获取发现类型标签
+const getDiscoveryLabel = computed(() => {
+  switch (props.discoveryType) {
+    case 'trending':
+      return { icon: '🔥', text: '热点发现' }
+    case 'category':
+      return { icon: '🎯', text: '主题发现' }
+    case 'custom':
+      return { icon: '🔍', text: '自定义发现' }
+    default:
+      return { icon: '🔍', text: '探索发现' }
+  }
+})
+
 // 计算卡片背景渐变（根据标题生成简单的主题色）
 const cardGradient = computed(() => {
   const title = props.article.title || ''
@@ -232,198 +272,192 @@ const cardGradient = computed(() => {
 <style scoped>
 @import '@/assets/design-system.css';
 
-.airbnb-modern-card {
-  background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%);
+.modern-news-card {
+  background: #ffffff;
   border-radius: 20px;
   overflow: hidden;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 2px solid transparent;
-  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.airbnb-modern-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, 
-    rgba(0, 122, 255, 0.1) 0%, 
-    rgba(255, 119, 198, 0.1) 50%, 
-    rgba(120, 219, 255, 0.1) 100%);
-  border-radius: 20px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+.modern-news-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: rgba(0, 122, 255, 0.2);
 }
 
-.airbnb-modern-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    0 8px 16px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
 
-.airbnb-modern-card:hover::before {
-  opacity: 1;
-}
-
-.card-content.compact {
-  padding: 24px;
+.card-content {
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   position: relative;
   z-index: 1;
   height: 100%;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 2px 8px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  flex: 1;
 }
 
-.compact-meta {
+/* 无图片情况下的特殊样式 */
+.card-content.no-image {
+  padding: 24px;
+  gap: 20px;
+}
+
+.card-header {
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
 }
 
-.tag {
-  display: inline-flex;
-  align-items: center;
+/* 无图片情况下的顶部信息栏样式 */
+.card-content.no-image .card-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F2F2F7;
+}
+
+.source-info {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  padding: 6px 12px;
-  border-radius: 16px;
+}
+
+.source-name {
   font-size: 12px;
   font-weight: 600;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.tag.category {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.2) 0%, rgba(90, 200, 250, 0.2) 100%);
   color: #007AFF;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.tag.category::before {
-  content: '📂';
-  font-size: 10px;
+.publish-time {
+  font-size: 11px;
+  color: #8E8E93;
+  font-weight: 500;
 }
 
-.tag.difficulty {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 235, 59, 0.2) 100%);
+
+.category-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.category-tag {
+  background: #F2F2F7;
+  color: #007AFF;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.difficulty-tag {
+  background: #FFF3E0;
   color: #FF9500;
-}
-
-.tag.difficulty::before {
-  content: '⭐';
-  font-size: 10px;
-}
-
-.tag.source {
-  background: linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(115, 209, 61, 0.2) 100%);
-  color: #52c41a;
-}
-
-.tag.source::before {
-  content: '🏢';
-  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .card-title {
   font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-  line-height: 1.4;
+  font-weight: 700;
+  color: #1D1D1F;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+/* 无图片情况下的标题样式 */
+.card-content.no-image .card-title {
+  font-size: 20px;
+  line-height: 1.4;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  margin-bottom: 8px;
 }
 
 .card-description {
   font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 8px;
+  color: #6E6E73;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-  background: linear-gradient(135deg, var(--text-secondary) 0%, rgba(0, 0, 0, 0.6) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin: 0;
+  flex: 1;
 }
 
-.card-meta {
+/* 无图片情况下的描述样式 */
+.card-content.no-image .card-description {
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  margin-bottom: 12px;
+}
+
+.card-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #F2F2F7;
+}
+
+.reading-info {
   display: flex;
   gap: 16px;
   align-items: center;
-  margin-top: auto;
-  justify-content: flex-end;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: 12px;
-  font-weight: 600;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  color: #8E8E93;
+  justify-content: space-between;
 }
 
-.meta-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+.read-time {
+  font-weight: 500;
 }
 
-/* 为每个meta-item设置不同的背景色 */
-.meta-item:nth-child(1) {
-  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
-  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+.word-count {
+  font-weight: 500;
 }
 
-.meta-item:nth-child(2) {
-  background: linear-gradient(135deg, #4ECDC4 0%, #7EDDD6 100%);
-  box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+.discovery-type {
+  font-weight: 500;
+  color: #007AFF;
+  background: rgba(0, 122, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
 }
 
-.meta-item:nth-child(3) {
-  background: linear-gradient(135deg, #FFA726 0%, #FFB74D 100%);
-  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
+/* 底部时间信息右对齐 */
+.card-footer .publish-time {
+  margin-left: auto;
+  font-weight: 500;
 }
 
 /* 封面图片样式 */
@@ -454,10 +488,10 @@ const cardGradient = computed(() => {
   bottom: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.4) 0%,
     transparent 30%,
     transparent 70%,
-    rgba(0, 0, 0, 0.5) 100%
+    rgba(0, 0, 0, 0.6) 100%
   );
   display: flex;
   justify-content: space-between;
@@ -466,12 +500,32 @@ const cardGradient = computed(() => {
 }
 
 .source-badge {
-  background: rgba(0, 122, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
+  color: #007AFF;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.image-overlay .publish-time {
   color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 4px 8px;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 
@@ -481,27 +535,72 @@ const cardGradient = computed(() => {
 @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
 
 @media (max-width: 768px) {
-  .airbnb-modern-card { 
+  .modern-news-card { 
     border-radius: 16px; 
   }
-  .card-content.compact { 
-    padding: 20px; 
-    border-radius: 12px;
+  
+  .card-content { 
+    padding: 16px; 
+    gap: 12px;
   }
+  
   .card-title { 
     font-size: 16px; 
+    line-height: 1.4;
   }
+  
   .card-description { 
     font-size: 13px; 
+    line-height: 1.4;
   }
-  .tag {
-    padding: 4px 8px;
+  
+  .card-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .category-tags {
+    gap: 6px;
+  }
+  
+  .category-tag,
+  .difficulty-tag {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+  
+  .reading-info {
+    gap: 12px;
     font-size: 11px;
   }
-  .meta-item {
-    padding: 4px 8px;
-    font-size: 11px;
-    border-radius: 16px;
+  
+  .card-image-container {
+    height: 160px;
   }
+  
+  .discovery-type {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  /* 无图片情况下的移动端样式 */
+  .card-content.no-image {
+    padding: 20px;
+    gap: 16px;
+  }
+  
+  .card-content.no-image .card-title {
+    font-size: 18px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  
+  .card-content.no-image .card-description {
+    font-size: 14px;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+  
 }
 </style>

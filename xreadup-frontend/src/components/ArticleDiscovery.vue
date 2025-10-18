@@ -333,10 +333,11 @@
       <div class="articles-result" v-if="articles.length > 0">
         <h3 class="result-title">{{ resultTitle }}</h3>
         <div class="articles-grid">
-          <DiscoveryArticleCard
+          <ArticleCard
             v-for="article in articles"
             :key="article.id"
             :article="article"
+            :show-discovery-badge="true"
             :discovery-type="getDiscoveryType()"
           />
         </div>
@@ -369,17 +370,23 @@
           <!-- 加载文章网格 -->
           <div class="loading-grid">
             <div class="loading-card" v-for="n in 6" :key="n" :style="{ animationDelay: (n - 1) * 0.1 + 's' }">
-              <!-- 探索标识骨架 -->
-              <div class="loading-badge">
-                <div class="loading-badge-icon"></div>
-                <div class="loading-badge-text"></div>
-              </div>
-              
-              <!-- NEW标识骨架 -->
-              <div class="loading-new-badge"></div>
+              <!-- 图片区域骨架 -->
+              <div class="loading-image"></div>
               
               <!-- 卡片内容骨架 -->
               <div class="loading-card-content">
+                <!-- 顶部信息栏骨架 -->
+                <div class="loading-header">
+                  <div class="loading-source-info">
+                    <div class="loading-source-name"></div>
+                    <div class="loading-publish-time"></div>
+                  </div>
+                  <div class="loading-category-tags">
+                    <div class="loading-category-tag"></div>
+                    <div class="loading-difficulty-tag"></div>
+                  </div>
+                </div>
+                
                 <!-- 标题骨架 -->
                 <div class="loading-card-title"></div>
                 <div class="loading-card-title short"></div>
@@ -389,10 +396,13 @@
                 <div class="loading-card-desc"></div>
                 <div class="loading-card-desc short"></div>
                 
-                <!-- 标签骨架 -->
-                <div class="loading-meta">
-                  <div class="loading-tag"></div>
-                  <div class="loading-tag"></div>
+                <!-- 底部信息骨架 -->
+                <div class="loading-footer">
+                  <div class="loading-reading-info">
+                    <div class="loading-read-time"></div>
+                    <div class="loading-word-count"></div>
+                    <div class="loading-discovery-type"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -475,7 +485,7 @@ import { articleApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { watch } from 'vue'
-import DiscoveryArticleCard from '@/components/DiscoveryArticleCard.vue'
+import ArticleCard from '@/components/ArticleCard.vue'
 import TactileButton from '@/components/common/TactileButton.vue'
 import { CATEGORY_MAP, getCategoryOptions } from '@/utils/categoryConfig'
 import { getLanguageOptions, getCountryOptions, getSortOptions, getLanguageLabel, getCountryLabel, getSortLabel, getLanguageDescription, getCountryDescription } from '@/utils/gnewsConfig'
@@ -1743,21 +1753,16 @@ const fetchCustomTopicArticles = async () => {
 }
 
 .loading-card {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.95) 0%, 
-    rgba(248, 250, 252, 0.9) 50%, 
-    rgba(241, 245, 249, 0.95) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: #ffffff;
+  border-radius: 20px;
   overflow: hidden;
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   opacity: 0;
   transform: translateY(20px) scale(0.95);
   animation: cardAppear 0.6s ease-out forwards;
@@ -1776,22 +1781,78 @@ const fetchCustomTopicArticles = async () => {
 
 .loading-card-content {
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   position: relative;
   z-index: 1;
+  height: 100%;
+  flex: 1;
 }
 
-.loading-badge {
-  position: absolute;
-  top: 16px;
-  left: 16px;
+/* 图片区域骨架 */
+.loading-image {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* 顶部信息栏骨架 */
+.loading-header {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(64, 158, 255, 0.1);
-  padding: 4px 8px;
-  border-radius: 12px;
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  z-index: 2;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.loading-source-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loading-source-name {
+  width: 80px;
+  height: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.loading-publish-time {
+  width: 60px;
+  height: 11px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.loading-category-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.loading-category-tag {
+  width: 50px;
+  height: 20px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.loading-difficulty-tag {
+  width: 40px;
+  height: 20px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 .loading-badge-icon {
@@ -1842,66 +1903,71 @@ const fetchCustomTopicArticles = async () => {
 }
 
 .loading-card-title {
-  width: 85%;
-  height: 22px;
-  background: linear-gradient(135deg, 
-    rgba(240, 244, 248, 0.8) 0%, 
-    rgba(226, 232, 240, 0.6) 50%, 
-    rgba(240, 244, 248, 0.8) 100%);
-  border-radius: 6px;
-  margin-bottom: 12px;
-  animation: shimmer 2s ease-in-out infinite;
-}
-
-.loading-card-desc {
-  width: 100%;
-  height: 16px;
-  background: linear-gradient(135deg, 
-    rgba(240, 244, 248, 0.6) 0%, 
-    rgba(226, 232, 240, 0.4) 50%, 
-    rgba(240, 244, 248, 0.6) 100%);
+  height: 18px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
   border-radius: 4px;
   margin-bottom: 8px;
   animation: shimmer 2s ease-in-out infinite;
 }
 
-.loading-card-desc.short {
-  width: 70%;
+.loading-card-title.short {
+  width: 60%;
 }
 
-.loading-meta {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.loading-tag {
-  width: 60px;
-  height: 20px;
-  background: linear-gradient(135deg, 
-    rgba(240, 244, 248, 0.5) 0%, 
-    rgba(226, 232, 240, 0.3) 50%, 
-    rgba(240, 244, 248, 0.5) 100%);
-  border-radius: 10px;
+.loading-card-desc {
+  height: 14px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 3px;
+  margin-bottom: 6px;
   animation: shimmer 2s ease-in-out infinite;
 }
 
-.loading-card-meta {
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
+.loading-card-desc.short {
+  width: 40%;
 }
 
-.loading-meta-item {
+/* 底部信息骨架 */
+.loading-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #F2F2F7;
+}
+
+.loading-reading-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.loading-read-time {
   width: 60px;
-  height: 14px;
-  background: linear-gradient(135deg, 
-    rgba(240, 244, 248, 0.5) 0%, 
-    rgba(226, 232, 240, 0.3) 50%, 
-    rgba(240, 244, 248, 0.5) 100%);
+  height: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
   border-radius: 4px;
   animation: shimmer 2s ease-in-out infinite;
 }
+
+.loading-word-count {
+  width: 40px;
+  height: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+.loading-discovery-type {
+  width: 50px;
+  height: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
 
 @keyframes shimmer {
   0% {
@@ -2064,6 +2130,46 @@ const fetchCustomTopicArticles = async () => {
     padding: 2px 6px;
     top: -6px;
     right: -6px;
+  }
+  
+  /* 加载卡片移动端样式 */
+  .loading-card {
+    border-radius: 16px;
+  }
+  
+  .loading-card-content {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .loading-image {
+    height: 160px;
+  }
+  
+  .loading-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .loading-category-tags {
+    gap: 6px;
+  }
+  
+  .loading-category-tag,
+  .loading-difficulty-tag {
+    width: 40px;
+    height: 16px;
+  }
+  
+  .loading-reading-info {
+    gap: 12px;
+  }
+  
+  .loading-read-time,
+  .loading-word-count,
+  .loading-discovery-type {
+    height: 10px;
   }
 }
 </style>
