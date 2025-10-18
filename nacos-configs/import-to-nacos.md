@@ -21,7 +21,7 @@ XReadUp 项目采用 **Nacos** 作为配置中心，实现微服务配置的统�
 | 服务名称 | 端口 | 配置文件 | 功能描述 |
 |----------|------|----------|----------|
 | **Gateway** | 8080 | gateway-dev.yml | API网关，请求路由和负载均衡 |
-| **User Service** | 8081 | user-service-dev.yml | 用户管理、认证和三级词库策略 |
+| **User Service** | 8081 | user-service-dev.yml | 用户管理、认证和智能词汇系统策略 |
 | **Article Service** | 8082 | article-service-dev.yml | 文章内容管理和阅读功能 |
 | **Report Service** | 8083 | report-service-dev.yml | 学习统计和报表生成 |
 | **AI Service** | 8084 | ai-service-dev.yml | AI智能分析和翻译功能 |
@@ -237,7 +237,7 @@ jwt:
   secret: ${JWT_SECRET:xreadup-secret-key-2025}
   expiration: 86400000  # 24小时
 
-# 三级词库配置
+# 智能词汇系统配置
 vocabulary:
   cache:
     enabled: true

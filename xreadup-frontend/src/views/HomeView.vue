@@ -398,6 +398,12 @@ interface Article {
   category: string
   difficultyLevel: string
   enContent?: string
+  image?: string  // GNews API封面图片
+  url?: string    // 原文链接
+  publishedAt?: string | Date  // 发布时间
+  source?: string  // 来源信息
+  wordCount?: number
+  difficulty?: number | string
 }
 
 // 推荐文章相关
@@ -524,7 +530,11 @@ const fetchRecommendArticles = async (isRefresh = false) => {
       recommendArticles.value = response.data.list.map((article: any) => ({
         ...article,
         difficulty: article.difficultyLevel || '',
-        wordCount: article.wordCount || article.word_count || 0
+        wordCount: article.wordCount || article.word_count || 0,
+        image: article.image || '',
+        url: article.url || '',
+        publishedAt: article.publishedAt || '',
+        source: article.source || ''
       }))
     } else {
       recommendArticles.value = []

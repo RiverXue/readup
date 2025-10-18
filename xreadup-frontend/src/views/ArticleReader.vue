@@ -160,8 +160,28 @@
     <div class="main-content" :class="{ 'main-content-expanded': isSidebarCollapsed }">
       <!-- 文章标题与元数据 -->
       <div class="article-header">
+        <!-- 标题和来源标签区域 -->
         <div class="article-title-section">
-          <h1 class="article-title">{{ article.title }}</h1>
+          <div class="title-row">
+            <h1 class="article-title">{{ article.title }}</h1>
+            <!-- 来源标签 - 放在标题右侧 -->
+            <el-tag size="large" type="success" class="source-tag" v-if="article.source">
+              <el-icon><OfficeBuilding /></el-icon>
+              {{ article.source }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 封面图片区域 - 参考主流媒体网站布局 -->
+        <div class="article-cover-section" v-if="article.image">
+          <div class="cover-image-wrapper">
+            <img 
+              :src="article.image" 
+              :alt="article.title"
+              class="cover-image"
+              @error="handleImageError"
+            />
+          </div>
         </div>
 
         <div class="article-meta">
@@ -395,10 +415,10 @@
                 </div>
               </template>
             </div>
-          </div>
+      </div>
 
-          <!-- 翻译分界线 -->
-          <div v-if="showTranslation" class="translation-divider"></div>
+      <!-- 翻译分界线 -->
+      <div v-if="showTranslation" class="translation-divider"></div>
 
           <!-- 免费用户的中文翻译 (显示在原文下方) -->
           <div v-if="showTranslation" class="chinese-section">
@@ -429,6 +449,27 @@
         </div>
       </div>
 
+      <!-- 文章末尾信息 - 放在双语阅读区外面 -->
+      <div class="article-footer" v-if="article.publishedAt || article.url">
+        <div class="footer-info">
+          <!-- 发布时间 -->
+          <div class="footer-item" v-if="article.publishedAt">
+            <el-icon><Calendar /></el-icon>
+            <span>发布时间：{{ formatPublishTime(article.publishedAt) }}</span>
+          </div>
+          <!-- 原文链接 -->
+          <div class="footer-item" v-if="article.url">
+            <el-button 
+              type="primary" 
+              @click="openOriginalArticle(article.url!)"
+              class="original-article-btn"
+            >
+              <el-icon><Link /></el-icon>
+              查看原文
+            </el-button>
+          </div>
+        </div>
+      </div>
 
     </div>
 
@@ -526,7 +567,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { aiApi, articleApi, vocabularyApi, learningApi, request as api } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
-import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Search, ArrowLeft, ArrowRight, CircleClose, Trophy, Star, StarFilled, Reading, View, Clock, User, Delete } from '@element-plus/icons-vue'
+import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Search, ArrowLeft, ArrowRight, CircleClose, Trophy, Star, StarFilled, Reading, View, Clock, User, Delete, OfficeBuilding, Calendar, Link } from '@element-plus/icons-vue'
 import { subscriptionApi } from '@/utils/api'
 import type { UsageQuota } from '@/types/subscription'
 import QuizComponent from '@/components/QuizComponent.vue'
@@ -651,6 +692,11 @@ interface Article {
   difficulty: string
   tags: string[]
   readCount?: number
+  image?: string  // GNews API封面图片
+  url?: string    // 原文链接
+  publishedAt?: string | Date  // 发布时间
+  source?: string  // 来源信息
+  description?: string  // 文章描述
 }
 
 interface WordDetail {
@@ -1129,11 +1175,22 @@ const loadArticle = async () => {
       category: data.article?.category || '',
       difficulty: data.article?.difficultyLevel || '',
       tags: data.article?.tags || [],
-      readCount: data.article?.readCount || 0
+      readCount: data.article?.readCount || 0,
+      image: data.article?.image || '',
+      url: data.article?.url || '',
+      publishedAt: data.article?.publishedAt || '',
+      source: data.article?.source || '',
+      description: data.article?.description || ''
     }
 
     // 初始化内容项
     updateContentItems()
+    
+    // 调试信息
+    // console.log('ArticleReader加载的文章数据:', article.value)
+    // console.log('文章来源:', article.value.source)
+    // console.log('文章发布时间:', article.value.publishedAt)
+    // console.log('文章URL:', article.value.url)
 
     // 加载用户数据
     if (userStore.isLoggedIn) {
@@ -1605,6 +1662,43 @@ const formatTime = (timestamp: number) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// 格式化发布时间
+const formatPublishTime = (publishedAt: string | Date): string => {
+  const date = new Date(publishedAt)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+  
+  if (diffInHours < 1) {
+    return '刚刚'
+  } else if (diffInHours < 24) {
+    return `${diffInHours}小时前`
+  } else if (diffInHours < 48) {
+    return '昨天'
+  } else if (diffInHours < 168) { // 7天
+    return `${Math.floor(diffInHours / 24)}天前`
+  } else {
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+}
+
+// 处理图片加载错误
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+  // 隐藏图片后，回到无图片的现有状态
+}
+
+// 打开原文链接
+const openOriginalArticle = (url: string) => {
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 }
 
 
@@ -2393,19 +2487,24 @@ onUnmounted(async () => {
 }
 
 .article-title-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 20px;
 }
 
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
 .article-title {
+  flex: 1;
+  margin: 0;
   font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
   line-height: 1.3;
-  margin: 0;
-  flex: 1;
   margin-right: 20px;
 }
 
@@ -2537,7 +2636,8 @@ onUnmounted(async () => {
   padding: 30px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
-  min-height: calc(100vh - 200px);
+  position: relative;
+  z-index: 1;
 }
 
 .english-section, .chinese-section {
@@ -3422,6 +3522,103 @@ onUnmounted(async () => {
 
 .article-header:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 封面图片样式 - 参考主流媒体网站 */
+.article-cover-section {
+  margin: 24px 0 32px 0;
+  width: 100%;
+}
+
+.cover-image-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: #f8f9fa;
+}
+
+.cover-image {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.cover-image:hover {
+  transform: scale(1.01);
+}
+
+/* 来源标签样式 */
+.source-tag {
+  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+  color: white;
+  border: none;
+  flex-shrink: 0;
+}
+
+.source-tag .el-icon {
+  margin-right: 4px;
+}
+
+/* 文章末尾信息样式 */
+.article-footer {
+  margin-top: 32px;
+  padding: 20px;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 2;
+}
+
+.footer-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.footer-item .el-icon {
+  color: #007AFF;
+}
+
+/* 原文链接按钮样式 */
+.original-article-btn {
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.original-article-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+}
+
+.original-article-btn .el-icon {
+  margin-right: 6px;
 }
 
 /* 按钮加载状态 */

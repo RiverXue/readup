@@ -1,4 +1,4 @@
-# XReadUp Frontend - 智能英语学习平台前端
+# ReadUp Frontend - 智能英语学习平台前端
 
 <div align="center">
 
@@ -12,7 +12,7 @@
 
 ## 📖 项目概述
 
-XReadUp Frontend 是一个基于 Vue 3 + TypeScript 构建的现代化智能英语学习平台前端应用。采用 Composition API、Element Plus UI 组件库和 Pinia 状态管理，提供了丰富的英语学习功能，包括智能阅读、生词管理、学习报告、AI 助手和订阅管理等核心模块。
+ReadUp Frontend 是一个基于 Vue 3 + TypeScript 构建的现代化智能英语学习平台前端应用。专注于**真实新闻英语学习**，结合**AI导师**和**智能学习系统**，为用户提供真实、有趣、高效的学习体验。
 
 ### 🎯 核心特性
 
@@ -20,7 +20,7 @@ XReadUp Frontend 是一个基于 Vue 3 + TypeScript 构建的现代化智能英�
 - **🎓 AI 学习导师** - Rayda老师专业英语学习导师，提供个性化学习指导
 - **📊 智能用户画像** - 多维度学习数据分析，智能识别薄弱环节和优势
 - **📚 智能阅读器** - 双语对照阅读，点击查词，双击朗读，上下文理解
-- **🔍 三级词库系统** - 本地缓存 + 共享词库 + AI 实时生成
+- **🔍 智能词汇系统** - 本地缓存 + AI增强 + 学习管理
 - **📊 数据可视化报告** - ECharts 图表展示学习进度和成就
 - **📱 响应式设计** - 完美适配桌面端和移动端
 - **🎨 现代化 UI** - Element Plus 组件库，优雅的用户界面
@@ -175,7 +175,7 @@ xreadup-frontend/
 
 ### 双系统架构
 
-XReadUp Frontend 采用**双系统架构**，包含用户端和管理员端两个独立的系统：
+ReadUp Frontend 采用**双系统架构**，包含用户端和管理员端两个独立的系统：
 
 #### 1. 用户端系统 (User System)
 ```
@@ -415,7 +415,7 @@ interface UserProfile {
 
 #### 双Store架构设计
 
-XReadUp Frontend 采用**双Store架构**，分别管理用户端和管理员端的状态：
+ReadUp Frontend 采用**双Store架构**，分别管理用户端和管理员端的状态：
 
 #### 1. User Store (stores/user.ts) - 用户状态管理
 
@@ -488,7 +488,7 @@ interface AdminState {
 
 #### 双路由守卫系统
 
-XReadUp Frontend 采用**双路由守卫系统**，分别处理用户端和管理员端的路由权限：
+ReadUp Frontend 采用**双路由守卫系统**，分别处理用户端和管理员端的路由权限：
 
 #### 1. 用户路由守卫 (userGuard.ts)
 
@@ -648,7 +648,7 @@ router.beforeEach((to, from, next) => {
 
 #### 双API系统架构
 
-XReadUp Frontend 采用**双API系统架构**，分别处理用户端和管理员端的API调用：
+ReadUp Frontend 采用**双API系统架构**，分别处理用户端和管理员端的API调用：
 
 #### 1. HTTP 客户端封装 (utils/api.ts)
 
@@ -780,7 +780,7 @@ api.interceptors.response.use(
 
 ### 设计系统
 
-XReadUp Frontend 采用现代化的设计系统，融合了 iOS 26 设计语言和 Airbnb 的温暖美学，提供一致且优雅的用户体验。
+ReadUp Frontend 采用现代化的设计系统，融合了 iOS 26 设计语言和 Airbnb 的温暖美学，提供一致且优雅的用户体验。
 
 #### 设计理念
 - **Liquid Glass 效果** - 玻璃态背景，模糊效果，现代感十足
@@ -2087,14 +2087,14 @@ CMD ["nginx", "-g", "daemon off;"]
 #### 开发环境
 ```env
 VITE_API_BASE_URL=http://localhost:8080
-VITE_APP_TITLE=XReadUp Development
+VITE_APP_TITLE=ReadUp Development
 NODE_ENV=development
 ```
 
 #### 生产环境
 ```env
 VITE_API_BASE_URL=https://api.xreadup.com
-VITE_APP_TITLE=XReadUp
+VITE_APP_TITLE=ReadUp
 NODE_ENV=production
 ```
 

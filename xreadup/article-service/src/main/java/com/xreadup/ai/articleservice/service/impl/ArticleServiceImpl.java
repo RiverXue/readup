@@ -114,11 +114,17 @@ public class ArticleServiceImpl implements ArticleService {
             
             // 转换为ArticleListVO对象列表
             List<ArticleListVO> listVOs = articlePage.getRecords().stream().map(article -> {
+                // 调试日志
+                log.info("处理文章: ID={}, Title={}, URL={}, Source={}", 
+                    article.getId(), article.getTitle(), article.getUrl(), article.getSource());
+                
                 ArticleListVO listVO = new ArticleListVO();
                 listVO.setId(article.getId());
                 listVO.setTitle(article.getTitle());
                 listVO.setDescription(article.getDescription());
+                listVO.setUrl(article.getUrl());
                 listVO.setImage(article.getImage());
+                listVO.setSource(article.getSource());
                 listVO.setCategory(article.getCategory());
                 listVO.setPublishedAt(article.getPublishedAt());
                 listVO.setReadCount(article.getReadCount());

@@ -160,7 +160,7 @@ public String intelligentChat(String question, String articleContext) {
         %s
         
         🎯 个性化教学要求（基于XReadUp平台功能）：
-        1. 结合平台的三级词库系统...
+        1. 结合平台的智能词汇系统系统...
         """, articleTheme, articleDifficulty, question, userProfile);
     
     // 3. 调用AI模型

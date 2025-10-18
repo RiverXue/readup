@@ -1,5 +1,20 @@
 <template>
   <div class="airbnb-modern-card" @click="handleClick">
+    <!-- 封面图片区域（仅在有图片时显示） -->
+    <div class="card-image-container" v-if="article.image">
+      <img 
+        :src="article.image" 
+        :alt="article.title"
+        class="card-image"
+        @error="handleImageError"
+      />
+      <div class="image-overlay">
+        <div class="source-badge" v-if="article.source">
+          {{ article.source }}
+        </div>
+      </div>
+    </div>
+    
     <!-- 卡片内容 -->
     <div class="card-content compact">
       <!-- 分类与难度 -->
@@ -26,6 +41,29 @@
           <span class="meta-icon">📝</span>
           <span>{{ formatWordCount(article.wordCount) }}词</span>
         </div>
+        <!-- 新增：发布时间 -->
+        <div class="meta-item" v-if="article.publishedAt">
+          <span class="meta-icon">📅</span>
+          <span>{{ formatPublishTime(article.publishedAt) }}</span>
+        </div>
+        <!-- 新增：来源信息 -->
+        <div class="meta-item" v-if="article.source">
+          <span class="meta-icon">🏢</span>
+          <span>{{ article.source }}</span>
+        </div>
+      </div>
+      
+      <!-- 原文链接 - 放在文章内容末尾的角落 -->
+      <div class="original-link-corner" v-if="article.url">
+        <el-button 
+          type="text" 
+          size="small" 
+          @click.stop="openOriginalArticle(article.url!)"
+          class="corner-link-btn"
+        >
+          <el-icon><Link /></el-icon>
+          查看原文
+        </el-button>
       </div>
     </div>
 
@@ -39,6 +77,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Link } from '@element-plus/icons-vue'
 
 // Props定义
 interface Article {
@@ -47,6 +86,10 @@ interface Article {
   excerpt?: string
   description?: string
   coverImage?: string
+  image?: string  // GNews API封面图片
+  url?: string    // 原文链接
+  publishedAt?: string | Date  // 发布时间
+  source?: string  // 来源信息
   category?: string
   readTime?: number
   wordCount?: number
@@ -58,6 +101,8 @@ interface Article {
 const props = defineProps<{
   article: Article
 }>()
+
+// 调试信息已移除
 
 const router = useRouter()
 const loading = ref(false)
@@ -147,6 +192,43 @@ const getEstimatedReadTime = computed(() => {
   // 没有字数时默认返回5分钟
   return 5
 })
+
+// 格式化发布时间
+const formatPublishTime = (publishedAt: string | Date): string => {
+  const date = new Date(publishedAt)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+  
+  if (diffInHours < 1) {
+    return '刚刚'
+  } else if (diffInHours < 24) {
+    return `${diffInHours}小时前`
+  } else if (diffInHours < 48) {
+    return '昨天'
+  } else if (diffInHours < 168) { // 7天
+    return `${Math.floor(diffInHours / 24)}天前`
+  } else {
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+}
+
+// 处理图片加载错误
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+  // 隐藏图片后，卡片回到无图片的现有状态
+}
+
+// 打开原文链接
+const openOriginalArticle = (url: string) => {
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+}
 
 // 计算卡片背景渐变（根据标题生成简单的主题色）
 const cardGradient = computed(() => {
@@ -335,14 +417,99 @@ const cardGradient = computed(() => {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
-.meta-item:first-child {
+/* 为每个meta-item设置不同的背景色 */
+.meta-item:nth-child(1) {
   background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%);
   box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
 }
 
-.meta-item:last-child {
+.meta-item:nth-child(2) {
   background: linear-gradient(135deg, #4ECDC4 0%, #7EDDD6 100%);
   box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+.meta-item:nth-child(3) {
+  background: linear-gradient(135deg, #FFA726 0%, #FFB74D 100%);
+  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
+}
+
+.meta-item:nth-child(4) {
+  background: linear-gradient(135deg, #AB47BC 0%, #BA68C8 100%);
+  box-shadow: 0 4px 12px rgba(171, 71, 188, 0.3);
+}
+
+/* 封面图片样式 */
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card-image:hover {
+  transform: scale(1.05);
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px;
+}
+
+.source-badge {
+  background: rgba(0, 122, 255, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 原文链接角落样式 */
+.original-link-corner {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.corner-link-btn {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007AFF;
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.corner-link-btn:hover {
+  background: rgba(0, 122, 255, 0.2);
+  color: #0056CC;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
 }
 
 /* 智能加载状态和响应式保留 */

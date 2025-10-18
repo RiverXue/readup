@@ -11,6 +11,19 @@
       <span class="new-text">NEW</span>
     </div>
 
+    <!-- 封面图片区域（仅在有图片时显示） -->
+    <div class="card-image-container" v-if="article.image">
+      <img 
+        :src="article.image" 
+        :alt="article.title"
+        class="card-image"
+        @error="handleImageError"
+      />
+      <div class="image-overlay">
+        <!-- 移除图片上的信息显示，避免被遮盖 -->
+      </div>
+    </div>
+
     <!-- 卡片内容 -->
     <div class="card-content">
       <!-- 标题 -->
@@ -25,6 +38,10 @@
       <div class="compact-meta">
         <span class="tag category">{{ article.category || '未分类' }}</span>
         <span class="tag difficulty">{{ getDifficultyText(article.difficulty || '') }}</span>
+        <!-- 新增：来源标签 -->
+        <span class="tag source" v-if="article.source">{{ article.source }}</span>
+        <!-- 新增：发布时间标签 -->
+        <span class="tag publish-time" v-if="article.publishedAt">{{ formatPublishTime(article.publishedAt) }}</span>
       </div>
     </div>
 
@@ -38,6 +55,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Link } from '@element-plus/icons-vue'
 
 // Props定义
 interface Article {
@@ -46,6 +64,10 @@ interface Article {
   excerpt?: string
   description?: string
   coverImage?: string
+  image?: string  // GNews API封面图片
+  url?: string    // 原文链接
+  publishedAt?: string | Date  // 发布时间
+  source?: string  // 来源信息
   category?: string
   readTime?: number
   wordCount?: number
@@ -126,6 +148,43 @@ const getDiscoveryLabel = computed(() => {
       return { icon: '🔍', text: '探索发现' }
   }
 })
+
+// 格式化发布时间
+const formatPublishTime = (publishedAt: string | Date): string => {
+  const date = new Date(publishedAt)
+  const now = new Date()
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+  
+  if (diffInHours < 1) {
+    return '刚刚'
+  } else if (diffInHours < 24) {
+    return `${diffInHours}小时前`
+  } else if (diffInHours < 48) {
+    return '昨天'
+  } else if (diffInHours < 168) { // 7天
+    return `${Math.floor(diffInHours / 24)}天前`
+  } else {
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
+}
+
+// 处理图片加载错误
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.style.display = 'none'
+  // 隐藏图片后，卡片回到无图片的现有状态
+}
+
+// 打开原文链接
+const openOriginalArticle = (url: string) => {
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+}
 </script>
 
 <style scoped>
@@ -293,6 +352,26 @@ const getDiscoveryLabel = computed(() => {
   font-size: 10px;
 }
 
+.tag.source {
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(115, 209, 61, 0.2) 100%);
+  color: #52c41a;
+}
+
+.tag.source::before {
+  content: '🏢';
+  font-size: 10px;
+}
+
+.tag.publish-time {
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.2) 0%, rgba(64, 169, 255, 0.2) 100%);
+  color: #1890ff;
+}
+
+.tag.publish-time::before {
+  content: '📅';
+  font-size: 10px;
+}
+
 .card-title {
   font-size: 18px;
   font-weight: 600;
@@ -327,6 +406,62 @@ const getDiscoveryLabel = computed(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* 封面图片样式 */
+.card-image-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.card-image:hover {
+  transform: scale(1.05);
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.3) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px;
+}
+
+.source-badge {
+  background: rgba(0, 122, 255, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.publish-time {
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
 
 /* 智能加载状态 */
 .smart-loading-overlay {
