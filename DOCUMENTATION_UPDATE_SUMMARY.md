@@ -102,11 +102,13 @@ String prompt = String.format("""
 
 #### **智能分析算法**
 ```typescript
-// 学习水平评估算法
-const assessUserLevel = (learningDays: number, articlesRead: number, vocabCount: number) => {
-  if (learningDays >= 90 && articlesRead >= 50 && vocabCount >= 1000) return 'expert'
-  if (learningDays >= 60 && articlesRead >= 30 && vocabCount >= 500) return 'advanced'
-  if (learningDays >= 30 && articlesRead >= 15 && vocabCount >= 200) return 'intermediate'
+// 学习水平评估算法（新标准）
+const assessUserLevel = (learningDays: number, articlesRead: number, masteredWords: number, totalWords: number) => {
+  const masteryRate = totalWords > 0 ? (masteredWords / totalWords) : 0
+  
+  if (learningDays >= 90 && articlesRead >= 50 && masteredWords >= 500 && masteryRate >= 0.8) return 'expert'
+  if (learningDays >= 60 && articlesRead >= 30 && masteredWords >= 200 && masteryRate >= 0.7) return 'advanced'
+  if (learningDays >= 30 && articlesRead >= 15 && masteredWords >= 50 && masteryRate >= 0.6) return 'intermediate'
   return 'beginner'
 }
 
@@ -127,7 +129,7 @@ const identifyWeakAreas = (reviewStatus: any, profile: any) => {
   // 基于学习数据识别
   if (profile.learningDays < 14) weakAreas.push('学习坚持性')
   if (profile.totalArticlesRead < 10) weakAreas.push('阅读练习')
-  if (profile.vocabularyCount < 100) weakAreas.push('词汇积累')
+  if (profile.masteredWords < 50) weakAreas.push('词汇掌握')
   if (profile.readingStreak < 5) weakAreas.push('学习习惯')
   if (profile.averageReadTime < 15) weakAreas.push('阅读专注力')
   

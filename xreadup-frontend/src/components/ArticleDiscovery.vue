@@ -95,7 +95,7 @@
             <template #icon>
               <SearchIcon />
             </template>
-            搜索主题
+            自定义主题
           </TactileButton>
           <!-- 会员等级标签 -->
           <span class="membership-tag pro">专业会员+</span>
@@ -585,7 +585,7 @@ const canFetchCustomTopic = computed(() => {
 const getDiscoveryType = () => {
   if (resultTitle.value.includes('热点')) return 'trending'
   if (resultTitle.value.includes('主题')) return 'category'
-  if (resultTitle.value.includes('自定义') || resultTitle.value.includes('搜索')) return 'custom'
+  if (resultTitle.value.includes('自定义')) return 'custom'
   return 'trending' // 默认
 }
 
@@ -892,9 +892,9 @@ const fetchCustomTopicArticles = async () => {
     if (advancedFilters.value.useAdvanced) {
       const languageLabel = getLanguageLabel(advancedFilters.value.language)
       const countryLabel = getCountryLabel(advancedFilters.value.country)
-      resultTitle.value = `🔍 "${customTopic.value}" 主题文章 (${languageLabel} - ${countryLabel})`
+      resultTitle.value = `🔍 "${customTopic.value}" 自定义主题文章 (${languageLabel} - ${countryLabel})`
     } else {
-      resultTitle.value = `🔍 "${customTopic.value}" 主题文章`
+      resultTitle.value = `🔍 "${customTopic.value}" 自定义主题文章`
     }
 
     // 清除错误状态

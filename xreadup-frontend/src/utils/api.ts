@@ -224,6 +224,23 @@ export const aiApi = {
     });
   },
 
+  // 简配版AI学导对话（专门为SimpleAITutor设计，节省token）
+  simpleTutorChat: (question: string, userId: number, article: {
+    title: string;
+    category: string;
+    difficulty: string;
+    description?: string;
+  }) => {
+    return api.post('/api/ai/simple-tutor/chat', {
+      question,
+      userId,
+      articleTitle: article.title,
+      articleCategory: article.category,
+      articleDifficulty: article.difficulty,
+      articleDescription: article.description || ''
+    });
+  },
+
   // Function Calling 生成测验（推荐使用）
   assistantGenerateQuiz: (data: {
     articleContent: string;

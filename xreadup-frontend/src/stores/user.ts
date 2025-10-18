@@ -234,26 +234,23 @@ export const useUserStore = defineStore('user', () => {
   }
 
   // 注册
-  const register = async (username: string, password: string, _email?: string, nickname?: string) => {
+  const register = async (username: string, password: string, _email?: string, nickname?: string, additionalInfo?: {
+    phone?: string
+    interestTag?: string
+    identityTag?: string
+    learningGoalWords?: number
+    targetReadingTime?: number
+  }) => {
     try {
       loading.value = true
-      // 移除邮箱参数，只使用用户名和密码注册
-      const registerData = nickname ?
-        { username, password, nickname } :
-        { username, password }
+      // 构建完整的注册数据
+      const registerData = {
+        username,
+        password,
+        ...(additionalInfo || {})
+      }
 
       const response = await api.post('/api/user/register', registerData)
-
-      // 如果注册成功后自动登录
-      if (response.data.token || response.data.data?.token) {
-        token.value = response.data.token || response.data.data?.token
-        user.value = response.data.user || response.data.data?.user
-
-        localStorage.setItem('token', token.value)
-        localStorage.setItem('user', JSON.stringify(user.value))
-
-        api.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
-      }
 
       ElMessage.success('注册成功')
       return { success: true, data: response.data }

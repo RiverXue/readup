@@ -1136,19 +1136,41 @@ public class ArticleServiceImpl implements ArticleService {
                         continue;
                     }
                     
+                    // 使用Readability4J获取文章全文
+                    log.info("尝试使用Readability4J获取搜索文章全文: {}", gnewsArticle.getUrl());
+                    Optional<String> fullContentOptional = scraperService.scrapeArticleContent(gnewsArticle.getUrl());
+                    
+                    if (fullContentOptional.isEmpty()) {
+                        log.warn("未能获取搜索文章全文，跳过存储: {} - {}", gnewsArticle.getTitle(), gnewsArticle.getUrl());
+                        continue;
+                    }
+                    
+                    String fullContent = fullContentOptional.get();
+                    log.info("成功获取搜索文章全文，长度: {} 字符", fullContent.length());
+                    
                     // 创建新文章
                     Article article = new Article();
-                    article.setTitle(gnewsArticle.getTitle());
-                    article.setDescription(gnewsArticle.getDescription());
+                    // 限制title长度，避免数据库字段超限
+                    String title = gnewsArticle.getTitle();
+                    if (title != null && title.length() > 200) {
+                        title = title.substring(0, 197) + "...";
+                    }
+                    article.setTitle(title);
+                    // 限制description长度，避免数据库字段超限
+                    String description = gnewsArticle.getDescription();
+                    if (description != null && description.length() > 500) {
+                        description = description.substring(0, 497) + "...";
+                    }
+                    article.setDescription(description);
                     article.setUrl(gnewsArticle.getUrl());
                     article.setImage(gnewsArticle.getImage());
                     article.setSource(gnewsArticle.getSource().getName());
                     article.setPublishedAt(gnewsArticle.getPublishedAt());
-                    article.setCategory("custom"); // 标记为自定义主题
-                    article.setContentEn(""); // 初始为空，后续通过AI服务填充
+                    article.setCategory(keyword); // 使用关键词作为分类
+                    article.setContentEn(fullContent); // 使用Readability4J获取的全文
                     article.setContentCn(""); // 初始为空，后续通过AI服务填充
-                    article.setWordCount(0); // 初始为0，后续通过AI服务计算
-                    article.setDifficultyLevel(""); // 初始为空，后续通过AI服务评估
+                    article.setWordCount(countWords(fullContent)); // 计算单词数
+                    article.setDifficultyLevel(difficultyEvaluator.evaluateDifficulty(fullContent)); // 评估难度
                     article.setReadCount(0);
                     article.setCreateTime(LocalDateTime.now());
                     article.setUpdateTime(LocalDateTime.now());
@@ -1265,7 +1287,7 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setImage(gnewsArticle.getImage());
                     article.setSource(gnewsArticle.getSource().getName());
                     article.setPublishedAt(gnewsArticle.getPublishedAt());
-                    article.setCategory("custom"); // 标记为自定义主题
+                    article.setCategory(keyword); // 使用关键词作为分类
                     article.setContentEn(fullContent); // 使用Readability4J获取的全文
                     article.setContentCn(""); // 初始为空，后续通过AI服务填充
                     article.setWordCount(0); // 初始为0，后续通过AI服务计算

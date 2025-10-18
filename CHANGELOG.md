@@ -34,6 +34,7 @@
 - **后端优化**: Spring Boot + Spring AI + 智能分析算法
 - **响应式设计**: 完美适配桌面、平板、手机所有设备
 - **性能优化**: 数据缓存策略、异步加载、响应式更新
+- **等级评估统一化**: 创建`levelAssessment.ts`工具函数，统一AIAssistantView和ArticleReader的等级评估算法
 
 **文档更新**
 - **USER_PROFILE_SYSTEM_DOCUMENTATION.md**: 用户画像系统详细文档

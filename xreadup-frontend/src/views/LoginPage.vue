@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <div class="login-form">
-      <h2>{{ isRegister ? '注册账号' : '用户登录' }}</h2>
+      <h2>用户登录</h2>
       <p class="subtitle">欢迎来到XReadUp英语学习平台</p>
 
       <el-form
@@ -19,14 +19,6 @@
           />
         </el-form-item>
 
-        <el-form-item v-if="isRegister" prop="nickname">
-          <el-input
-            v-model="form.nickname"
-            placeholder="请输入昵称"
-            prefix-icon="Avatar"
-          />
-        </el-form-item>
-
         <el-form-item prop="password">
           <el-input
             v-model="form.password"
@@ -34,16 +26,7 @@
             placeholder="请输入密码"
             prefix-icon="Lock"
             show-password
-          />
-        </el-form-item>
-
-        <el-form-item v-if="isRegister" prop="confirmPassword">
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="请确认密码"
-            prefix-icon="Lock"
-            show-password
+            @keyup.enter="handleLogin"
           />
         </el-form-item>
 
@@ -53,17 +36,17 @@
             size="lg"
             style="width: 100%"
             :loading="loading"
-            @click="handleSubmit"
+            @click="handleLogin"
           >
-            {{ isRegister ? '注册' : '登录' }}
+            登录
           </TactileButton>
         </el-form-item>
       </el-form>
 
       <div class="switch-mode">
-        <TactileButton variant="ghost" @click="toggleMode">
-          {{ isRegister ? '已有账号？立即登录' : '没有账号？立即注册' }}
-        </TactileButton>
+        <p>没有账号？
+          <router-link to="/register">立即注册</router-link>
+        </p>
       </div>
 
       <!-- 演示账号提示 -->
@@ -88,13 +71,10 @@ const userStore = useUserStore()
 
 const loginForm = ref()
 const loading = ref(false)
-const isRegister = ref(false)
 
 const form = reactive({
   username: '',
-  password: '',
-  nickname: '',
-  confirmPassword: ''
+  password: ''
 })
 
 const rules = {
@@ -105,70 +85,27 @@ const rules = {
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度至少6位', trigger: 'blur' }
-  ],
-  nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度2-20位', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    {
-      validator: (_rule: unknown, value: string, callback: (error?: Error) => void) => {
-        if (value !== form.password) {
-          callback(new Error('两次输入密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
   ]
 }
 
-const toggleMode = () => {
-  isRegister.value = !isRegister.value
-  loginForm.value?.clearValidate()
-}
-
-const handleSubmit = () => {
-  loginForm.value?.validate((valid: boolean) => {
+const handleLogin = async () => {
+  loginForm.value?.validate(async (valid: boolean) => {
     if (valid) {
-      if (isRegister.value) {
-        handleRegister()
-      } else {
-        handleLogin()
+      loading.value = true
+      try {
+        const result = await userStore.login(form.username, form.password)
+        if (result.success) {
+          ElMessage.success('登录成功')
+          router.push('/')
+        }
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } }
+        ElMessage.error(err.response?.data?.message || '登录失败')
+      } finally {
+        loading.value = false
       }
     }
   })
-}
-
-const handleLogin = async () => {
-  loading.value = true
-  try {
-    await userStore.login(form.username, form.password)
-    ElMessage.success('登录成功')
-    router.push('/')
-  } catch (error: unknown) {
-    const err = error as { response?: { data?: { message?: string } } }
-    ElMessage.error(err.response?.data?.message || '登录失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleRegister = async () => {
-  loading.value = true
-  try {
-    await userStore.register(form.username, form.password, undefined, form.nickname)
-    ElMessage.success('注册成功')
-    isRegister.value = false
-    loginForm.value?.resetFields()
-  } catch (error: unknown) {
-    const err = error as { response?: { data?: { message?: string } } }
-    ElMessage.error(err.response?.data?.message || '注册失败')
-  } finally {
-    loading.value = false
-  }
 }
 </script>
 

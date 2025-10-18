@@ -4,6 +4,7 @@ import com.xreadup.ai.model.dto.AiChatRequest;
 import com.xreadup.ai.model.dto.AiChatResponse;
 import com.xreadup.ai.model.dto.QuizQuestionDTO;
 import com.xreadup.ai.model.dto.QuizQuestion;
+import com.xreadup.ai.model.dto.WordInfo;
 import com.xreadup.ai.service.AiReadingAssistantService;
 import com.xreadup.ai.service.EnhancedAiAnalysisService;
 import com.xreadup.ai.common.ApiResponse;
@@ -51,8 +52,23 @@ public class AiReadingAssistantController {
         }
     }
 
+    /**
+     * 查询单词信息
+     */
+    @GetMapping("/word/{word}")
+    @Operation(summary = "查询单词", description = "查询单词的详细信息，包括释义、例句等")
+    public ApiResponse<WordInfo> lookupWord(@PathVariable String word) {
+        try {
+            log.info("查询单词请求: {}", word);
+            WordInfo wordInfo = aiReadingAssistantService.lookupWord(word);
+            return ApiResponse.success(wordInfo);
+        } catch (Exception e) {
+            log.error("查询单词失败: {}", word, e);
+            return ApiResponse.error("查询单词失败: " + e.getMessage());
+        }
+    }
+
     // ===== 以下方法已删除（未使用） =====
-    // - lookupWord() - 前端使用 vocabularyApi.lookupWord() 代替
     // - translate() - 前端使用分层翻译策略代替
 
     /**

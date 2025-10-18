@@ -47,6 +47,76 @@
           />
         </el-form-item>
 
+        <el-form-item prop="phone">
+          <el-input
+            v-model="registerForm.phone"
+            placeholder="手机号（可选）"
+            size="large"
+            prefix-icon="Phone"
+          />
+        </el-form-item>
+
+        <el-form-item prop="interestTag">
+          <el-select
+            v-model="registerForm.interestTag"
+            placeholder="选择兴趣标签（可选）"
+            size="large"
+            style="width: 100%"
+            clearable
+          >
+            <el-option label="科技" value="technology" />
+            <el-option label="商业" value="business" />
+            <el-option label="娱乐" value="entertainment" />
+            <el-option label="体育" value="sports" />
+            <el-option label="科学" value="science" />
+            <el-option label="健康" value="health" />
+            <el-option label="国际" value="world" />
+            <el-option label="国内" value="nation" />
+            <el-option label="综合" value="general" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item prop="identityTag">
+          <el-select
+            v-model="registerForm.identityTag"
+            placeholder="选择身份标签（可选）"
+            size="large"
+            style="width: 100%"
+            clearable
+          >
+            <el-option label="考研" value="考研" />
+            <el-option label="四六级" value="四六级" />
+            <el-option label="职场" value="职场" />
+            <el-option label="留学" value="留学" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item prop="learningGoalWords">
+          <el-input-number
+            v-model="registerForm.learningGoalWords"
+            placeholder="目标词汇量（可选）"
+            size="large"
+            style="width: 100%"
+            :min="0"
+            :max="10000"
+            :step="100"
+            controls-position="right"
+          />
+        </el-form-item>
+
+        <el-form-item prop="targetReadingTime">
+          <el-input-number
+            v-model="registerForm.targetReadingTime"
+            placeholder="每日目标阅读时长（分钟，可选）"
+            size="large"
+            style="width: 100%"
+            :min="0"
+            :max="300"
+            :step="5"
+            controls-position="right"
+          />
+        </el-form-item>
+
         <el-form-item>
           <el-button
             type="primary"
@@ -73,6 +143,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()
@@ -84,7 +155,12 @@ const loading = ref(false)
 const registerForm = reactive({
   username: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  phone: '',
+  interestTag: '',
+  identityTag: '',
+  learningGoalWords: null,
+  targetReadingTime: null
 })
 
 const validatePass = (rule: any, value: any, callback: any) => {
@@ -92,6 +168,14 @@ const validatePass = (rule: any, value: any, callback: any) => {
     callback(new Error('请再次输入密码'))
   } else if (value !== registerForm.password) {
     callback(new Error('两次输入密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const validatePhone = (rule: any, value: any, callback: any) => {
+  if (value && !/^1[3-9]\d{9}$/.test(value)) {
+    callback(new Error('请输入正确的手机号格式'))
   } else {
     callback()
   }
@@ -108,6 +192,9 @@ const registerRules: FormRules = {
   ],
   confirmPassword: [
     { validator: validatePass, trigger: 'blur' }
+  ],
+  phone: [
+    { validator: validatePhone, trigger: 'blur' }
   ]
 }
 
@@ -120,11 +207,20 @@ const handleRegister = async () => {
       const result = await userStore.register(
         registerForm.username,
         registerForm.password,
-        undefined
+        undefined,
+        undefined,
+        {
+          phone: registerForm.phone || undefined,
+          interestTag: registerForm.interestTag || undefined,
+          identityTag: registerForm.identityTag || undefined,
+          learningGoalWords: registerForm.learningGoalWords || undefined,
+          targetReadingTime: registerForm.targetReadingTime || undefined
+        }
       )
 
       if (result.success) {
-        router.push('/')
+        ElMessage.success('注册成功，请登录')
+        router.push('/login')
       }
       loading.value = false
     }

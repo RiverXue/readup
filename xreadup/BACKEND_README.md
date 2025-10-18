@@ -413,12 +413,17 @@ public class AiReadingAssistantService {
 public class UserProfileAnalysisService {
     
     /**
-     * 学习水平评估算法
+     * 学习水平评估算法（与前端统一标准）
+     * 注意：当前后端未实现此方法，等级评估在前端进行
+     * 
+     * 新标准：基于已掌握词汇数和掌握率评估
      */
-    public String assessUserLevel(int learningDays, int articlesRead, int vocabCount) {
-        if (learningDays >= 90 && articlesRead >= 50 && vocabCount >= 1000) return "expert";
-        if (learningDays >= 60 && articlesRead >= 30 && vocabCount >= 500) return "advanced";
-        if (learningDays >= 30 && articlesRead >= 15 && vocabCount >= 200) return "intermediate";
+    public String assessUserLevel(int learningDays, int articlesRead, int masteredWords, int totalWords) {
+        double masteryRate = totalWords > 0 ? (double) masteredWords / totalWords : 0.0;
+        
+        if (learningDays >= 90 && articlesRead >= 50 && masteredWords >= 500 && masteryRate >= 0.8) return "expert";
+        if (learningDays >= 60 && articlesRead >= 30 && masteredWords >= 200 && masteryRate >= 0.7) return "advanced";
+        if (learningDays >= 30 && articlesRead >= 15 && masteredWords >= 50 && masteryRate >= 0.6) return "intermediate";
         return "beginner";
     }
     

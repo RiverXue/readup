@@ -83,12 +83,12 @@
 
           <el-button
             type="danger"
-            @click="askAI"
+            @click="openAITutor"
             class="function-button danger-button"
             size="large"
           >
             <el-icon><ChatLineRound /></el-icon>
-            <span>AI助手</span>
+            <span>Rayda老师</span>
           </el-button>
         </div>
 
@@ -110,6 +110,12 @@
           />
         </div>
       </div>
+
+      <!-- 简配版AI学导 -->
+      <SimpleAITutor
+        v-model="showAITutor"
+        :article="article"
+      />
 
       <!-- 会员升级提示（底部） -->
       <div class="upgrade-section" v-if="!userStore.hasAIFeatures && userStore.isLoggedIn">
@@ -426,144 +432,6 @@
 
     </div>
 
-    <!-- AI学习助手对话框 -->
-    <!-- 现代化AI助手面板 -->
-    <div v-if="aiDialogVisible" class="ai-assistant-panel">
-      <!-- 遮罩层 -->
-      <div class="ai-panel-overlay" @click="aiDialogVisible = false"></div>
-
-      <!-- 主面板 -->
-      <div class="ai-panel-container">
-        <!-- 头部 -->
-        <div class="ai-panel-header">
-          <div class="header-left">
-            <div class="ai-avatar">
-              <el-icon><Star /></el-icon>
-            </div>
-            <div class="header-info">
-              <h3>🎓 AI学习助手</h3>
-              <p>基于您的学习数据为您定制</p>
-            </div>
-          </div>
-          <div class="header-actions">
-            <el-button type="text" @click="clearChat" :disabled="aiLoading" size="small">
-              <el-icon><Delete /></el-icon>
-              清空
-            </el-button>
-            <el-button type="text" @click="aiDialogVisible = false" size="small">
-              <el-icon><Close /></el-icon>
-            </el-button>
-          </div>
-        </div>
-
-        <!-- 学习上下文卡片 -->
-        <div class="context-card" v-if="article.title">
-          <div class="context-header">
-            <el-icon><Document /></el-icon>
-            <span>当前学习内容</span>
-          </div>
-          <div class="article-preview">
-            <h4>{{ article.title }}</h4>
-            <div class="article-meta">
-              <el-tag :type="getDifficultyType(article.difficulty)" size="small" class="capsule-tag capsule-tag--difficulty">
-                {{ article.difficulty || '未知难度' }}
-              </el-tag>
-              <el-tag type="info" size="small" class="capsule-tag capsule-tag--category">
-                {{ article.category || '未分类' }}
-              </el-tag>
-            </div>
-          </div>
-        </div>
-
-        <!-- 主内容区域 -->
-        <div class="ai-panel-content">
-          <!-- 个性化问题推荐 -->
-          <div class="smart-questions-section" v-if="!aiAnswer && chatHistory.length === 0">
-            <div class="section-title">
-              <el-icon><Lightbulb /></el-icon>
-              <span>🎯 个性化阅读提升</span>
-            </div>
-            <div class="question-grid">
-              <div
-                v-for="question in smartQuestions"
-                :key="question.id"
-                @click="askSuggestedQuestion(question.text)"
-                class="smart-question-card"
-                :class="question.type"
-              >
-                <div class="question-icon">{{ question.icon }}</div>
-                <div class="question-content">
-                  <div class="question-text">{{ question.text }}</div>
-                  <div class="question-type">{{ getQuestionTypeLabel(question.type) }}</div>
-                </div>
-                <div class="question-arrow">
-                  <el-icon><ArrowRight /></el-icon>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 对话区域 -->
-          <div class="chat-section" v-else>
-            <!-- 消息历史 -->
-            <div class="messages-container" v-if="chatHistory.length > 0">
-              <div
-                v-for="message in chatHistory"
-                :key="message.id"
-                class="message"
-                :class="message.type"
-              >
-                <div class="message-avatar">
-                  <el-avatar :size="32">
-                    <el-icon v-if="message.type === 'user'"><User /></el-icon>
-                    <el-icon v-else><Star /></el-icon>
-                  </el-avatar>
-                </div>
-                <div class="message-content">
-                  <div class="message-text" v-html="formatAIAnswer(message.content)"></div>
-                  <div class="message-time">{{ formatTime(message.timestamp) }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- AI回答区域 -->
-            <div v-if="aiAnswer && chatHistory.length === 0" class="ai-answer">
-              <div class="answer-header">
-                <el-icon><Star /></el-icon>
-                <span>AI回答</span>
-              </div>
-              <div class="answer-content" v-html="formatAIAnswer(aiAnswer)"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 输入区域 -->
-        <div class="ai-panel-input">
-          <div class="input-container">
-            <el-input
-              v-model="aiQuestion"
-              type="textarea"
-              :rows="2"
-              placeholder="问我任何关于这篇文章的问题..."
-              @keyup.enter.ctrl="submitAIQuestion"
-              :disabled="aiLoading"
-              class="question-input"
-            />
-            <el-button
-              type="primary"
-              @click="submitAIQuestion"
-              :loading="aiLoading"
-              class="send-button"
-            >
-              <el-icon><ArrowRight /></el-icon>
-            </el-button>
-          </div>
-          <div class="input-tips">
-            <span>按 Ctrl+Enter 快速发送</span>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- 单词查询弹窗 -->
     <el-dialog v-model="wordDialogVisible" title="📚 单词详情" width="400px">
@@ -662,6 +530,7 @@ import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Se
 import { subscriptionApi } from '@/utils/api'
 import type { UsageQuota } from '@/types/subscription'
 import QuizComponent from '@/components/QuizComponent.vue'
+import SimpleAITutor from '@/components/SimpleAITutor.vue'
 
 // 报告服务API - 学习统计
 const reportApi = {
@@ -913,444 +782,30 @@ const removeParseResult = (index: number) => {
 const wordDialogVisible = ref(false)
 const wordDetail = ref<WordDetail | null>(null)
 
-// AI助手
-const aiDialogVisible = ref(false)
-const aiQuestion = ref('')
-const aiAnswer = ref('')
-const aiLoading = ref(false)
 
-// 个性化阅读提升问题（基于用户学习数据）
-const smartQuestions = ref<Array<{
-  id: number
-  text: string
-  icon: string
-  type: string
-}>>([])
 
-// 用户学习画像数据
-const userProfile = ref({
-  learningDays: 0,
-  totalArticlesRead: 0,
-  vocabularyCount: 0,
-  averageReadTime: 0,
-  totalReadTime: 0,
-  readingStreak: 0,
-  preferredCategories: [] as string[],
-  currentLevel: 'beginner',
-  weakAreas: [] as string[],
-  // 词汇学习数据
-  newWords: 0,
-  learningWords: 0,
-  masteredWords: 0,
-  averageDifficulty: 'B1'
-})
+// AI学导弹窗控制
+const showAITutor = ref(false)
 
-// 优化AI回答质量
-const optimizeAIResponse = (response: string, question: string, context: any) => {
-  let optimizedResponse = response.trim()
 
-  // 检查回答是否与问题相关
-  if (!isResponseRelevant(optimizedResponse, question, context)) {
-    console.warn('AI回答与问题不相关，尝试重新生成')
-    return `抱歉，我的回答可能不够准确。让我重新为您分析：
 
-基于文章《${context.title}》，${question}
 
-请尝试更具体地描述您想了解的内容，比如：
-- 文章的具体段落或句子
-- 您关心的特定方面
-- 您的英语学习目标
 
-这样我就能为您提供更精准的帮助。`
+// 打开AI学导
+const openAITutor = () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录以使用AI学导功能')
+    return
   }
-
-  // 添加个性化阅读提升建议
-  if (context.questionType === 'personalized-progress') {
-    optimizedResponse += `\n\n🎯 个性化建议：基于您${context.userProfile.learningDays}天的学习经验，建议重点关注这些要点。`
-  } else if (context.questionType === 'category-improvement') {
-    optimizedResponse += `\n\n📈 分类提升：根据您${context.userProfile.preferredCategories.join('、')}类文章的阅读经验，建议采用这些策略。`
-  } else if (context.questionType === 'vocabulary-expansion') {
-    optimizedResponse += `\n\n💡 词汇扩展：基于您${context.userProfile.vocabularyCount}个词汇的学习基础（已掌握${context.userProfile.masteredWords}个），建议将这些新表达加入生词本。`
-  } else if (context.questionType === 'reading-efficiency') {
-    optimizedResponse += `\n\n⏱️ 效率提升：根据您平均${context.userProfile.averageReadTime}分钟的阅读习惯，建议采用这些优化策略。`
-  } else if (context.questionType === 'weakness-targeting') {
-    optimizedResponse += `\n\n💪 薄弱提升：针对您的薄弱环节${context.userProfile.weakAreas.join('、')}，这篇文章能帮助您针对性提升。`
-  } else if (context.questionType === 'next-learning-path') {
-    optimizedResponse += `\n\n📚 学习路径：根据您已阅读${context.userProfile.totalArticlesRead}篇文章的经验，建议接下来重点学习这些内容。`
-  } else if (context.questionType === 'achievement-based') {
-    optimizedResponse += `\n\n🏆 成就激励：恭喜您连续学习${context.userProfile.readingStreak}天！继续保持这个学习节奏，您一定能取得更大进步。`
-  } else if (context.questionType === 'vocabulary-consolidation') {
-    optimizedResponse += `\n\n🔄 词汇巩固：您还有${context.userProfile.learningWords}个词汇在学习中，建议结合这篇文章的内容来巩固这些词汇。`
-  }
-
-  // 添加难度提示
-  if (context.difficulty && context.difficulty !== '未知难度') {
-    optimizedResponse += `\n\n📊 文章难度：${context.difficulty}`
-  }
-
-  return optimizedResponse
+  showAITutor.value = true
 }
 
-// 检查AI回答是否与问题相关
-const isResponseRelevant = (response: string, question: string, context: any) => {
-  const responseLower = response.toLowerCase()
-  const questionLower = question.toLowerCase()
 
-  // 检查是否包含通用拒绝回答
-  const genericRejections = [
-    '抱歉，我无法',
-    '我不能',
-    '我无法回答',
-    '我不确定',
-    '我不了解'
-  ]
 
-  if (genericRejections.some(rejection => responseLower.includes(rejection))) {
-    return false
-  }
 
-  // 检查回答长度是否合理
-  if (response.length < 20) {
-    return false
-  }
 
-  // 检查是否包含文章相关内容
-  if (context.title && !responseLower.includes(context.title.toLowerCase().split(' ')[0])) {
-    // 如果问题明确要求分析文章，但回答中没有提到文章标题的第一个词，可能不相关
-    if (questionLower.includes('文章') || questionLower.includes('这篇')) {
-      return false
-    }
-  }
 
-  return true
-}
 
-// 获取问题类型标签
-const getQuestionTypeLabel = (type: string) => {
-  const typeLabels: Record<string, string> = {
-    'personalized-progress': '个性化进度',
-    'category-improvement': '分类提升',
-    'vocabulary-expansion': '词汇扩展',
-    'reading-efficiency': '阅读效率',
-    'weakness-targeting': '薄弱提升',
-    'next-learning-path': '学习路径',
-    'achievement-based': '成就激励',
-    'vocabulary-consolidation': '词汇巩固'
-  }
-  return typeLabels[type] || '阅读提升'
-}
-
-// 分析用户问题类型
-const analyzeQuestionType = (question: string) => {
-  const lowerQuestion = question.toLowerCase()
-
-  if (lowerQuestion.includes('突破') || lowerQuestion.includes('水平') || lowerQuestion.includes('进步')) {
-    return 'personalized-progress'
-  } else if (lowerQuestion.includes('分类') || lowerQuestion.includes('类型') || lowerQuestion.includes('主题')) {
-    return 'category-improvement'
-  } else if (lowerQuestion.includes('词汇') || lowerQuestion.includes('单词') || lowerQuestion.includes('表达')) {
-    return 'vocabulary-expansion'
-  } else if (lowerQuestion.includes('效率') || lowerQuestion.includes('速度') || lowerQuestion.includes('时间')) {
-    return 'reading-efficiency'
-  } else if (lowerQuestion.includes('薄弱') || lowerQuestion.includes('提升') || lowerQuestion.includes('改进')) {
-    return 'weakness-targeting'
-  } else if (lowerQuestion.includes('接下来') || lowerQuestion.includes('学习') || lowerQuestion.includes('路径')) {
-    return 'next-learning-path'
-  } else {
-    return 'personalized-progress'
-  }
-}
-
-// 获取用户学习数据
-const loadUserProfile = async () => {
-  if (!userStore.isLoggedIn || !userStore.userInfo?.id) return
-
-  try {
-    // 获取用户学习天数（异步）
-    const learningDays = await getUserLearningDays()
-
-    // 获取用户阅读统计（需要调用report-service API）
-    const readingStats = await getUserReadingStats()
-
-    // 获取用户词汇统计（需要调用user-service API）
-    const vocabularyStats = await getUserVocabularyStats()
-
-    // 评估用户当前水平
-    const currentLevel = assessUserLevel(learningDays, readingStats.totalArticles, vocabularyStats.count)
-
-    // 识别用户薄弱环节
-    const weakAreas = identifyWeakAreas(vocabularyStats.reviewStatus)
-
-    userProfile.value = {
-      learningDays,
-      totalArticlesRead: readingStats.totalArticles || 0,
-      vocabularyCount: vocabularyStats.count || 0,
-      averageReadTime: readingStats.averageReadTime || 0,
-      totalReadTime: readingStats.totalReadTime || 0,
-      readingStreak: readingStats.readingStreak || 0,
-      preferredCategories: readingStats.preferredCategories || [],
-      currentLevel,
-      weakAreas,
-      // 词汇学习数据
-      newWords: vocabularyStats.newWords || 0,
-      learningWords: vocabularyStats.learningWords || 0,
-      masteredWords: vocabularyStats.masteredWords || 0,
-      averageDifficulty: vocabularyStats.averageDifficulty || 'B1'
-    }
-
-    console.log('📊 用户学习画像加载完成:', userProfile.value)
-  } catch (error) {
-    console.error('加载用户学习数据失败:', error)
-  }
-}
-
-// 获取用户学习天数（使用与导航栏相同的方法）
-const getUserLearningDays = async () => {
-  if (!userStore.userInfo?.id) return 0
-
-  try {
-    // 使用与导航栏相同的API获取连续打卡天数
-    const userId = userStore.userInfo.id.toString()
-    const checkInResponse = await learningApi.dailyCheckIn(userId)
-
-    if (checkInResponse.data !== undefined) {
-      console.log('从打卡API获取学习天数:', checkInResponse.data)
-      return checkInResponse.data
-    }
-
-    // 如果API调用失败，返回0
-    return 0
-  } catch (error) {
-    console.warn('获取学习天数失败:', error)
-    return 0
-  }
-}
-
-// 获取用户阅读统计
-const getUserReadingStats = async () => {
-  try {
-    if (!userStore.userInfo?.id) {
-      return { totalArticles: 0, averageReadTime: 0, preferredCategories: [], totalReadTime: 0, readingStreak: 0 }
-    }
-
-    // 调用report-service的API获取真实数据
-    const dashboardResponse = await reportApi.getDashboard(Number(userStore.userInfo.id))
-    const readingTimeResponse = await reportApi.getReadingTime(Number(userStore.userInfo.id))
-
-    if (dashboardResponse.data && readingTimeResponse.data) {
-      const dashboard = dashboardResponse.data
-      const readingTime = readingTimeResponse.data
-
-      return {
-        totalArticles: readingTime.totalArticles || dashboard.totalArticlesRead || 0,
-        averageReadTime: readingTime.averageReadTimeMinutes || 0,
-        preferredCategories: dashboard.preferredCategories || [],
-        totalReadTime: readingTime.totalReadTimeMinutes || 0,
-        readingStreak: dashboard.readingStreak || 0
-      }
-    }
-
-    // 如果report-service API失败，尝试使用learningApi作为备选
-    try {
-      const readingTimeRes = await learningApi.getReadingTimeStats(Number(userStore.userInfo.id))
-      if (readingTimeRes?.data) {
-        return {
-          totalArticles: readingTimeRes.data.totalArticles || 0,
-          averageReadTime: readingTimeRes.data.averageReadTimeMinutes || 0,
-          preferredCategories: [],
-          totalReadTime: readingTimeRes.data.totalReadTimeMinutes || 0,
-          readingStreak: 0
-        }
-      }
-    } catch (learningError) {
-      console.warn('learningApi备选方案也失败:', learningError)
-    }
-
-    // 如果所有API调用失败，返回默认值
-    return { totalArticles: 0, averageReadTime: 0, preferredCategories: [], totalReadTime: 0, readingStreak: 0 }
-  } catch (error) {
-    console.warn('获取用户阅读统计失败:', error)
-    return { totalArticles: 0, averageReadTime: 0, preferredCategories: [], totalReadTime: 0, readingStreak: 0 }
-  }
-}
-
-// 获取用户词汇统计
-const getUserVocabularyStats = async () => {
-  try {
-    if (!userStore.userInfo?.id) {
-      return {
-        count: 0,
-        reviewStatus: { new: 0, learning: 0, mastered: 0 },
-        totalWords: 0,
-        newWords: 0,
-        learningWords: 0,
-        masteredWords: 0,
-        averageDifficulty: 'B1'
-      }
-    }
-
-    // 调用user-service的API获取真实数据
-    const statsResponse = await vocabularyStatsApi.getStats(Number(userStore.userInfo.id))
-    const myWordsResponse = await vocabularyStatsApi.getMyWords(Number(userStore.userInfo.id))
-
-    if (statsResponse.data && myWordsResponse.data) {
-      const stats = statsResponse.data
-      const words = myWordsResponse.data
-
-      // 统计复习状态
-      const reviewStatus = {
-        new: words.filter((word: any) => word.reviewStatus === 'new').length,
-        learning: words.filter((word: any) => word.reviewStatus === 'learning').length,
-        mastered: words.filter((word: any) => word.reviewStatus === 'mastered').length
-      }
-
-      return {
-        count: stats.totalWords || words.length || 0,
-        reviewStatus,
-        totalWords: stats.totalWords || 0,
-        newWords: stats.newWords || 0,
-        learningWords: stats.learningWords || 0,
-        masteredWords: stats.masteredWords || 0,
-        averageDifficulty: stats.averageDifficulty || 'B1'
-      }
-    }
-
-    // 如果API调用失败，返回默认值
-    return {
-      count: 0,
-      reviewStatus: { new: 0, learning: 0, mastered: 0 },
-      totalWords: 0,
-      newWords: 0,
-      learningWords: 0,
-      masteredWords: 0,
-      averageDifficulty: 'B1'
-    }
-  } catch (error) {
-    console.warn('获取用户词汇统计失败:', error)
-    return {
-      count: 0,
-      reviewStatus: { new: 0, learning: 0, mastered: 0 },
-      totalWords: 0,
-      newWords: 0,
-      learningWords: 0,
-      masteredWords: 0,
-      averageDifficulty: 'B1'
-    }
-  }
-}
-
-// 评估用户当前水平
-const assessUserLevel = (learningDays: number, articlesRead: number, vocabCount: number) => {
-  if (learningDays < 7 || articlesRead < 5) return 'beginner'
-  if (learningDays < 30 || articlesRead < 20) return 'intermediate'
-  if (learningDays < 90 || articlesRead < 50) return 'advanced'
-  return 'expert'
-}
-
-// 识别用户薄弱环节
-const identifyWeakAreas = (reviewStatus: any) => {
-  const areas = []
-
-  // 基于词汇复习状态识别薄弱环节
-  if (reviewStatus.new > 20) areas.push('新词汇掌握')
-  if (reviewStatus.learning > 30) areas.push('词汇复习')
-  if (reviewStatus.mastered < 50) areas.push('词汇巩固')
-
-  // 基于学习数据识别薄弱环节
-  const totalWords = reviewStatus.new + reviewStatus.learning + reviewStatus.mastered
-  if (totalWords > 0) {
-    const masteryRate = reviewStatus.mastered / totalWords
-    if (masteryRate < 0.3) areas.push('词汇掌握率低')
-    if (reviewStatus.learning / totalWords > 0.5) areas.push('学习进度缓慢')
-  }
-
-  return areas
-}
-
-// 生成个性化问题
-const generatePersonalizedQuestions = () => {
-  const profile = userProfile.value
-  const questions = []
-
-  // 基于用户数据生成个性化问题
-  questions.push({
-    id: 1,
-    text: `基于您已学习${profile.learningDays}天，这篇文章如何帮您突破${profile.currentLevel}水平？`,
-    icon: '🎯',
-    type: 'personalized-progress'
-  })
-
-  if (profile.preferredCategories.length > 0) {
-    questions.push({
-      id: 2,
-      text: `根据您${profile.preferredCategories.join('、')}类文章的阅读经验，如何提高理解这类文章的能力？`,
-      icon: '📈',
-      type: 'category-improvement'
-    })
-  }
-
-  questions.push({
-    id: 3,
-    text: `基于您${profile.vocabularyCount}个词汇的学习基础（掌握${profile.masteredWords}个），这篇文章能帮您掌握哪些新表达？`,
-    icon: '💡',
-    type: 'vocabulary-expansion'
-  })
-
-  if (profile.averageReadTime > 0) {
-    questions.push({
-      id: 4,
-      text: `根据您平均${profile.averageReadTime}分钟的阅读习惯，如何优化阅读效率？`,
-      icon: '⏱️',
-      type: 'reading-efficiency'
-    })
-  }
-
-  if (profile.weakAreas.length > 0) {
-    questions.push({
-      id: 5,
-      text: `基于您的薄弱环节${profile.weakAreas.join('、')}，这篇文章如何针对性提升？`,
-      icon: '💪',
-      type: 'weakness-targeting'
-    })
-  }
-
-  // 基于学习成就生成问题
-  if (profile.readingStreak > 0) {
-    questions.push({
-      id: 6,
-      text: `恭喜您连续学习${profile.readingStreak}天！基于这个学习节奏，这篇文章如何帮您保持进步？`,
-      icon: '🏆',
-      type: 'achievement-based'
-    })
-  } else {
-    questions.push({
-      id: 6,
-      text: `根据您已阅读${profile.totalArticlesRead}篇文章的经验，接下来该重点学习什么？`,
-      icon: '📚',
-      type: 'next-learning-path'
-    })
-  }
-
-  // 基于词汇学习状态生成问题
-  if (profile.learningWords > 10) {
-    questions.push({
-      id: 7,
-      text: `您还有${profile.learningWords}个词汇在学习中，这篇文章如何帮您巩固这些词汇？`,
-      icon: '🔄',
-      type: 'vocabulary-consolidation'
-    })
-  }
-
-  smartQuestions.value = questions
-}
-
-// 对话历史
-const chatHistory = ref<Array<{
-  id: string
-  type: 'user' | 'ai'
-  content: string
-  timestamp: number
-}>>([])
 
 // 生词本计数
 const vocabCount = ref(0)
@@ -1680,10 +1135,8 @@ const loadArticle = async () => {
     // 初始化内容项
     updateContentItems()
 
-    // 加载用户学习数据并生成个性化问题
+    // 加载用户数据
     if (userStore.isLoggedIn) {
-      await loadUserProfile()
-      generatePersonalizedQuestions()
       loadVocabCount()
       loadSubscriptionInfo()
     }
@@ -2144,32 +1597,6 @@ const getWordCount = () => {
   return article.value.enContent?.split(/\s+/).length || 0
 }
 
-// 问AI助手
-const askAI = () => {
-  // 跳转到独立的AI助手页面，并传递当前文章信息
-  router.push({
-    name: 'ai-assistant',
-    query: {
-      articleId: article.value?.id,
-      title: article.value?.title,
-      difficulty: article.value?.difficulty,
-      category: article.value?.category
-    }
-  })
-}
-
-// 点击推荐问题
-const askSuggestedQuestion = (questionText: string) => {
-  aiQuestion.value = questionText
-  submitAIQuestion()
-}
-
-// 清空对话
-const clearChat = () => {
-  aiQuestion.value = ''
-  aiAnswer.value = ''
-  chatHistory.value = []
-}
 
 // 格式化时间
 const formatTime = (timestamp: number) => {
@@ -2180,153 +1607,6 @@ const formatTime = (timestamp: number) => {
   })
 }
 
-const submitAIQuestion = async () => {
-  if (!aiQuestion.value.trim()) return
-
-  // 检查用户是否登录
-  if (!userStore.isLoggedIn || !userStore.userInfo?.id) {
-    ElMessage.warning('请先登录以使用AI助手功能')
-    return
-  }
-
-  // 检查AI调用配额
-  if (!userStore.checkAiQuota()) return
-
-  aiLoading.value = true
-  setAiState('loading', 'AI助手正在思考，请稍候…')
-  try {
-    // 使用类型断言解决TypeScript类型推断问题
-    console.log('🔄 开始AI助手对话请求:', {
-      timestamp: new Date().toISOString(),
-      userId: userStore.userInfo?.id,
-      question: aiQuestion.value,
-      contentLength: article.value.enContent.length,
-      articleId: article.value.id
-    })
-
-    console.time('AI助手对话请求耗时')
-
-    // 构建个性化阅读提升上下文（使用description减少token）
-    const articleContext = {
-      // 文章基础信息（使用description替代contentEn）
-      title: article.value.title,
-      description: (article.value as any).description || article.value.enContent.substring(0, 200),
-      category: article.value.category,
-      difficulty: article.value.difficulty,
-
-      // 用户学习画像
-      userProfile: userProfile.value,
-
-      // 问题类型分析
-      questionType: analyzeQuestionType(aiQuestion.value)
-    }
-
-    console.log('📚 传递给AI的个性化上下文:', {
-      title: articleContext.title,
-      category: articleContext.category,
-      difficulty: articleContext.difficulty,
-      descriptionLength: articleContext.description.length,
-      userLevel: articleContext.userProfile.currentLevel,
-      questionType: articleContext.questionType
-    })
-
-    // 传递精简的文章上下文给AI助手
-    const res = (await aiApi.chat(aiQuestion.value, Number(userStore.userInfo.id), JSON.stringify(articleContext))) as any
-    console.timeEnd('AI助手对话请求耗时')
-
-    console.log('✅ AI助手对话请求成功，结果:', {
-      success: res.success,
-      code: res.code,
-      message: res.message,
-      hasData: !!res.data,
-      answerLength: res.data?.answer?.length || 0,
-      fullResponse: res
-    })
-
-    // 检查响应是否成功
-    if (!res.success || !res.data) {
-      console.error('AI助手响应失败:', res.message || '未知错误')
-      aiAnswer.value = res.message || 'AI助手暂时无法回答，请稍后再试'
-      setAiState('error', 'AI助手响应失败')
-      return
-    }
-
-    // 处理AI助手的响应
-    let aiResponse = res.data.answer
-    if (!aiResponse || aiResponse.trim() === '') {
-      console.warn('AI返回空响应')
-      aiAnswer.value = '抱歉，我暂时无法回答这个问题。请尝试换个方式提问，或者稍后再试。'
-      setAiState('error', 'AI返回空响应')
-      return
-    }
-
-    // 优化AI回答质量
-    aiResponse = optimizeAIResponse(aiResponse, aiQuestion.value, articleContext)
-
-    // 添加用户问题到对话历史
-    chatHistory.value.push({
-      id: Date.now().toString(),
-      type: 'user',
-      content: aiQuestion.value,
-      timestamp: Date.now()
-    })
-
-    // 添加AI回答到对话历史
-    chatHistory.value.push({
-      id: (Date.now() + 1).toString(),
-      type: 'ai',
-      content: aiResponse,
-      timestamp: Date.now()
-    })
-
-    // 设置AI回答（用于兼容旧版本显示）
-    aiAnswer.value = aiResponse
-
-    // 清空输入框
-    aiQuestion.value = ''
-
-    // 如果有后续问题建议，可以在这里处理
-    if (res.data.followUpQuestion) {
-      console.log('后续问题建议:', res.data.followUpQuestion)
-    }
-    setAiState('success', 'AI回答已生成')
-  } catch (error) {
-    // 使用类型断言解决TypeScript unknown类型问题
-    const err = error as any
-    console.error('❌ AI助手对话失败:',
-      err.response?.data || err.message || error,
-      {
-        requestDetails: {
-          question: aiQuestion.value,
-          contentPreview: article.value.enContent.substring(0, 50),
-          errorCode: err.code,
-          errorName: err.name,
-          url: err.config?.url,
-          status: err.response?.status
-        }
-      }
-    )
-
-    // 根据错误类型提供不同的错误信息
-    let errorMessage = 'AI助手暂时无法回答，请稍后重试'
-    if (err.response?.status === 401) {
-      errorMessage = '请先登录以使用AI助手功能'
-    } else if (err.response?.status === 403) {
-      errorMessage = '您的AI功能权限不足，请升级订阅'
-    } else if (err.response?.status >= 500) {
-      errorMessage = 'AI服务暂时不可用，请稍后再试'
-    } else if (err.code === 'NETWORK_ERROR' || err.message?.includes('Network Error')) {
-      errorMessage = '网络连接失败，请检查网络后重试'
-    }
-
-    aiAnswer.value = errorMessage
-    ElMessage.error(errorMessage)
-    setAiState('error', errorMessage)
-  } finally {
-    aiLoading.value = false
-    if (aiState.value.phase === 'loading') setAiState('idle', '准备就绪')
-  }
-}
 
 // 处理高亮段落
 const handleHighlightParagraph = (index: number | null) => {

@@ -62,8 +62,7 @@ public class UserController {
     public ResponseEntity<?> register(@RequestBody UserRegisterRequest request) {
         try {
             User user = userService.register(request);
-
-
+            
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "注册成功",

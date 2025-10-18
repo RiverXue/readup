@@ -50,8 +50,8 @@
             <div class="stat-label">已读文章</div>
           </div>
           <div class="stat-item">
-            <div class="stat-value">{{ userProfile.vocabularyCount || 0 }}</div>
-            <div class="stat-label">学习词汇</div>
+            <div class="stat-value">{{ userProfile.masteredWords || 0 }}</div>
+            <div class="stat-label">已掌握词汇</div>
               </div>
             </div>
           </div>
@@ -69,7 +69,7 @@
                 <span class="level-value">{{ userProfile.currentLevel || '初学者' }}</span>
               </div>
               <div class="progress-bar">
-                <div class="progress" :style="{width: getLevelProgress() + '%'}"></div>
+                <div class="progress" :style="{width: getLevelProgressValue() + '%'}"></div>
               </div>
             </div>
             <div class="strengths-weaknesses">
@@ -218,6 +218,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { aiApi, articleApi, vocabularyApi, learningApi, request as api } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
+import { assessUserLevel, getLevelDisplayName, getLevelProgress } from '@/utils/levelAssessment'
+import { LEARNING_THRESHOLDS, isStrong, isWeak } from '@/utils/learningThresholds'
 import { 
   Document, ArrowLeft, CircleClose, Trophy, Star, StarFilled, 
   Reading, View, Clock, User, Delete, TrendCharts 
@@ -339,7 +341,7 @@ const loadUserProfile = async () => {
     const learningDays = await getUserLearningDays()
     const readingStats = await getUserReadingStats()
     const vocabularyStats = await getUserVocabularyStats()
-    const currentLevel = assessUserLevel(learningDays, readingStats.totalArticles, vocabularyStats.count)
+    const currentLevel = assessUserLevel(learningDays, readingStats.totalArticles, vocabularyStats.masteredWords, vocabularyStats.count)
     
     // 先创建基础profile对象
     const baseProfile = {
@@ -515,54 +517,47 @@ const getUserVocabularyStats = async () => {
   }
 }
 
-// 评估用户当前水平
-const assessUserLevel = (learningDays: number, articlesRead: number, vocabCount: number) => {
-  if (learningDays >= 90 && articlesRead >= 50 && vocabCount >= 1000) return 'expert'
-  if (learningDays >= 60 && articlesRead >= 30 && vocabCount >= 500) return 'advanced'
-  if (learningDays >= 30 && articlesRead >= 15 && vocabCount >= 200) return 'intermediate'
-  return 'beginner'
-}
 
 // 识别用户薄弱环节
 const identifyWeakAreas = (reviewStatus: any, profile: any) => {
   const weakAreas = []
   
-  // 如果没有词汇数据，基于其他学习数据识别薄弱环节
-  if (!reviewStatus || Object.keys(reviewStatus).length === 0) {
-    if (profile.learningDays < 7) weakAreas.push('学习坚持性')
-    if (profile.totalArticlesRead < 5) weakAreas.push('阅读练习')
-    if (profile.vocabularyCount < 50) weakAreas.push('词汇积累')
-    if (profile.readingStreak < 3) weakAreas.push('学习习惯')
-    if (profile.averageReadTime < 10) weakAreas.push('阅读专注力')
-    return weakAreas
+  // 1. 基于词汇复习状态识别薄弱环节（优先级最高）
+  if (reviewStatus && Object.keys(reviewStatus).length > 0) {
+    const total = Object.values(reviewStatus).reduce((sum: number, count: any) => sum + count, 0)
+    
+    if (total > 0) {
+      // 词汇学习状态分析
+      const newRate = (reviewStatus['new'] || 0) / total
+      const learningRate = (reviewStatus['learning'] || 0) / total
+      const reviewRate = (reviewStatus['review'] || 0) / total
+      const masteryRate = (reviewStatus['mastered'] || 0) / total
+      
+      // 新词过多：说明学习速度过快，质量不够
+      if (newRate > 0.3) weakAreas.push('新词掌握')
+      
+      // 学习中词汇过多：说明复习不够，进度缓慢
+      if (learningRate > 0.4) weakAreas.push('词汇巩固')
+      
+      // 待复习词汇过多：说明复习频率不够
+      if (reviewRate > 0.2) weakAreas.push('复习频率')
+      
+      // 掌握率过低：说明学习效果不好
+      if (masteryRate < 0.3) weakAreas.push('词汇掌握率低')
+      
+      // 学习中词汇比例过高：说明学习进度缓慢
+      if (learningRate > 0.5) weakAreas.push('学习进度缓慢')
+    }
   }
   
-  // 基于词汇复习状态识别薄弱环节
-  const total = Object.values(reviewStatus).reduce((sum: number, count: any) => sum + count, 0)
+  // 2. 基于整体学习数据识别薄弱环节
+  if (isWeak(profile, 'learningDays')) weakAreas.push('学习坚持性')
+  if (isWeak(profile, 'totalArticlesRead')) weakAreas.push('阅读练习')
+  if (isWeak(profile, 'masteredWords')) weakAreas.push('词汇掌握')
+  if (isWeak(profile, 'readingStreak')) weakAreas.push('学习习惯')
+  if (isWeak(profile, 'averageReadTime')) weakAreas.push('阅读专注力')
   
-  if (total > 0) {
-    // 降低阈值，更容易触发薄弱环节识别
-    if (reviewStatus['new'] > total * 0.2) weakAreas.push('新词掌握')
-    if (reviewStatus['learning'] > total * 0.3) weakAreas.push('词汇巩固')
-    if (reviewStatus['review'] > total * 0.15) weakAreas.push('复习频率')
-    
-    // 基于掌握率识别薄弱环节
-    const masteryRate = (reviewStatus['mastered'] || 0) / total
-    if (masteryRate < 0.4) weakAreas.push('词汇掌握率低')
-    
-    // 基于学习进度识别薄弱环节
-    const learningRate = (reviewStatus['learning'] || 0) / total
-    if (learningRate > 0.5) weakAreas.push('学习进度缓慢')
-  }
-  
-  // 基于整体学习数据补充薄弱环节
-  if (profile.learningDays < 14) weakAreas.push('学习坚持性')
-  if (profile.totalArticlesRead < 10) weakAreas.push('阅读练习')
-  if (profile.vocabularyCount < 100) weakAreas.push('词汇积累')
-  if (profile.readingStreak < 5) weakAreas.push('学习习惯')
-  if (profile.averageReadTime < 15) weakAreas.push('阅读专注力')
-  
-  // 去重
+  // 去重并返回
   return [...new Set(weakAreas)]
 }
 
@@ -590,24 +585,11 @@ const generateLearningDiagnosis = (profile: any) => {
 const identifyStrengths = (profile: any) => {
   const strengths = []
   
-  if (profile.learningDays >= 30) {
-    strengths.push('学习坚持性')
-  }
-  if (profile.vocabularyCount >= 200) {
-    strengths.push('词汇积累')
-  }
-  if (profile.totalArticlesRead >= 10) {
-    strengths.push('阅读能力')
-  }
-  if (profile.readingStreak >= 7) {
-    strengths.push('学习习惯')
-  }
-  if (profile.averageReadTime >= 15) {
-    strengths.push('专注力')
-  }
-  if (profile.masteredWords >= 100) {
-    strengths.push('词汇掌握')
-  }
+  if (isStrong(profile, 'learningDays')) strengths.push('学习坚持性')
+  if (isStrong(profile, 'masteredWords')) strengths.push('词汇掌握')
+  if (isStrong(profile, 'totalArticlesRead')) strengths.push('阅读能力')
+  if (isStrong(profile, 'readingStreak')) strengths.push('学习习惯')
+  if (isStrong(profile, 'averageReadTime')) strengths.push('专注力')
   
   // 如果没有明显的优势，给出鼓励性建议
   if (strengths.length === 0) {
@@ -660,8 +642,8 @@ const generateRecommendations = (profile: any) => {
   if (profile.readingStreak < 3) {
     recommendations.push('建议保持连续学习习惯，避免中断')
   }
-  if (profile.vocabularyCount < 100) {
-    recommendations.push('建议增加词汇学习量，扩大词汇基础')
+  if (profile.masteredWords < 50) {
+    recommendations.push('建议提高词汇掌握率，重点巩固已学词汇')
   }
   if (profile.totalArticlesRead < 5) {
     recommendations.push('建议多阅读不同类型的文章，拓宽知识面')
@@ -676,16 +658,9 @@ const generateRecommendations = (profile: any) => {
   return recommendations
 }
 
-// 获取学习水平进度百分比
-const getLevelProgress = () => {
-  const level = userProfile.value.currentLevel
-  const progressMap: Record<string, number> = {
-    'beginner': 25,
-    'intermediate': 50,
-    'advanced': 75,
-    'expert': 100
-  }
-  return progressMap[level] || 25
+// 获取学习水平进度百分比（使用统一工具函数）
+const getLevelProgressValue = () => {
+  return getLevelProgress(userProfile.value.currentLevel as any)
 }
 
 // 生成个性化问题

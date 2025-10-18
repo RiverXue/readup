@@ -117,15 +117,17 @@ const getUserVocabularyStats = async () => {
 ### 1. **学习水平评估算法**
 
 ```typescript
-const assessUserLevel = (learningDays: number, articlesRead: number, vocabCount: number) => {
-  // 专家级别：90天+学习，50+文章，1000+词汇
-  if (learningDays >= 90 && articlesRead >= 50 && vocabCount >= 1000) return 'expert'
+const assessUserLevel = (learningDays: number, articlesRead: number, masteredWords: number, totalWords: number) => {
+  const masteryRate = totalWords > 0 ? (masteredWords / totalWords) : 0
   
-  // 高级级别：60天+学习，30+文章，500+词汇
-  if (learningDays >= 60 && articlesRead >= 30 && vocabCount >= 500) return 'advanced'
+  // 专家级别：90天+学习，50+文章，已掌握500+词汇，掌握率80%+
+  if (learningDays >= 90 && articlesRead >= 50 && masteredWords >= 500 && masteryRate >= 0.8) return 'expert'
   
-  // 中级级别：30天+学习，15+文章，200+词汇
-  if (learningDays >= 30 && articlesRead >= 15 && vocabCount >= 200) return 'intermediate'
+  // 高级级别：60天+学习，30+文章，已掌握200+词汇，掌握率70%+
+  if (learningDays >= 60 && articlesRead >= 30 && masteredWords >= 200 && masteryRate >= 0.7) return 'advanced'
+  
+  // 中级级别：30天+学习，15+文章，已掌握50+词汇，掌握率60%+
+  if (learningDays >= 30 && articlesRead >= 15 && masteredWords >= 50 && masteryRate >= 0.6) return 'intermediate'
   
   // 初级级别：其他情况
   return 'beginner'
@@ -142,7 +144,7 @@ const identifyWeakAreas = (reviewStatus: any, profile: any) => {
   if (!reviewStatus || Object.keys(reviewStatus).length === 0) {
     if (profile.learningDays < 7) weakAreas.push('学习坚持性')
     if (profile.totalArticlesRead < 5) weakAreas.push('阅读练习')
-    if (profile.vocabularyCount < 50) weakAreas.push('词汇积累')
+    if (profile.masteredWords < 20) weakAreas.push('词汇掌握')
     if (profile.readingStreak < 3) weakAreas.push('学习习惯')
     if (profile.averageReadTime < 10) weakAreas.push('阅读专注力')
     return weakAreas
@@ -169,7 +171,7 @@ const identifyWeakAreas = (reviewStatus: any, profile: any) => {
   // 基于整体学习数据补充薄弱环节
   if (profile.learningDays < 14) weakAreas.push('学习坚持性')
   if (profile.totalArticlesRead < 10) weakAreas.push('阅读练习')
-  if (profile.vocabularyCount < 100) weakAreas.push('词汇积累')
+  if (profile.masteredWords < 50) weakAreas.push('词汇掌握')
   if (profile.readingStreak < 5) weakAreas.push('学习习惯')
   if (profile.averageReadTime < 15) weakAreas.push('阅读专注力')
   
@@ -187,8 +189,8 @@ const identifyStrengths = (profile: any) => {
   if (profile.learningDays >= 30) {
     strengths.push('学习坚持性')
   }
-  if (profile.vocabularyCount >= 200) {
-    strengths.push('词汇积累')
+  if (profile.masteredWords >= 100) {
+    strengths.push('词汇掌握')
   }
   if (profile.totalArticlesRead >= 10) {
     strengths.push('阅读能力')
