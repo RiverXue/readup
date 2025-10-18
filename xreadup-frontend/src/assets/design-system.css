@@ -1651,7 +1651,143 @@
   100% { transform: translateX(100%); }
 }
 
-/* 28. 打印样式 */
+/* 28. 角落链接按钮系统 - 现代玻璃态角落按钮 */
+.corner-link-container {
+  position: relative;
+}
+
+.original-link-corner {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.corner-link-btn {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007AFF;
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+}
+
+.corner-link-btn:hover {
+  background: rgba(0, 122, 255, 0.2);
+  color: #0056CC;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  text-decoration: none;
+}
+
+.corner-link-btn:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 角落链接按钮变体 */
+.corner-link-btn--success {
+  background: rgba(52, 199, 89, 0.1);
+  color: #34C759;
+  border-color: rgba(52, 199, 89, 0.2);
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.1);
+}
+
+.corner-link-btn--success:hover {
+  background: rgba(52, 199, 89, 0.2);
+  color: #2A9D3A;
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2);
+}
+
+.corner-link-btn--warning {
+  background: rgba(255, 149, 0, 0.1);
+  color: #FF9500;
+  border-color: rgba(255, 149, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.1);
+}
+
+.corner-link-btn--warning:hover {
+  background: rgba(255, 149, 0, 0.2);
+  color: #E6850E;
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.2);
+}
+
+.corner-link-btn--error {
+  background: rgba(255, 59, 48, 0.1);
+  color: #FF3B30;
+  border-color: rgba(255, 59, 48, 0.2);
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.1);
+}
+
+.corner-link-btn--error:hover {
+  background: rgba(255, 59, 48, 0.2);
+  color: #E5342A;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.2);
+}
+
+.corner-link-btn--info {
+  background: rgba(78, 205, 196, 0.1);
+  color: #4ECDC4;
+  border-color: rgba(78, 205, 196, 0.2);
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.1);
+}
+
+.corner-link-btn--info:hover {
+  background: rgba(78, 205, 196, 0.2);
+  color: #3BA89F;
+  box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+}
+
+/* 角落链接按钮尺寸 */
+.corner-link-btn--sm {
+  padding: 2px 6px;
+  font-size: 10px;
+  border-radius: 12px;
+}
+
+.corner-link-btn--lg {
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 20px;
+}
+
+/* 响应式角落链接按钮 */
+@media (max-width: 768px) {
+  .original-link-corner {
+    bottom: 8px;
+    right: 8px;
+  }
+  
+  .corner-link-btn {
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 14px;
+  }
+  
+  .corner-link-btn--sm {
+    padding: 2px 4px;
+    font-size: 9px;
+    border-radius: 10px;
+  }
+  
+  .corner-link-btn--lg {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 16px;
+  }
+}
+
+/* 29. 打印样式 */
 @media print {
   .modern-card {
     box-shadow: none;
@@ -1662,5 +1798,12 @@
     background: transparent !important;
     color: #000 !important;
     border: 1px solid #000 !important;
+  }
+  
+  .corner-link-btn {
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
   }
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="airbnb-modern-card" @click="handleClick">
-    <!-- 封面图片区域（仅在有图片时显示） -->
-    <div class="card-image-container" v-if="article.image">
+    <!-- 封面图片区域（仅在有图片且未加载失败时显示） -->
+    <div class="card-image-container" v-if="article.image && !imageLoadFailed">
       <img 
         :src="article.image" 
         :alt="article.title"
@@ -21,6 +21,10 @@
       <div class="compact-meta">
         <span class="tag category">{{ article.category || '未分类' }}</span>
         <span class="tag difficulty">{{ getDifficultyText(article.difficulty || '') }}</span>
+        <!-- 当图片加载失败时，在标签区域显示来源信息 -->
+        <span class="tag source" v-if="article.source && imageLoadFailed">
+          {{ article.source }}
+        </span>
       </div>
 
       <!-- 标题 -->
@@ -46,25 +50,8 @@
           <span class="meta-icon">📅</span>
           <span>{{ formatPublishTime(article.publishedAt) }}</span>
         </div>
-        <!-- 新增：来源信息 -->
-        <div class="meta-item" v-if="article.source">
-          <span class="meta-icon">🏢</span>
-          <span>{{ article.source }}</span>
-        </div>
       </div>
       
-      <!-- 原文链接 - 放在文章内容末尾的角落 -->
-      <div class="original-link-corner" v-if="article.url">
-        <el-button 
-          type="text" 
-          size="small" 
-          @click.stop="openOriginalArticle(article.url!)"
-          class="corner-link-btn"
-        >
-          <el-icon><Link /></el-icon>
-          查看原文
-        </el-button>
-      </div>
     </div>
 
     <!-- 智能加载状态 -->
@@ -77,7 +64,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Link } from '@element-plus/icons-vue'
 
 // Props定义
 interface Article {
@@ -217,18 +203,15 @@ const formatPublishTime = (publishedAt: string | Date): string => {
 }
 
 // 处理图片加载错误
+const imageLoadFailed = ref(false)
+
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
   img.style.display = 'none'
+  imageLoadFailed.value = true
   // 隐藏图片后，卡片回到无图片的现有状态
 }
 
-// 打开原文链接
-const openOriginalArticle = (url: string) => {
-  if (url) {
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
-}
 
 // 计算卡片背景渐变（根据标题生成简单的主题色）
 const cardGradient = computed(() => {
@@ -354,6 +337,16 @@ const cardGradient = computed(() => {
   font-size: 10px;
 }
 
+.tag.source {
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.2) 0%, rgba(115, 209, 61, 0.2) 100%);
+  color: #52c41a;
+}
+
+.tag.source::before {
+  content: '🏢';
+  font-size: 10px;
+}
+
 .card-title {
   font-size: 18px;
   font-weight: 600;
@@ -433,11 +426,6 @@ const cardGradient = computed(() => {
   box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
 }
 
-.meta-item:nth-child(4) {
-  background: linear-gradient(135deg, #AB47BC 0%, #BA68C8 100%);
-  box-shadow: 0 4px 12px rgba(171, 71, 188, 0.3);
-}
-
 /* 封面图片样式 */
 .card-image-container {
   position: relative;
@@ -486,31 +474,6 @@ const cardGradient = computed(() => {
   font-weight: 600;
 }
 
-/* 原文链接角落样式 */
-.original-link-corner {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  z-index: 2;
-}
-
-.corner-link-btn {
-  background: rgba(0, 122, 255, 0.1);
-  color: #007AFF;
-  border: 1px solid rgba(0, 122, 255, 0.2);
-  border-radius: 16px;
-  padding: 4px 8px;
-  font-size: 12px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.corner-link-btn:hover {
-  background: rgba(0, 122, 255, 0.2);
-  color: #0056CC;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
-}
 
 /* 智能加载状态和响应式保留 */
 .smart-loading-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center; backdrop-filter: blur(10px); }

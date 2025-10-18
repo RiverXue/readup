@@ -457,17 +457,19 @@
             <el-icon><Calendar /></el-icon>
             <span>发布时间：{{ formatPublishTime(article.publishedAt) }}</span>
           </div>
-          <!-- 原文链接 -->
-          <div class="footer-item" v-if="article.url">
-            <el-button 
-              type="primary" 
-              @click="openOriginalArticle(article.url!)"
-              class="original-article-btn"
-            >
-              <el-icon><Link /></el-icon>
-              查看原文
-            </el-button>
-          </div>
+        </div>
+        
+        <!-- 原文链接 - 使用ArticleCard的角落样式 -->
+        <div class="original-link-corner" v-if="article.url">
+          <el-button 
+            type="text" 
+            size="small" 
+            @click="openOriginalArticle(article.url!)"
+            class="corner-link-btn"
+          >
+            <el-icon><Link /></el-icon>
+            查看原文
+          </el-button>
         </div>
       </div>
 
@@ -3583,7 +3585,7 @@ onUnmounted(async () => {
 
 .footer-info {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
@@ -3601,25 +3603,7 @@ onUnmounted(async () => {
   color: #007AFF;
 }
 
-/* 原文链接按钮样式 */
-.original-article-btn {
-  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
-  border: none;
-  color: white;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-}
-
-.original-article-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-}
-
-.original-article-btn .el-icon {
-  margin-right: 6px;
-}
+/* 原文链接角落样式 - 使用全局设计系统 */
 
 /* 按钮加载状态 */
 .function-button.is-loading {

@@ -338,6 +338,143 @@
         </div>
       </section>
 
+      <!-- 角落链接按钮演示 -->
+      <section class="demo-section">
+        <h2 class="section-title">🔗 角落链接按钮系统</h2>
+        <div class="corner-link-showcase">
+          <div class="corner-link-group">
+            <h3>基础变体</h3>
+            <div class="corner-demo-container">
+              <div class="corner-demo-card">
+                <h4>默认样式</h4>
+                <p>这是默认的角落链接按钮，采用iOS蓝色主题</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn" @click="handleCornerLinkClick">
+                    <el-icon><Link /></el-icon>
+                    查看原文
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card">
+                <h4>成功样式</h4>
+                <p>成功状态的角落链接按钮，采用绿色主题</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--success" @click="handleCornerLinkClick">
+                    <el-icon><Check /></el-icon>
+                    确认完成
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card">
+                <h4>警告样式</h4>
+                <p>警告状态的角落链接按钮，采用橙色主题</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--warning" @click="handleCornerLinkClick">
+                    <el-icon><Warning /></el-icon>
+                    注意
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card">
+                <h4>错误样式</h4>
+                <p>错误状态的角落链接按钮，采用红色主题</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--error" @click="handleCornerLinkClick">
+                    <el-icon><Close /></el-icon>
+                    删除
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card">
+                <h4>信息样式</h4>
+                <p>信息状态的角落链接按钮，采用青色主题</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--info" @click="handleCornerLinkClick">
+                    <el-icon><InfoFilled /></el-icon>
+                    详情
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="corner-link-group">
+            <h3>不同尺寸</h3>
+            <div class="corner-demo-container">
+              <div class="corner-demo-card">
+                <h4>小尺寸</h4>
+                <p>适合紧凑空间的角落链接按钮</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--sm" @click="handleCornerLinkClick">
+                    <el-icon><Link /></el-icon>
+                    链接
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card">
+                <h4>默认尺寸</h4>
+                <p>标准尺寸的角落链接按钮</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn" @click="handleCornerLinkClick">
+                    <el-icon><Link /></el-icon>
+                    查看原文
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card">
+                <h4>大尺寸</h4>
+                <p>适合重要操作的角落链接按钮</p>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--lg" @click="handleCornerLinkClick">
+                    <el-icon><Link /></el-icon>
+                    立即查看原文
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="corner-link-group">
+            <h3>实际应用场景</h3>
+            <div class="corner-demo-container">
+              <div class="corner-demo-card article-demo">
+                <h4>文章阅读器</h4>
+                <p>在文章末尾显示原文链接，方便用户查看原始内容</p>
+                <div class="article-content-demo">
+                  <p>这是文章内容的一部分，展示了如何在文章阅读器中使用角落链接按钮...</p>
+                </div>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn" @click="handleCornerLinkClick">
+                    <el-icon><Link /></el-icon>
+                    查看原文
+                  </button>
+                </div>
+              </div>
+              
+              <div class="corner-demo-card card-demo">
+                <h4>卡片组件</h4>
+                <p>在卡片组件中显示相关链接，保持界面整洁</p>
+                <div class="card-content-demo">
+                  <p>卡片内容描述...</p>
+                </div>
+                <div class="original-link-corner">
+                  <button class="corner-link-btn corner-link-btn--success" @click="handleCornerLinkClick">
+                    <el-icon><Link /></el-icon>
+                    外部链接
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 响应式演示 -->
       <section class="demo-section">
         <h2 class="section-title">📱 响应式设计</h2>
@@ -369,6 +506,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { Link, Check, Warning, Close, InfoFilled } from '@element-plus/icons-vue'
 import TactileButton from '@/components/common/TactileButton.vue'
 import SmartLoading from '@/components/common/SmartLoading.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
@@ -425,6 +563,10 @@ const handleReset = () => {
     email: '',
     description: ''
   })
+}
+
+const handleCornerLinkClick = () => {
+  console.log('角落链接按钮被点击')
 }
 </script>
 
@@ -786,6 +928,102 @@ const handleReset = () => {
   border: 1px solid var(--border-light);
 }
 
+/* 角落链接按钮展示 */
+.corner-link-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.corner-link-group h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.corner-demo-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+}
+
+.corner-demo-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  position: relative;
+  min-height: 120px;
+  transition: all var(--transition-normal);
+}
+
+.corner-demo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-200);
+}
+
+.corner-demo-card h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.corner-demo-card p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-4);
+  line-height: var(--line-height-normal);
+}
+
+.article-demo {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.article-content-demo {
+  background: var(--bg-primary);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--ios-blue);
+  margin-bottom: var(--space-4);
+}
+
+.article-content-demo p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: var(--line-height-relaxed);
+}
+
+.card-demo {
+  background: linear-gradient(135deg, 
+    rgba(52, 199, 89, 0.05) 0%, 
+    rgba(52, 199, 89, 0.02) 100%);
+  border-color: rgba(52, 199, 89, 0.2);
+}
+
+.card-content-demo {
+  background: var(--bg-primary);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--ios-green);
+  margin-bottom: var(--space-4);
+}
+
+.card-content-demo p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: var(--line-height-relaxed);
+}
+
 /* 响应式展示 */
 .responsive-showcase {
   display: flex;
@@ -895,6 +1133,14 @@ const handleReset = () => {
   
   .tag-row {
     justify-content: center;
+  }
+  
+  .corner-demo-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .corner-demo-card {
+    min-height: 100px;
   }
 }
 </style>
