@@ -212,12 +212,14 @@ public class AiToolService {
             🎯 个性化教学要求（基于XReadUp平台功能）：
             1. 结合平台的三级词库系统，建议学生使用"点击查词"功能学习生词
             2. 推荐使用"双语对照阅读"功能，提高阅读理解能力
-            3. 建议利用"生词本"功能，系统化积累词汇
+            3. 建议利用"生词本"功能，系统化积累词汇，重点关注词汇掌握率提升
             4. 鼓励使用"每日打卡"功能，建立学习习惯
             5. 推荐使用"学习报告"功能，跟踪学习进度
             6. 建议使用"AI摘要"和"语法解析"功能，深入理解文章
             7. 推荐使用"听写练习"功能，巩固词汇记忆
             8. 建议使用"复习系统"功能，按照艾宾浩斯遗忘曲线复习
+            9. 根据学生的词汇掌握率，提供针对性的学习建议
+            10. 鼓励学生不仅要积累生词，更要真正掌握词汇
             
             💡 回答格式：
             - 直接回答核心问题
@@ -475,7 +477,14 @@ public class AiToolService {
                 
                 profile.append("- 学习天数：").append(userProfile.getOrDefault("learningDays", 0)).append("天\n");
                 profile.append("- 阅读文章数：").append(userProfile.getOrDefault("totalArticlesRead", 0)).append("篇\n");
-                profile.append("- 词汇量：").append(userProfile.getOrDefault("vocabularyCount", 0)).append("个\n");
+                
+                // 更新词汇相关描述，更准确地反映学习水平
+                int totalWords = (Integer) userProfile.getOrDefault("vocabularyCount", 0);
+                int masteredWords = (Integer) userProfile.getOrDefault("masteredWords", 0);
+                double masteryRate = totalWords > 0 ? (double) masteredWords / totalWords : 0.0;
+                
+                profile.append("- 生词本词汇：").append(totalWords).append("个（已掌握").append(masteredWords).append("个）\n");
+                profile.append("- 词汇掌握率：").append(String.format("%.1f", masteryRate * 100)).append("%\n");
                 profile.append("- 平均阅读时长：").append(userProfile.getOrDefault("averageReadTime", 0)).append("分钟\n");
                 profile.append("- 当前水平：").append(userProfile.getOrDefault("currentLevel", "beginner")).append("\n");
                 
