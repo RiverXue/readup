@@ -224,6 +224,7 @@ AdminLayout.vue
 - 双击朗读：TTS语音朗读功能
 - AI 功能集成：翻译、摘要、解析、问答
 - 生词管理：一键添加到生词本
+- 字体大小控制：付费用户可自由调节阅读字体大小（14px-24px）
 - 阅读时长记录：自动记录有效阅读时间
 
 **VocabularyPage.vue - 生词本**
@@ -1123,6 +1124,86 @@ const onWordDoubleClick = (event: MouseEvent) => {
 ```
 
 ### 3. 智能阅读器
+
+#### 字体大小控制功能（付费用户专属）
+
+**功能特性**
+- **个性化字体调节**: 付费用户可在侧边栏调节字体大小（14px-24px）
+- **统一字体控制**: 英文原文和中文翻译使用相同的字体大小设置
+- **实时预览**: 拖动滑块时实时更新字体大小，提供平滑的过渡动画
+- **设置持久化**: 自动保存到本地存储，页面刷新后保持用户设置
+
+**技术实现**
+```vue
+<!-- 字体大小控制组件 -->
+<div v-if="isPremiumUser" class="font-size-control">
+  <div class="control-header">
+    <h4>字体大小</h4>
+  </div>
+  <div class="font-controls">
+    <div class="font-control-item">
+      <label>阅读字体</label>
+      <div class="font-size-slider">
+        <el-slider
+          v-model="fontSize.english"
+          :min="14"
+          :max="24"
+          :step="1"
+          @change="updateFontSize"
+        />
+        <span class="font-size-value">{{ fontSize.english }}px</span>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+**CSS变量系统**
+```css
+/* 使用CSS变量动态控制字体大小 */
+.english-content .paragraph {
+  font-size: var(--english-font-size, 18px);
+  transition: font-size 0.3s ease;
+}
+
+.chinese-content .paragraph {
+  font-size: var(--chinese-font-size, 16px);
+  transition: font-size 0.3s ease;
+}
+
+/* 侧边栏收起时字体大小增加 */
+.sidebar.sidebar-collapsed ~ .article-reader-main-content .english-content .paragraph {
+  font-size: calc(var(--english-font-size, 18px) + 2px);
+}
+```
+
+**JavaScript控制逻辑**
+```typescript
+// 字体大小控制状态
+const fontSize = ref({
+  english: 18,  // 统一字体大小
+  chinese: 16   // 保持兼容性，但实际使用english的值
+})
+
+// 应用字体大小到页面
+const applyFontSize = () => {
+  document.documentElement.style.setProperty('--english-font-size', `${fontSize.value.english}px`)
+  document.documentElement.style.setProperty('--chinese-font-size', `${fontSize.value.english}px`)
+}
+
+// 从本地存储加载字体大小设置
+const loadFontSizeSettings = () => {
+  const saved = localStorage.getItem('articleReader_fontSize')
+  if (saved) {
+    const parsed = JSON.parse(saved)
+    fontSize.value = {
+      english: parsed.english || 18,
+      chinese: parsed.chinese || 16
+    }
+    applyFontSize()
+  }
+}
+```
 
 #### 双语对照阅读
 ```vue

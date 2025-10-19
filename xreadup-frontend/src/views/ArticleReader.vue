@@ -92,6 +92,36 @@
           </el-button>
         </div>
 
+        <!-- 付费用户字体大小控制 -->
+        <div v-if="isPremiumUser" class="font-size-control">
+          <div class="control-header">
+            <h4>字体大小</h4>
+          </div>
+          <div class="font-controls">
+            <div class="font-control-item">
+              <label>阅读字体</label>
+              <div class="font-size-slider">
+                <el-slider
+                  v-model="fontSize.english"
+                  :min="14"
+                  :max="24"
+                  :step="1"
+                  :show-tooltip="false"
+                  @change="updateFontSize"
+                  class="font-slider"
+                />
+                <span class="font-size-value">{{ fontSize.english }}px</span>
+              </div>
+            </div>
+            <div class="font-control-actions">
+              <el-button size="small" @click="resetFontSize" class="reset-button">
+                <el-icon><Refresh /></el-icon>
+                重置
+              </el-button>
+            </div>
+          </div>
+        </div>
+
         <!-- AI结果展示区 - 融入侧边栏 -->
         <div v-if="aiResult && !isQuizMode" class="sidebar-ai-result">
           <div class="sidebar-result-header">
@@ -569,7 +599,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { aiApi, articleApi, vocabularyApi, learningApi, request as api } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
-import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Search, ArrowLeft, ArrowRight, CircleClose, Trophy, Star, StarFilled, Reading, View, Clock, User, Delete, OfficeBuilding, Calendar, Link } from '@element-plus/icons-vue'
+import { Document, MagicStick, ChatLineRound, ArrowDown, ArrowUp, Collection, Search, ArrowLeft, ArrowRight, CircleClose, Trophy, Star, StarFilled, Reading, View, Clock, User, Delete, OfficeBuilding, Calendar, Link, Refresh } from '@element-plus/icons-vue'
 import { subscriptionApi } from '@/utils/api'
 import type { UsageQuota } from '@/types/subscription'
 import QuizComponent from '@/components/QuizComponent.vue'
@@ -771,6 +801,12 @@ const showFirstUseGuide = ref(false)
 // 侧边栏折叠状态
 const isSidebarCollapsed = ref(false)
 
+// 字体大小控制状态
+const fontSize = ref({
+  english: 18,  // 统一字体大小
+  chinese: 16   // 保持兼容性，但实际使用english的值
+})
+
 // 上下文内容项（文章段落和AI解析结果）
 interface ContentItem {
   type: 'paragraph' | 'ai-parse'
@@ -791,6 +827,49 @@ const setAiState = (phase: AiPhase, message: string) => {
 // 切换侧边栏折叠状态
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value
+}
+
+// 更新字体大小
+const updateFontSize = () => {
+  // 保存到本地存储
+  localStorage.setItem('articleReader_fontSize', JSON.stringify(fontSize.value))
+  
+  // 应用字体大小到页面
+  applyFontSize()
+}
+
+// 应用字体大小到页面
+const applyFontSize = () => {
+  // 更新CSS变量 - 中文翻译也使用英文的字体大小
+  document.documentElement.style.setProperty('--english-font-size', `${fontSize.value.english}px`)
+  document.documentElement.style.setProperty('--chinese-font-size', `${fontSize.value.english}px`)
+}
+
+// 重置字体大小
+const resetFontSize = () => {
+  fontSize.value = {
+    english: 18,
+    chinese: 16
+  }
+  updateFontSize()
+  ElMessage.success('字体大小已重置')
+}
+
+// 从本地存储加载字体大小设置
+const loadFontSizeSettings = () => {
+  const saved = localStorage.getItem('articleReader_fontSize')
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      fontSize.value = {
+        english: parsed.english || 18,
+        chinese: parsed.chinese || 16
+      }
+      applyFontSize()
+    } catch (error) {
+      console.error('加载字体大小设置失败:', error)
+    }
+  }
 }
 
 // 限制免费用户看到的词汇数量
@@ -1922,6 +2001,9 @@ onMounted(async () => {
   // 等待文章加载完成，确保订阅信息也加载完毕
   await loadArticle()
 
+  // 加载字体大小设置
+  loadFontSizeSettings()
+
   document.addEventListener('selectionchange', handleTextSelection)
 
   // 添加页面可见性变化监听
@@ -2118,8 +2200,8 @@ onUnmounted(async () => {
 }
 
 .sidebar.sidebar-collapsed ~ .article-reader-main-content .english-content .paragraph {
-  font-size: 18px;  /* 增大字体大小 */
-  line-height: 1.8; /* 调整行高，提升阅读舒适度 */
+  font-size: calc(var(--english-font-size, 18px) + 2px); /* 在用户设置基础上增加2px */
+  line-height: 1.9; /* 调整行高，提升阅读舒适度 */
 }
 
 /* 为付费用户布局（行间翻译）的英文内容设置样式 */
@@ -2130,8 +2212,8 @@ onUnmounted(async () => {
 }
 
 .sidebar.sidebar-collapsed ~ .article-reader-main-content .free-bilingual-layout .english-sentence {
-  font-size: 18px;  /* 增大字体大小 */
-  line-height: 1.8; /* 调整行高，提升阅读舒适度 */
+  font-size: calc(var(--english-font-size, 18px) + 2px); /* 在用户设置基础上增加2px */
+  line-height: 1.9; /* 调整行高，提升阅读舒适度 */
   transition: font-size 0.3s ease, line-height 0.3s ease;
 }
 
@@ -2446,6 +2528,100 @@ onUnmounted(async () => {
   color: white;
 }
 
+/* 字体大小控制样式 */
+.font-size-control {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+}
+
+.control-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.control-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-header h4::before {
+  content: '🔤';
+  font-size: 16px;
+}
+
+.font-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.font-control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.font-control-item label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #606266;
+  margin: 0;
+}
+
+.font-size-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.font-slider {
+  flex: 1;
+}
+
+.font-size-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #409eff;
+  background: #f0f9ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.font-control-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.reset-button {
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  color: #606266;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.reset-button:hover {
+  background: #e6f7ff;
+  border-color: #409eff;
+  color: #409eff;
+  transform: translateY(-1px);
+}
+
 /* 升级卡片样式 */
 .upgrade-card {
   border: none;
@@ -2743,6 +2919,9 @@ onUnmounted(async () => {
 .free-bilingual-layout .english-sentence {
   font-weight: 500;
   margin-bottom: 8px;
+  font-size: var(--english-font-size, 18px); /* 使用CSS变量，默认18px */
+  line-height: 1.8;     /* 调整行高，提升阅读舒适度 */
+  transition: font-size 0.3s ease; /* 添加过渡动画 */
 }
 
 .free-bilingual-layout .chinese-sentence {
@@ -2750,6 +2929,8 @@ onUnmounted(async () => {
   margin-bottom: 0;
   padding-left: 10px;
   border-left: 3px solid #409eff;
+  font-size: var(--chinese-font-size, 16px); /* 使用CSS变量，默认16px */
+  transition: font-size 0.3s ease; /* 添加过渡动画 */
 }
 
 /* 响应式设计 */
@@ -2792,15 +2973,15 @@ onUnmounted(async () => {
   text-align: left;     /* 英文默认左对齐，符合阅读习惯 */
   word-wrap: break-word;/* 长单词自动换行，防止溢出 */
   text-indent: 2em;     /* 添加首行缩进，提升段落可读性 */
-  font-size: 16px;      /* 设置合适的字体大小 */
-  line-height: 1.7;     /* 合适的行高，提高阅读舒适度 */
+  font-size: var(--english-font-size, 18px); /* 使用CSS变量，默认18px */
+  line-height: 1.8;     /* 调整行高，提升阅读舒适度 */
   transition: font-size 0.3s ease, line-height 0.3s ease; /* 添加过渡动画 */
 }
 
 /* 中文内容样式 */
 .chinese-content {
   line-height: 1.8;
-  font-size: 16px;
+  font-size: var(--chinese-font-size, 16px); /* 使用CSS变量，默认16px */
 }
 
 .chinese-content .paragraph {
@@ -2808,9 +2989,10 @@ onUnmounted(async () => {
   text-align: left;     /* 中文默认左对齐，符合阅读习惯 */
   text-indent: 2em;     /* 添加首行缩进，提升段落可读性 */
   line-height: 1.8;     /* 合适的行高，提高阅读舒适度 */
-  font-size: 16px;      /* 设置合适的字体大小 */
+  font-size: var(--chinese-font-size, 16px); /* 使用CSS变量，默认16px */
   color: #606266;
   font-family: 'Microsoft YaHei', sans-serif;
+  transition: font-size 0.3s ease; /* 添加过渡动画 */
 }
 /* 段落通用样式 */
 .paragraph {
