@@ -2,6 +2,7 @@ package com.xreadup.ai.service;
 
 import com.xreadup.ai.model.dto.SimpleAiTutorRequest;
 import com.xreadup.ai.model.dto.SimpleAiTutorResponse;
+import com.xreadup.ai.service.filter.ContentFilterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ public class SimpleAiTutorService {
     @Autowired
     private ChatClient chatClient;
 
+    @Autowired
+    private ContentFilterService contentFilter;
+
     /**
      * 简配版AI学导对话
      * 使用极简的prompt，只关注当前文章和问题
@@ -26,6 +30,16 @@ public class SimpleAiTutorService {
         try {
             log.info("简配版AI学导对话 - 问题: {}, 文章: {}", 
                 request.getQuestion(), request.getArticleTitle());
+            
+            // 添加AI对话内容过滤 - 检查用户问题是否包含违禁内容
+            if (!contentFilter.isChatSafe(request.getQuestion())) {
+                log.warn("用户问题包含违禁内容，拒绝回答");
+                
+                SimpleAiTutorResponse blockedResponse = new SimpleAiTutorResponse();
+                blockedResponse.setAnswer("Rayda老师：抱歉，您的问题包含不当内容，请重新提问。");
+                blockedResponse.setFollowUpQuestion("您可以问我关于英语学习的问题。");
+                return blockedResponse;
+            }
             
             // 构建极简的prompt，只包含必要信息
             String prompt = buildMinimalPrompt(request);

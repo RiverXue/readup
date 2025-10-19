@@ -472,35 +472,23 @@ private boolean isValidArticleContent(String content) {
 
 **技术优势**:
 - ✅ **架构科学**: GNews发现 + Readability4J提取，职责分离清晰
-- ✅ **编码修复**: 智能检测和修复网页编码问题，确保内容正确显示
-- ✅ **内容安全**: 全文章类型覆盖的敏感词过滤系统
+- ✅ **内容安全**: 全文章类型覆盖的智能敏感词过滤系统
 - ✅ **质量保证**: 8维度内容验证，确保提取质量
 - ✅ **容错机制**: 3次重试 + 异常处理，提高成功率
 - ✅ **性能优化**: 智能缓存 + 异步处理，提升响应速度
 
-#### 🔧 编码修复和敏感词过滤系统
+#### 🛡️ 智能敏感词过滤系统
 
-**编码问题解决方案**:
-```java
-// 简化编码处理，让 Jsoup 自动处理编码
-Document doc = Jsoup.connect(url)
-    .timeout(30000)
-    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-    .header("Accept-Language", "en-US,en;q=0.5")
-    .maxBodySize(0)
-    .get();
+**系统概述**:
+智能敏感词过滤系统是ReadUp平台的核心安全组件，采用分级过滤策略，确保所有文章内容都经过安全检测，同时避免过度拦截影响正常新闻阅读体验。
 
-// 直接使用 Jsoup 解析后的 HTML，避免双重编码问题
-Readability4J readability = new Readability4J(url, doc.html());
-```
-
-**敏感词过滤机制**:
+**核心过滤机制**:
 ```java
 @Service
+@Slf4j
 public class ContentFilterService {
     
-    // 高风险词汇 - 直接拦截
+    // 高风险词汇 - 直接拦截（极端内容）
     private static final Set<String> HIGH_RISK_WORDS = Set.of(
         "nazi", "hitler", "fascism", "extremism",
         "法轮功", "六四", "天安门", "达赖", "台独", "港独", "疆独"
@@ -512,25 +500,125 @@ public class ContentFilterService {
         "porn", "pornography", "drug", "gambling", "hate"
     );
     
+    /**
+     * 智能内容安全检测
+     * @param content 待检测的文章内容
+     * @return true表示内容安全，false表示包含违禁内容
+     */
     public boolean isArticleSafe(String content) {
-        // 检查高风险词汇 - 直接拦截
+        if (content == null || content.trim().isEmpty()) {
+            log.debug("📝 文章内容为空，跳过过滤检查");
+            return true;
+        }
+
+        String lowerContent = content.toLowerCase();
+        log.debug("🔍 开始检查文章内容，长度: {} 字符", content.length());
+
+        // 1. 检查高风险词汇 - 直接拦截
         for (String word : HIGH_RISK_WORDS) {
-            if (content.toLowerCase().contains(word.toLowerCase())) {
-                log.warn("文章包含高风险违禁词: '{}' - 直接拦截", word);
+            if (lowerContent.contains(word.toLowerCase())) {
+                log.warn("🚨 文章包含高风险违禁词: '{}' - 直接拦截", word);
+                log.warn("📄 违禁词上下文: {}", getWordContext(content, word));
                 return false;
             }
         }
-        
-        // 检查一般敏感词 - 记录但允许通过
+
+        // 2. 检查一般敏感词 - 记录但允许通过
         int sensitiveWordCount = 0;
         for (String word : ENGLISH_SENSITIVE_WORDS) {
-            if (content.toLowerCase().contains(word.toLowerCase())) {
+            if (lowerContent.contains(word.toLowerCase())) {
                 sensitiveWordCount++;
-                log.info("文章包含敏感词汇: '{}' (新闻内容，已记录，允许通过)", word);
+                log.info("⚠️ 文章包含敏感词汇: '{}' (新闻内容，已记录，允许通过)", word);
+                log.debug("📄 敏感词上下文: {}", getWordContext(content, word));
             }
         }
-        
+
+        // 3. 特殊处理：如果文章包含大量敏感词汇，可能是极端内容
+        if (sensitiveWordCount > 5) {
+            log.warn("⚠️ 文章包含过多敏感词汇 ({}个)，可能是极端内容，但仍允许通过", sensitiveWordCount);
+        }
+
+        if (sensitiveWordCount > 0) {
+            log.info("📊 文章包含 {} 个敏感词汇，已记录但允许通过", sensitiveWordCount);
+        } else {
+            log.debug("✅ 文章内容检查通过，未发现违禁词汇");
+        }
+
         return true;
+    }
+    
+    /**
+     * 获取词汇在内容中的上下文
+     */
+    private String getWordContext(String content, String word) {
+        try {
+            String lowerContent = content.toLowerCase();
+            String lowerWord = word.toLowerCase();
+            int index = lowerContent.indexOf(lowerWord);
+
+            if (index == -1) {
+                return "未找到上下文";
+            }
+
+            int start = Math.max(0, index - 50);
+            int end = Math.min(content.length(), index + word.length() + 50);
+            String context = content.substring(start, end);
+
+            // 高亮显示关键词
+            return context.replaceAll("(?i)" + word, "【" + word + "】");
+        } catch (Exception e) {
+            return "获取上下文失败: " + e.getMessage();
+        }
+    }
+}
+```
+
+**AI对话敏感词过滤**:
+```java
+// AI阅读助手服务中的敏感词过滤
+@Service
+@Slf4j
+public class AiReadingAssistantService {
+    
+    @Autowired
+    private ContentFilterService contentFilter;
+    
+    public AiChatResponse chatWithAssistant(AiChatRequest request) {
+        // 添加AI对话内容过滤 - 检查用户问题是否包含违禁内容
+        if (!contentFilter.isChatSafe(request.getQuestion())) {
+            log.warn("用户问题包含违禁内容 | 用户: {}", request.getUserId());
+            
+            AiChatResponse blockedResponse = new AiChatResponse();
+            blockedResponse.setAnswer("抱歉，您的问题包含不当内容，请重新提问。");
+            blockedResponse.setFollowUpQuestion("您可以问我关于英语学习的问题。");
+            blockedResponse.setDifficulty("B1");
+            return blockedResponse;
+        }
+        
+        // 继续正常的AI对话处理...
+    }
+}
+
+// Rayda老师服务中的敏感词过滤
+@Service
+@Slf4j
+public class SimpleAiTutorService {
+    
+    @Autowired
+    private ContentFilterService contentFilter;
+    
+    public SimpleAiTutorResponse chat(SimpleAiTutorRequest request) {
+        // 添加AI对话内容过滤 - 检查用户问题是否包含违禁内容
+        if (!contentFilter.isChatSafe(request.getQuestion())) {
+            log.warn("用户问题包含违禁内容，拒绝回答");
+            
+            SimpleAiTutorResponse blockedResponse = new SimpleAiTutorResponse();
+            blockedResponse.setAnswer("Rayda老师：抱歉，您的问题包含不当内容，请重新提问。");
+            blockedResponse.setFollowUpQuestion("您可以问我关于英语学习的问题。");
+            return blockedResponse;
+        }
+        
+        // 继续正常的AI对话处理...
     }
 }
 ```
@@ -539,14 +627,17 @@ public class ContentFilterService {
 - ✅ **热点文章** (`refreshTopHeadlines`)
 - ✅ **主题分类文章** (`fetchAndSaveArticles`)  
 - ✅ **自定义搜索文章** (`searchArticlesByKeyword`)
+- ✅ **AI阅读助手对话** (`AiReadingAssistantService.chatWithAssistant`)
+- ✅ **Rayda老师对话** (`SimpleAiTutorService.chat`)
 - ✅ **增强搜索文章** (`searchArticlesByKeyword` 重载方法)
 - ✅ **增强分类文章** (`getArticlesByCategory`)
 
 **技术特点**:
-- ✅ **编码修复**: 解决 Readability4J 内容提取乱码问题
-- ✅ **全类型覆盖**: 确保所有文章类型都经过敏感词过滤
+- ✅ **全类型覆盖**: 确保所有文章类型和AI对话都经过敏感词过滤
 - ✅ **智能策略**: 高风险词汇直接拦截，一般敏感词记录但允许通过
 - ✅ **新闻优化**: 针对新闻内容特点优化的过滤策略
+- ✅ **AI对话安全**: AI阅读助手和Rayda老师对话的实时内容过滤
+- ✅ **上下文分析**: 智能上下文分析，提高过滤准确性
 - ✅ **维护性强**: 模块化设计，易于扩展和维护
 
 **核心业务逻辑**:
