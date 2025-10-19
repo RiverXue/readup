@@ -421,20 +421,26 @@ List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchArticlesByCat
 
 // 2. 遍历每篇文章，使用Readability4J提取内容
 for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
-    // 3. Jsoup获取HTML内容
+    // 3. Jsoup获取HTML内容（自动编码处理）
     Document doc = Jsoup.connect(url)
         .timeout(30000)
         .userAgent("Mozilla/5.0...")
         .get();
     
-    // 4. Readability4J解析文章内容
+    // 4. Readability4J解析文章内容（让Jsoup自动处理编码）
     Readability4J readability = new Readability4J(url, doc.html());
     Article article = readability.parse();
     
-    // 5. 内容质量验证和清理
+    // 5. 敏感词过滤和内容安全检测
+    if (!contentFilter.isArticleSafe(segmentedContent)) {
+        log.warn("文章包含违禁内容，跳过: {}", url);
+        continue;
+    }
+    
+    // 6. 内容质量验证和清理
     String cleanedContent = cleanArticleContent(article.getTextContent());
     
-    // 6. 智能分段处理
+    // 7. 智能分段处理
     String segmentedContent = segmentArticleContent(cleanedContent);
 }
 ```
@@ -444,8 +450,9 @@ for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
 | 组件 | 作用 | 技术特点 |
 |------|------|----------|
 | **GNews API** | 新闻发现和元数据获取 | 免费版提供标题、描述、URL、来源等 |
-| **Jsoup** | HTML网页解析 | 模拟浏览器请求，处理反爬虫机制 |
+| **Jsoup** | HTML网页解析 | 模拟浏览器请求，自动编码处理，避免乱码问题 |
 | **Readability4J** | 内容提取和清理 | 智能识别文章正文，过滤无关内容 |
+| **敏感词过滤** | 内容安全检测 | 全文章类型覆盖，高风险词汇直接拦截 |
 | **内容验证** | 质量保证 | 8维度验证确保内容有效性 |
 | **智能分段** | 阅读体验优化 | 基于语义边界的智能分段算法 |
 
@@ -465,9 +472,81 @@ private boolean isValidArticleContent(String content) {
 
 **技术优势**:
 - ✅ **架构科学**: GNews发现 + Readability4J提取，职责分离清晰
+- ✅ **编码修复**: 智能检测和修复网页编码问题，确保内容正确显示
+- ✅ **内容安全**: 全文章类型覆盖的敏感词过滤系统
 - ✅ **质量保证**: 8维度内容验证，确保提取质量
 - ✅ **容错机制**: 3次重试 + 异常处理，提高成功率
 - ✅ **性能优化**: 智能缓存 + 异步处理，提升响应速度
+
+#### 🔧 编码修复和敏感词过滤系统
+
+**编码问题解决方案**:
+```java
+// 简化编码处理，让 Jsoup 自动处理编码
+Document doc = Jsoup.connect(url)
+    .timeout(30000)
+    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+    .header("Accept-Language", "en-US,en;q=0.5")
+    .maxBodySize(0)
+    .get();
+
+// 直接使用 Jsoup 解析后的 HTML，避免双重编码问题
+Readability4J readability = new Readability4J(url, doc.html());
+```
+
+**敏感词过滤机制**:
+```java
+@Service
+public class ContentFilterService {
+    
+    // 高风险词汇 - 直接拦截
+    private static final Set<String> HIGH_RISK_WORDS = Set.of(
+        "nazi", "hitler", "fascism", "extremism",
+        "法轮功", "六四", "天安门", "达赖", "台独", "港独", "疆独"
+    );
+    
+    // 一般敏感词 - 记录但允许通过（新闻中常见）
+    private static final Set<String> ENGLISH_SENSITIVE_WORDS = Set.of(
+        "terrorism", "bomb", "explosion", "violence", "murder",
+        "porn", "pornography", "drug", "gambling", "hate"
+    );
+    
+    public boolean isArticleSafe(String content) {
+        // 检查高风险词汇 - 直接拦截
+        for (String word : HIGH_RISK_WORDS) {
+            if (content.toLowerCase().contains(word.toLowerCase())) {
+                log.warn("文章包含高风险违禁词: '{}' - 直接拦截", word);
+                return false;
+            }
+        }
+        
+        // 检查一般敏感词 - 记录但允许通过
+        int sensitiveWordCount = 0;
+        for (String word : ENGLISH_SENSITIVE_WORDS) {
+            if (content.toLowerCase().contains(word.toLowerCase())) {
+                sensitiveWordCount++;
+                log.info("文章包含敏感词汇: '{}' (新闻内容，已记录，允许通过)", word);
+            }
+        }
+        
+        return true;
+    }
+}
+```
+
+**覆盖范围**:
+- ✅ **热点文章** (`refreshTopHeadlines`)
+- ✅ **主题分类文章** (`fetchAndSaveArticles`)  
+- ✅ **自定义搜索文章** (`searchArticlesByKeyword`)
+- ✅ **增强搜索文章** (`searchArticlesByKeyword` 重载方法)
+- ✅ **增强分类文章** (`getArticlesByCategory`)
+
+**技术特点**:
+- ✅ **编码修复**: 解决 Readability4J 内容提取乱码问题
+- ✅ **全类型覆盖**: 确保所有文章类型都经过敏感词过滤
+- ✅ **智能策略**: 高风险词汇直接拦截，一般敏感词记录但允许通过
+- ✅ **新闻优化**: 针对新闻内容特点优化的过滤策略
 - ✅ **维护性强**: 模块化设计，易于扩展和维护
 
 **核心业务逻辑**:
