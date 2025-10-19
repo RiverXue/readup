@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,12 +56,15 @@ public class ScraperServiceImpl implements ScraperService {
                     // 例如：Updated [hour]:[minute] [AMPM] [timezone], [monthFull] [day], [year] WASHINGTON (AP) — 
                     String cleanedContent = cleanArticlePrefix(textContent);
                     
+                    // 清理文章结尾的无关信息
+                    cleanedContent = cleanArticleSuffix(cleanedContent);
+                    
                     // 对文章内容进行智能分段处理
                     String segmentedContent = segmentArticleContent(cleanedContent);
                     
-                    // 检查提取内容的长度，过短的内容视为失败
-                    if (segmentedContent == null || segmentedContent.trim().length() < 100) {
-                        log.warn("提取内容过短，视为失败: {}", url);
+                    // 增强内容验证，确保提取的是真正的文章内容
+                    if (!isValidArticleContent(segmentedContent)) {
+                        log.warn("内容验证失败，不是有效的文章内容: {}", url);
                         return Optional.empty();
                     }
                     
@@ -91,36 +97,123 @@ public class ScraperServiceImpl implements ScraperService {
 
     /**
      * 清理文章内容开头的时间戳和来源信息前缀
+     * 支持多种常见的新闻文章开头格式
      */
     private String cleanArticlePrefix(String content) {
         if (content == null || content.isEmpty()) {
             return content;
         }
         
-        // 匹配常见的新闻文章前缀格式，如 "Updated hh:mm AM/PM timezone, Month Day, Year WASHINGTON (AP) — "
-        // 此正则表达式尝试匹配多种可能的变体
-        String regex = "^Updated\\s+\\d{1,2}:\\d{2}\\s+[AP]M\\s+[A-Z]+,\\s+[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}\\s+[A-Z\\s()]+\\s*—\\s+";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(content);
+        String cleanedContent = content;
         
-        if (matcher.find()) {
-            // 找到匹配的前缀，返回清理后的内容
-            log.debug("清理文章前缀: {}", matcher.group());
-            return content.substring(matcher.end());
+        // 1. 清理时间戳和来源信息前缀
+        String[] prefixPatterns = {
+            // AP新闻格式：Updated hh:mm AM/PM timezone, Month Day, Year WASHINGTON (AP) —
+            "^Updated\\s+\\d{1,2}:\\d{2}\\s+[AP]M\\s+[A-Z]+,\\s+[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}\\s+[A-Z\\s()]+\\s*—\\s+",
+            // 其他AP格式：Month Day, Year WASHINGTON (AP) —
+            "^[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}\\s+[A-Z\\s()]+\\s*—\\s+",
+            // 时间戳格式：January 15, 2024 at 2:30 PM EST
+            "^[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}\\s+at\\s+\\d{1,2}:\\d{2}\\s+[AP]M\\s+[A-Z]+\\s*—?\\s*",
+            // 作者信息：By John Smith, Staff Writer | January 15, 2024
+            "^By\\s+[A-Za-z\\s]+,\\s*[A-Za-z\\s]+\\s*\\|\\s*[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}\\s*—?\\s*",
+            // 简单作者格式：By John Smith
+            "^By\\s+[A-Za-z\\s]+\\s*—?\\s*",
+            // 网站品牌：CNN Breaking News | BBC News | Reuters
+            "^(CNN|BBC|Reuters|AP|AFP|Reuters|Associated Press|Breaking News)\\s*—?\\s*",
+            // 社交媒体分享：Share on Facebook | Tweet this
+            "^(Share on|Tweet this|Follow us|Like us)\\s+[A-Za-z\\s|]+\\s*—?\\s*",
+            // 广告标识：Advertisement | Sponsored Content
+            "^(Advertisement|Sponsored|Promoted|Ad)\\s*[A-Za-z\\s]*\\s*—?\\s*",
+            // 网站导航：Home | News | Sports | Entertainment
+            "^(Home|News|Sports|Entertainment|Business|Technology)\\s*\\|\\s*[A-Za-z\\s|]+\\s*—?\\s*"
+        };
+        
+        for (String pattern : prefixPatterns) {
+            Pattern compiledPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = compiledPattern.matcher(cleanedContent);
+            if (matcher.find()) {
+                log.debug("清理文章前缀: {}", matcher.group());
+                cleanedContent = cleanedContent.substring(matcher.end());
+                break; // 找到第一个匹配就停止
+            }
         }
         
-        // 也尝试匹配其他可能的AP新闻格式
-        String regex2 = "^[A-Za-z]+\\s+\\d{1,2},\\s+\\d{4}\\s+[A-Z\\s()]+\\s*—\\s+";
-        Pattern pattern2 = Pattern.compile(regex2);
-        Matcher matcher2 = pattern2.matcher(content);
+        // 2. 清理开头可能的多余空行和标点
+        cleanedContent = cleanedContent.replaceAll("^\\s*[—\\-\\|]+\\s*", ""); // 清理开头的破折号、竖线等
+        cleanedContent = cleanedContent.replaceAll("^\\s+", ""); // 清理开头的空白字符
         
-        if (matcher2.find()) {
-            log.debug("清理文章前缀: {}", matcher2.group());
-            return content.substring(matcher2.end());
+        // 3. 如果清理后内容过短，可能清理过度了，返回原始内容
+        if (cleanedContent.trim().length() < 50) {
+            log.warn("清理后内容过短，可能清理过度，返回原始内容");
+            return content;
         }
         
-        // 如果没有匹配的前缀模式，返回原始内容
-        return content;
+        return cleanedContent;
+    }
+    
+    /**
+     * 清理文章内容结尾的无关信息
+     * 包括版权声明、相关文章推荐、社交媒体链接等
+     */
+    private String cleanArticleSuffix(String content) {
+        if (content == null || content.isEmpty()) {
+            return content;
+        }
+        
+        String cleanedContent = content;
+        
+        // 1. 清理结尾的版权声明和网站信息
+        String[] suffixPatterns = {
+            // 版权声明：© 2024 CNN. All rights reserved.
+            "\\s*©\\s*\\d{4}\\s+[A-Za-z\\s\\.]+\\s+All rights reserved\\..*$",
+            // 版权声明变体：Copyright © 2024
+            "\\s*Copyright\\s+©\\s*\\d{4}\\s+[A-Za-z\\s\\.]+.*$",
+            // 相关文章推荐：Related Articles | More from this author
+            "\\s*(Related|More from|You might also like|Recommended|Also read)\\s+[A-Za-z\\s|]+.*$",
+            // 社交媒体链接：Follow us on Twitter | Like us on Facebook
+            "\\s*(Follow us|Like us|Share this|Tweet this)\\s+[A-Za-z\\s|]+.*$",
+            // 评论区：Comments | Leave a comment | Join the discussion
+            "\\s*(Comments|Leave a comment|Join the discussion|Add your comment)\\s*.*$",
+            // 广告内容：Advertisement | Sponsored by | Promoted content
+            "\\s*(Advertisement|Sponsored by|Promoted|Ad)\\s+[A-Za-z\\s]+.*$",
+            // 网站导航：About us | Contact | Privacy Policy
+            "\\s*(About us|Contact|Privacy Policy|Terms of Service|Disclaimer)\\s*.*$",
+            // 作者信息：About the author | Author bio
+            "\\s*(About the author|Author bio|Writer)\\s+[A-Za-z\\s]+.*$",
+            // 新闻来源：Source: | Via: | Originally published
+            "\\s*(Source|Via|Originally published|First published)\\s*:?\\s*[A-Za-z\\s]+.*$",
+            // 更新时间：Updated | Last updated | Modified
+            "\\s*(Updated|Last updated|Modified)\\s*:?\\s*[A-Za-z\\s\\d,]+.*$",
+            // 标签和分类：Tags: | Categories: | Filed under
+            "\\s*(Tags|Categories|Filed under)\\s*:?\\s*[A-Za-z\\s,]+.*$",
+            // 分享按钮：Share this article | Print this article
+            "\\s*(Share this|Print this|Email this)\\s+[A-Za-z\\s]+.*$",
+            // 订阅信息：Subscribe | Newsletter | Get updates
+            "\\s*(Subscribe|Newsletter|Get updates|Stay informed)\\s+[A-Za-z\\s]+.*$"
+        };
+        
+        // 从后往前匹配，找到第一个匹配的模式就截断
+        for (String pattern : suffixPatterns) {
+            Pattern compiledPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = compiledPattern.matcher(cleanedContent);
+            if (matcher.find()) {
+                log.debug("清理文章后缀: {}", matcher.group().trim());
+                cleanedContent = cleanedContent.substring(0, matcher.start());
+                break; // 找到第一个匹配就停止
+            }
+        }
+        
+        // 2. 清理结尾可能的多余空行和标点
+        cleanedContent = cleanedContent.replaceAll("\\s*[—\\-\\|]+\\s*$", ""); // 清理结尾的破折号、竖线等
+        cleanedContent = cleanedContent.replaceAll("\\s+$", ""); // 清理结尾的空白字符
+        
+        // 3. 如果清理后内容过短，可能清理过度了，返回原始内容
+        if (cleanedContent.trim().length() < 50) {
+            log.warn("清理后内容过短，可能清理过度，返回原始内容");
+            return content;
+        }
+        
+        return cleanedContent;
     }
     
     /**
@@ -182,7 +275,6 @@ public class ScraperServiceImpl implements ScraperService {
         
         StringBuilder segmentedContent = new StringBuilder();
         int lastEnd = 0;
-        int currentParagraphLength = 0;
         boolean firstSegment = true;
         
         // 寻找句子边界并添加分段标记
@@ -201,13 +293,11 @@ public class ScraperServiceImpl implements ScraperService {
                 if (firstSegment || candidateLength >= 100) {  // 提高阈值到100字符
                     segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(1)));
                     segmentedContent.append(paragraphSeparator);
-                    currentParagraphLength = 0;
                     firstSegment = false;
                 } else {
                     // 段落太短，继续添加到当前段落
                     segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(1)));
                     segmentedContent.append(" ");
-                    currentParagraphLength += candidateLength + 1;
                 }
                 lastEnd = matcher.end(2);
             } else if (matcher.group(3) != null) {
@@ -220,13 +310,11 @@ public class ScraperServiceImpl implements ScraperService {
                 if (firstSegment || candidateLength >= 80) {
                     segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(3)));
                     segmentedContent.append(paragraphSeparator);
-                    currentParagraphLength = 0;
                     firstSegment = false;
                 } else {
                     // 段落太短，继续添加到当前段落
                     segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(3)));
                     segmentedContent.append(" ");
-                    currentParagraphLength += candidateLength + 1;
                 }
                 lastEnd = matcher.end(4);
             } else if (matcher.group(5) != null) {
@@ -240,12 +328,10 @@ public class ScraperServiceImpl implements ScraperService {
                 if (candidateLength >= 150) {  // 大幅提高阈值到150字符
                     segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(5)));
                     segmentedContent.append(paragraphSeparator);
-                    currentParagraphLength = 0;
                 } else {
                     // 段落较短，仅添加空格
                     segmentedContent.append(normalizedContent.substring(lastEnd, matcher.end(5)));
                     segmentedContent.append(" ");
-                    currentParagraphLength += candidateLength + 1;
                 }
                 lastEnd = matcher.end(6);
             }
@@ -399,5 +485,132 @@ public class ScraperServiceImpl implements ScraperService {
         }
         
         return count;
+    }
+    
+    /**
+     * 验证提取的文章内容是否有效
+     * 通过多个维度检查内容质量，确保提取的是真正的文章内容
+     * 
+     * @param content 待验证的内容
+     * @return true表示内容有效，false表示内容无效
+     */
+    private boolean isValidArticleContent(String content) {
+        if (content == null || content.trim().isEmpty()) {
+            log.debug("内容为空或null");
+            return false;
+        }
+        
+        String trimmedContent = content.trim();
+        
+        // 1. 长度验证：至少100个字符
+        if (trimmedContent.length() < 100) {
+            log.debug("内容太短: {} 字符", trimmedContent.length());
+            return false;
+        }
+        
+        // 2. 单词数验证：至少20个单词
+        int wordCount = countWords(trimmedContent);
+        if (wordCount < 20) {
+            log.debug("单词数太少: {} 个单词", wordCount);
+            return false;
+        }
+        
+        // 3. 句子数验证：至少2个句子
+        String[] sentences = trimmedContent.split("[.!?]+");
+        long sentenceCount = Arrays.stream(sentences)
+                .filter(sentence -> sentence.trim().length() > 0)
+                .count();
+        
+        if (sentenceCount < 2) {
+            log.debug("句子数太少: {} 个句子", sentenceCount);
+            return false;
+        }
+        
+        // 4. 检查是否包含大量无意义内容（噪音词汇）
+        String[] noisePatterns = {
+            "click here", "read more", "subscribe", "newsletter",
+            "advertisement", "sponsored", "cookie", "privacy policy",
+            "terms of service", "all rights reserved", "copyright",
+            "follow us", "like us", "share this", "tweet this",
+            "join the discussion", "leave a comment", "add your comment",
+            "about us", "contact us", "disclaimer", "legal notice"
+        };
+        
+        String lowerContent = trimmedContent.toLowerCase();
+        int noiseCount = 0;
+        for (String pattern : noisePatterns) {
+            if (lowerContent.contains(pattern)) {
+                noiseCount++;
+            }
+        }
+        
+        // 如果包含太多噪音词汇，可能不是有效内容
+        if (noiseCount > 3) {
+            log.debug("包含太多噪音词汇: {} 个", noiseCount);
+            return false;
+        }
+        
+        // 5. 检查内容密度：有效词汇与总字符的比例
+        int validWordCount = countWords(trimmedContent);
+        double contentDensity = (double) validWordCount / trimmedContent.length();
+        
+        // 内容密度应该至少为0.1（10%的字符是有效单词）
+        if (contentDensity < 0.1) {
+            log.debug("内容密度太低: {:.2f}", contentDensity);
+            return false;
+        }
+        
+        // 6. 检查是否包含足够的实质性信息
+        // 计算平均句子长度，过短可能表示内容质量不高
+        double avgSentenceLength = (double) validWordCount / sentenceCount;
+        if (avgSentenceLength < 5) {
+            log.debug("平均句子长度太短: {:.1f} 个单词", avgSentenceLength);
+            return false;
+        }
+        
+        // 7. 检查是否包含重复内容（可能是错误提取）
+        String[] words = trimmedContent.toLowerCase().split("\\s+");
+        Map<String, Integer> wordFrequency = new HashMap<>();
+        
+        for (String word : words) {
+            if (word.length() > 3) { // 只统计长度大于3的单词
+                wordFrequency.put(word, wordFrequency.getOrDefault(word, 0) + 1);
+            }
+        }
+        
+        // 检查是否有单词重复率过高
+        int totalWords = words.length;
+        long highFrequencyWords = wordFrequency.values().stream()
+                .filter(count -> count > totalWords * 0.1) // 重复率超过10%
+                .count();
+        
+        if (highFrequencyWords > totalWords * 0.2) { // 如果超过20%的单词重复率过高
+            log.debug("内容重复率过高: {} 个高频词", highFrequencyWords);
+            return false;
+        }
+        
+        // 8. 检查是否包含文章特征词汇
+        String[] articleIndicators = {
+            "said", "according", "reported", "announced", "stated",
+            "however", "therefore", "furthermore", "moreover",
+            "first", "second", "finally", "conclusion", "summary"
+        };
+        
+        int indicatorCount = 0;
+        for (String indicator : articleIndicators) {
+            if (lowerContent.contains(indicator)) {
+                indicatorCount++;
+            }
+        }
+        
+        // 如果包含一些文章特征词汇，增加可信度
+        if (indicatorCount > 0) {
+            log.debug("检测到文章特征词汇: {} 个", indicatorCount);
+        }
+        
+        log.debug("内容验证通过: {} 字符, {} 单词, {} 句子, 密度: {:.2f}", 
+                trimmedContent.length(), validWordCount, sentenceCount, contentDensity);
+        
+        return true;
     }
 }

@@ -407,6 +407,69 @@ public Word lookupWord(String word, String context, Long userId, Long articleId)
 - ✅ **分类标注**: 自动分类 (科技/商业/文化等)
 - ✅ **阅读统计**: 文章阅读次数和用户行为追踪
 
+#### 🔧 GNews + Readability4J 技术架构
+
+**架构设计理念**:
+```
+GNews免费版限制 → 只提供元数据 → 需要Readability4J提取完整内容
+```
+
+**技术实现流程**:
+```java
+// 1. GNews API 获取新闻元数据
+List<GnewsResponse.GnewsArticle> gnewsArticles = gnewsService.fetchArticlesByCategory(category, limit);
+
+// 2. 遍历每篇文章，使用Readability4J提取内容
+for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
+    // 3. Jsoup获取HTML内容
+    Document doc = Jsoup.connect(url)
+        .timeout(30000)
+        .userAgent("Mozilla/5.0...")
+        .get();
+    
+    // 4. Readability4J解析文章内容
+    Readability4J readability = new Readability4J(url, doc.html());
+    Article article = readability.parse();
+    
+    // 5. 内容质量验证和清理
+    String cleanedContent = cleanArticleContent(article.getTextContent());
+    
+    // 6. 智能分段处理
+    String segmentedContent = segmentArticleContent(cleanedContent);
+}
+```
+
+**核心技术组件**:
+
+| 组件 | 作用 | 技术特点 |
+|------|------|----------|
+| **GNews API** | 新闻发现和元数据获取 | 免费版提供标题、描述、URL、来源等 |
+| **Jsoup** | HTML网页解析 | 模拟浏览器请求，处理反爬虫机制 |
+| **Readability4J** | 内容提取和清理 | 智能识别文章正文，过滤无关内容 |
+| **内容验证** | 质量保证 | 8维度验证确保内容有效性 |
+| **智能分段** | 阅读体验优化 | 基于语义边界的智能分段算法 |
+
+**内容质量验证机制**:
+```java
+private boolean isValidArticleContent(String content) {
+    // 1. 基础验证：长度、单词数、句子数
+    // 2. 噪音检测：广告、导航、版权信息
+    // 3. 内容密度：有效词汇与总字符比例
+    // 4. 句子质量：平均句子长度检查
+    // 5. 重复检测：避免重复内容
+    // 6. 文章特征：检测文章特征词汇
+    // 7. 语义完整性：确保内容连贯性
+    // 8. 语言质量：检查语法和拼写
+}
+```
+
+**技术优势**:
+- ✅ **架构科学**: GNews发现 + Readability4J提取，职责分离清晰
+- ✅ **质量保证**: 8维度内容验证，确保提取质量
+- ✅ **容错机制**: 3次重试 + 异常处理，提高成功率
+- ✅ **性能优化**: 智能缓存 + 异步处理，提升响应速度
+- ✅ **维护性强**: 模块化设计，易于扩展和维护
+
 **核心业务逻辑**:
 ```java
 @RestController
