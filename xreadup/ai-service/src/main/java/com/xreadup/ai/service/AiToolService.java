@@ -1,8 +1,6 @@
 package com.xreadup.ai.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xreadup.ai.model.dto.WordInfo;
-import com.xreadup.ai.model.dto.Example;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +10,12 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.function.Function;
 
 /**
  * AI工具服务
- * 集成Spring AI的Function Calling能力
+ * 提供智能对话和测验生成功能
  * 
- * @author XReadUp Team
+ * @author ReadUp Team
  * @version 2.0.0
  */
 @Slf4j
@@ -29,158 +26,14 @@ public class AiToolService {
     private ChatClient chatClient;
 
 
-    /**
-     * 单词查询工具
-     * Spring AI Function Calling的核心工具
-     */
-    public static class WordLookupTool implements Function<WordLookupRequest, WordInfo> {
-        
-        @Override
-        public WordInfo apply(WordLookupRequest request) {
-            log.info("AI调用单词查询工具: {}", request.getWord());
-            
-            // 这里可以集成真实的词典服务
-            return generateMockWordInfo(request.getWord());
-        }
+    // 移除未使用的Function Calling工具类
+    // WordLookupTool 已移除，使用独立的词汇查询API
 
-        private WordInfo generateMockWordInfo(String word) {
-            WordInfo info = new WordInfo();
-            info.setWord(word);
-            info.setPhonetic(getPhonetic(word));
-            info.setMeanings(getMeanings(word));
-            info.setExamples(getExamples(word));
-            info.setSynonyms(getSynonyms(word));
-            info.setDifficulty(getDifficulty(word));
-            info.setUsage(getUsage(word));
-            return info;
-        }
+    // 移除未使用的Function Calling翻译工具
+    // 翻译功能已通过独立的翻译API实现
 
-        private String getPhonetic(String word) {
-            // 模拟音标
-            return "/səˈsteɪnəbəl/";
-        }
-
-        private List<String> getMeanings(String word) {
-            return List.of(
-                "adj. 可持续的，能持续的",
-                "adj. 合理利用的，不破坏环境的"
-            );
-        }
-
-        private List<Example> getExamples(String word) {
-            List<Example> examples = new ArrayList<>();
-            
-            Example example1 = new Example();
-            example1.setEnglish("We need to find a sustainable solution to climate change.");
-            example1.setChinese("我们需要找到应对气候变化的可持续解决方案。");
-            examples.add(example1);
-            
-            Example example2 = new Example();
-            example2.setEnglish("Sustainable development is key to our future.");
-            example2.setChinese("可持续发展是我们未来的关键。");
-            examples.add(example2);
-            
-            return examples;
-        }
-
-        private List<String> getSynonyms(String word) {
-            return List.of("maintainable", "enduring", "lasting");
-        }
-
-        private String getDifficulty(String word) {
-            return "B2";
-        }
-
-        private String getUsage(String word) {
-            return "常用于环保、经济、社会发展等话题";
-        }
-    }
-
-    /**
-     * 翻译工具
-     * AI可以直接调用的翻译功能
-     */
-    public static class TranslationTool implements Function<TranslationRequest, String> {
-        
-        private TencentTranslateService translateService;
-        
-        public TranslationTool() {
-            // Spring容器会自动注入依赖
-        }
-        
-        public void setTranslateService(TencentTranslateService translateService) {
-            this.translateService = translateService;
-        }
-
-        @Override
-        public String apply(TranslationRequest request) {
-            log.info("AI调用翻译工具: {} -> {}", request.getText(), request.getTargetLang());
-            if (translateService != null) {
-                // 标准化语言代码
-                String normalizedTargetLang = normalizeLanguageCode(request.getTargetLang());
-                log.info("标准化语言代码: {} -> {}", request.getTargetLang(), normalizedTargetLang);
-                
-                return translateService.translateText(request.getText(), "en", normalizedTargetLang);
-            } else {
-                return "翻译服务暂时不可用";
-            }
-        }
-        
-        /**
-         * 标准化语言代码，将复杂的语言代码转换为腾讯云API支持的格式
-         */
-        private String normalizeLanguageCode(String languageCode) {
-            if (languageCode == null) {
-                return "zh";
-            }
-            
-            // 转换为小写并处理常见的语言代码格式
-            String normalized = languageCode.toLowerCase().trim();
-            
-            // 处理中文相关的语言代码
-            if (normalized.startsWith("zh")) {
-                return "zh"; // zh、zh-CN、zh-Hans、zh-Hant 都转换为 zh
-            }
-            
-            // 处理英文相关的语言代码
-            if (normalized.startsWith("en")) {
-                return "en"; // en、en-US、en-GB 都转换为 en
-            }
-            
-            // 处理其他语言代码，提取主要部分
-            if (normalized.contains("-")) {
-                return normalized.split("-")[0];
-            }
-            
-            return normalized;
-        }
-    }
-
-    /**
-     * 单词查询请求DTO
-     */
-    public static class WordLookupRequest {
-        private String word;
-        private String context;
-
-        public String getWord() { return word; }
-        public void setWord(String word) { this.word = word; }
-        public String getContext() { return context; }
-        public void setContext(String context) { this.context = context; }
-    }
-
-    /**
-     * 翻译请求DTO
-     */
-    public static class TranslationRequest {
-        private String text;
-        private String targetLang;
-
-        public String getText() { return text; }
-        public void setText(String text) { this.text = text; }
-        public String getTargetLang() { return targetLang; }
-        public void setTargetLang(String targetLang) { this.targetLang = targetLang; }
-    }
+    // 移除未使用的Function Calling相关DTO类
+    // 这些类已不再需要，相关功能通过独立API实现
 
     /**
      * 智能对话（个性化阅读提升版 - 基于用户学习数据）

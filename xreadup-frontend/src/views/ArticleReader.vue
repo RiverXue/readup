@@ -1498,7 +1498,7 @@ const generateQuiz = async () => {
     if (!userStore.checkAiQuota()) return
 
     console.time('生成测验题请求耗时')
-    // 使用Function Calling接口生成新的测验题
+    // 使用智能测验生成接口
     const res = (await aiApi.assistantGenerateQuiz({
       articleContent: article.value.enContent,
       articleId: articleId
@@ -1542,12 +1542,12 @@ const generateQuiz = async () => {
         ElMessage.success('测验题已生成')
       } else {
         // 所有问题都无效，尝试回退到DeepSeek接口
-        console.log('Function Calling接口返回的测验题全部无效，尝试DeepSeek接口')
+        console.log('智能测验接口返回的测验题全部无效，尝试DeepSeek接口')
         await tryFallbackQuiz()
       }
     } else {
       // 没有返回测验题，尝试回退到DeepSeek接口
-      console.log('Function Calling接口无结果，尝试DeepSeek接口')
+      console.log('智能测验接口无结果，尝试DeepSeek接口')
       await tryFallbackQuiz()
     }
   } catch (error) {
@@ -2542,6 +2542,12 @@ onUnmounted(async () => {
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
   box-shadow: 0 2px 8px rgba(142, 142, 147, 0.1) !important;
+  
+  /* 内容居中对齐 */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
 }
 
 /* 来源标签悬停效果 - 使用更柔和的颜色 */
@@ -3639,6 +3645,21 @@ onUnmounted(async () => {
 
 .source-tag .el-icon {
   margin-right: 4px;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 来源标签内部文字对齐 */
+.source-tag {
+  line-height: 1 !important;
+}
+
+.source-tag .el-tag__content {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
 }
 
 /* 文章末尾信息样式 - 应用标题部分的边框样式 */
@@ -4110,6 +4131,10 @@ onUnmounted(async () => {
     padding: 3px 6px !important;
     font-size: 11px !important;
     border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
   }
 
   .article-actions {

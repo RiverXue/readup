@@ -19,11 +19,11 @@ import java.util.ArrayList;
 
 /**
  * AI阅读助手控制器
- * 提供AI对话和Function Calling功能
+ * 提供AI对话和智能分析功能
  */
 @RestController
 @RequestMapping("/api/ai/assistant")
-@Tag(name = "AI阅读助手", description = "AI对话助手和Function Calling接口")
+@Tag(name = "AI阅读助手", description = "AI对话助手和智能分析接口")
 @Slf4j
 public class AiReadingAssistantController {
 
@@ -37,7 +37,7 @@ public class AiReadingAssistantController {
      * AI对话接口
      */
     @PostMapping("/chat")
-    @Operation(summary = "AI对话", description = "与AI助手进行对话，支持Function Calling")
+    @Operation(summary = "AI对话", description = "与AI助手进行智能对话，提供个性化学习指导")
     public ApiResponse<AiChatResponse> chat(@RequestBody AiChatRequest request) {
         try {
             log.info("AI对话请求 - 用户: {}, 问题: {}", 

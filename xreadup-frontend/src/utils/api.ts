@@ -215,7 +215,7 @@ export const aiApi = {
   parseSentence: (sentence: string, articleId: string | number) =>
     api.post('/api/ai/parse', { sentence, articleId }),
 
-  // AI对话（支持Function Calling）
+  // AI智能对话
   chat: (question: string, userId: number, articleContext?: string) => {
     return api.post('/api/ai/assistant/chat', {
       question,
@@ -241,7 +241,7 @@ export const aiApi = {
     });
   },
 
-  // Function Calling 生成测验（推荐使用）
+  // 智能生成测验（推荐使用）
   assistantGenerateQuiz: (data: {
     articleContent: string;
     articleId: number;

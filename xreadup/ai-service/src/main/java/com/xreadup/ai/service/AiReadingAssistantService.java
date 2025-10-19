@@ -107,13 +107,13 @@ public class AiReadingAssistantService {
 
     /**
      * 生成学习测验（增强版）
-     * 不使用Function Calling，避免不必要的工具调用
+     * 使用简化的智能对话功能，提供高效的学习指导
      */
     public List<QuizQuestionDTO> generateQuizEnhanced(String articleContent) {
         try {
             log.info("生成学习测验（增强版） - 文章长度: {}", articleContent.length());
             
-            // 直接使用ChatClient生成测验题，不调用Function Calling
+            // 直接使用ChatClient生成测验题，提供高效的测验生成
             String prompt = String.format("""
                 作为英语阅读理解专家，请基于以下文章内容生成高质量的阅读理解选择题。
                 
