@@ -5,7 +5,7 @@
       <div class="header-content">
         <div class="header-left">
           <div class="tutor-avatar">
-            <el-icon><Star /></el-icon>
+            <span class="tutor-initial">R</span>
           </div>
           <div class="header-info">
             <h1>🎓 Rayda老师</h1>
@@ -32,18 +32,15 @@
           </div>
           <div class="profile-content">
             <div class="user-info">
-              <div class="user-avatar">
-            <el-icon><User /></el-icon>
-          </div>
-              <div class="user-details">
-                <h4>{{ userStore.userInfo?.username || '学习者' }}</h4>
+              <div class="user-header">
+                <h4 class="user-name">{{ userStore.userInfo?.username || '学习者' }}</h4>
                 <div class="user-level-info">
                   <span class="level-icon">{{ getLevelIcon(userProfile.currentLevel as any) }}</span>
                   <span class="level-name">{{ getLevelDisplayName(userProfile.currentLevel as any) }}</span>
                 </div>
-                <p class="level-description">{{ getLevelDescription(userProfile.currentLevel as any) }}</p>
-          </div>
-        </div>
+              </div>
+              <p class="level-description">{{ getLevelDescription(userProfile.currentLevel as any) }}</p>
+            </div>
             <div class="learning-stats">
           <div class="stat-item">
             <div class="stat-value">{{ userProfile.learningDays || 0 }}</div>
@@ -191,7 +188,7 @@
                 :class="message.type"
               >
                 <div class="message-avatar" v-if="message.type === 'ai'">
-                  <el-icon><Star /></el-icon>
+                  <span class="ai-initial">R</span>
                 </div>
                 <div class="message-content">
                   <div class="message-text" v-html="formatMessage(message.content)"></div>
@@ -241,6 +238,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { aiApi, articleApi, vocabularyApi, learningApi, request as api } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
+import { watch } from 'vue'
 import { assessUserLevel, getLevelDisplayName, getLevelProgress, getLevelDescription, getLevelIcon } from '@/utils/levelAssessment'
 import { LEARNING_THRESHOLDS, isStrong, isWeak } from '@/utils/learningThresholds'
 import { 
@@ -265,6 +263,40 @@ const chatHistory = ref<Array<{
   content: string
   timestamp: number
 }>>([])
+
+// 存储键名
+const CHAT_HISTORY_KEY = 'ai_tutor_chat_history'
+
+// 保存聊天记录到sessionStorage
+const saveChatHistory = () => {
+  try {
+    sessionStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory.value))
+  } catch (error) {
+    console.warn('保存聊天记录失败:', error)
+  }
+}
+
+// 从sessionStorage加载聊天记录
+const loadChatHistory = () => {
+  try {
+    const stored = sessionStorage.getItem(CHAT_HISTORY_KEY)
+    if (stored) {
+      chatHistory.value = JSON.parse(stored)
+    }
+  } catch (error) {
+    console.warn('加载聊天记录失败:', error)
+    chatHistory.value = []
+  }
+}
+
+// 清除聊天记录
+const clearStoredChatHistory = () => {
+  try {
+    sessionStorage.removeItem(CHAT_HISTORY_KEY)
+  } catch (error) {
+    console.warn('清除聊天记录失败:', error)
+  }
+}
 
 // 用户学习画像
 const userProfile = ref({
@@ -796,6 +828,9 @@ const submitAIQuestion = async () => {
         timestamp: Date.now()
       })
       
+      // 保存聊天记录到sessionStorage
+      saveChatHistory()
+      
       // 清空AI回答临时变量和输入框
       aiAnswer.value = ''
       aiQuestion.value = ''
@@ -823,6 +858,9 @@ const submitAIQuestion = async () => {
         content: answerText,
         timestamp: Date.now()
       })
+      
+      // 保存聊天记录到sessionStorage
+      saveChatHistory()
       
       // 清空AI回答临时变量和输入框
       aiAnswer.value = ''
@@ -869,6 +907,7 @@ const clearChat = () => {
   aiQuestion.value = ''
   aiAnswer.value = ''
   chatHistory.value = []
+  clearStoredChatHistory()
 }
 
 // 返回首页
@@ -890,11 +929,28 @@ const formatTime = (timestamp: number) => {
   })
 }
 
+// 监听用户登录状态变化
+watch(() => userStore.isLoggedIn, (isLoggedIn) => {
+  if (!isLoggedIn) {
+    // 用户退出登录时清除聊天记录
+    chatHistory.value = []
+    clearStoredChatHistory()
+  } else {
+    // 用户登录时加载聊天记录
+    loadChatHistory()
+  }
+})
+
 // 组件挂载
 onMounted(async () => {
   await loadUserProfile()
   await getCurrentArticle()
   generatePersonalizedQuestions()
+  
+  // 如果用户已登录，加载聊天记录
+  if (userStore.isLoggedIn) {
+    loadChatHistory()
+  }
 })
 </script>
 
@@ -941,6 +997,12 @@ onMounted(async () => {
   font-size: 24px;
   color: white;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.tutor-initial {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
 }
 
 .header-info h1 {
@@ -1017,25 +1079,17 @@ onMounted(async () => {
 }
 
 .user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-bottom: 20px;
 }
 
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
-  border-radius: 50%;
+.user-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 20px;
+  margin-bottom: 8px;
 }
 
-.user-details h4 {
+.user-name {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
@@ -1046,7 +1100,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 4px 0 6px 0;
 }
 
 .level-icon {
@@ -1305,7 +1358,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 1065px;
+  min-height: 1040px;
   max-height: 80vh;
 }
 
@@ -1486,17 +1539,25 @@ onMounted(async () => {
 }
 
 .message.ai .message-avatar {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  color: white;
+}
+
+.ai-initial {
+  font-size: 18px;
+  font-weight: 700;
   color: white;
 }
 
 .message-content {
   flex: 1;
-  max-width: 70%;
+  max-width: 80%;
+  min-width: 0;
 }
 
 .message.user .message-content {
   text-align: right;
+  max-width: 85%;
 }
 
 .message-text {
@@ -1507,6 +1568,8 @@ onMounted(async () => {
   line-height: 1.5;
   color: #2d3748;
   word-wrap: break-word;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .message.user .message-text {
