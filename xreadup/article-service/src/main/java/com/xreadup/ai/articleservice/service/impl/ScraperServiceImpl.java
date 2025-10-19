@@ -36,10 +36,17 @@ public class ScraperServiceImpl implements ScraperService {
             // 1. 使用 Jsoup 获取整个网页的 HTML
             Document doc = Jsoup.connect(url)
                     .timeout(30000) // 从10秒提高到30秒
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .header("Referer", "https://www.google.com/")
-                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
-                    .header("Accept-Language", "en-US,en;q=0.5")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
+                    .header("Accept-Language", "en-US,en;q=0.9")
+                    .header("Accept-Encoding", "gzip, deflate, br")
+                    .header("Cache-Control", "no-cache")
+                    .header("Pragma", "no-cache")
+                    .header("Sec-Fetch-Dest", "document")
+                    .header("Sec-Fetch-Mode", "navigate")
+                    .header("Sec-Fetch-Site", "none")
+                    .header("Upgrade-Insecure-Requests", "1")
                     .get();
 
             // 2. 将 HTML 文档传递给 Readability4J
@@ -52,22 +59,49 @@ public class ScraperServiceImpl implements ScraperService {
                 // 获取纯文本内容并清理开头格式
                 String textContent = article.getTextContent();
                 if (textContent != null) {
+                    log.info("Readability4J原始内容长度: {} 字符", textContent.length());
+                    log.info("Readability4J原始内容预览: {}", textContent.substring(0, Math.min(300, textContent.length())));
+                    
+                    // 如果Readability4J提取的内容太短（少于500字符），尝试备用提取方法
+                    if (textContent.length() < 500) {
+                        log.warn("Readability4J提取内容过短，尝试备用提取方法");
+                        String fallbackContent = extractContentFallback(doc);
+                        if (fallbackContent != null && fallbackContent.length() > textContent.length()) {
+                            log.info("备用方法提取到更长内容: {} 字符", fallbackContent.length());
+                            textContent = fallbackContent;
+                        }
+                    }
+                    
                     // 清理文章开头常见的时间戳和来源信息格式
                     // 例如：Updated [hour]:[minute] [AMPM] [timezone], [monthFull] [day], [year] WASHINGTON (AP) — 
                     String cleanedContent = cleanArticlePrefix(textContent);
+                    log.info("清理前缀后长度: {} 字符", cleanedContent.length());
                     
                     // 清理文章结尾的无关信息
                     cleanedContent = cleanArticleSuffix(cleanedContent);
+                    log.info("清理后缀后长度: {} 字符", cleanedContent.length());
                     
                     // 对文章内容进行智能分段处理
                     String segmentedContent = segmentArticleContent(cleanedContent);
+                    log.info("分段处理后长度: {} 字符", segmentedContent.length());
                     
                     // 增强内容验证，确保提取的是真正的文章内容
                     if (!isValidArticleContent(segmentedContent)) {
                         log.warn("内容验证失败，不是有效的文章内容: {}", url);
+                        log.warn("最终内容预览: {}", segmentedContent.substring(0, Math.min(200, segmentedContent.length())));
                         return Optional.empty();
                     }
                     
+                    // 检测内容是否可能被截断
+                    ContentQuality quality = assessContentQuality(segmentedContent, url);
+                    log.info("内容质量评估: {} - 长度: {} 字符", quality.getQuality(), segmentedContent.length());
+                    
+                    // 如果内容质量较低，添加质量标记
+                    if (quality.getQuality() == ContentQuality.QualityLevel.LOW) {
+                        segmentedContent = addContentQualityWarning(segmentedContent, quality);
+                    }
+                    
+                    log.info("内容验证通过，最终内容长度: {} 字符", segmentedContent.length());
                     return Optional.of(segmentedContent);
                 }
             } else {
@@ -142,8 +176,8 @@ public class ScraperServiceImpl implements ScraperService {
         cleanedContent = cleanedContent.replaceAll("^\\s*[—\\-\\|]+\\s*", ""); // 清理开头的破折号、竖线等
         cleanedContent = cleanedContent.replaceAll("^\\s+", ""); // 清理开头的空白字符
         
-        // 3. 如果清理后内容过短，可能清理过度了，返回原始内容
-        if (cleanedContent.trim().length() < 50) {
+        // 3. 如果清理后内容过短，可能清理过度了，返回原始内容 - 降低阈值
+        if (cleanedContent.trim().length() < 30) {  // 从50字符降低到30字符
             log.warn("清理后内容过短，可能清理过度，返回原始内容");
             return content;
         }
@@ -193,12 +227,19 @@ public class ScraperServiceImpl implements ScraperService {
         };
         
         // 从后往前匹配，找到第一个匹配的模式就截断
+        // 修改：只在文章最后20%内容中查找清理模式，避免误删中间内容
+        int contentLength = cleanedContent.length();
+        int searchStartIndex = Math.max(0, contentLength - contentLength / 5); // 只搜索最后20%
+        String endSection = cleanedContent.substring(searchStartIndex);
+        
         for (String pattern : suffixPatterns) {
             Pattern compiledPattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
-            Matcher matcher = compiledPattern.matcher(cleanedContent);
+            Matcher matcher = compiledPattern.matcher(endSection);
             if (matcher.find()) {
                 log.debug("清理文章后缀: {}", matcher.group().trim());
-                cleanedContent = cleanedContent.substring(0, matcher.start());
+                // 计算在原文中的实际位置
+                int actualStartIndex = searchStartIndex + matcher.start();
+                cleanedContent = cleanedContent.substring(0, actualStartIndex);
                 break; // 找到第一个匹配就停止
             }
         }
@@ -207,8 +248,8 @@ public class ScraperServiceImpl implements ScraperService {
         cleanedContent = cleanedContent.replaceAll("\\s*[—\\-\\|]+\\s*$", ""); // 清理结尾的破折号、竖线等
         cleanedContent = cleanedContent.replaceAll("\\s+$", ""); // 清理结尾的空白字符
         
-        // 3. 如果清理后内容过短，可能清理过度了，返回原始内容
-        if (cleanedContent.trim().length() < 50) {
+        // 3. 如果清理后内容过短，可能清理过度了，返回原始内容 - 降低阈值
+        if (cleanedContent.trim().length() < 30) {  // 从50字符降低到30字符
             log.warn("清理后内容过短，可能清理过度，返回原始内容");
             return content;
         }
@@ -502,31 +543,31 @@ public class ScraperServiceImpl implements ScraperService {
         
         String trimmedContent = content.trim();
         
-        // 1. 长度验证：至少100个字符
-        if (trimmedContent.length() < 100) {
+        // 1. 长度验证：降低阈值到50个字符，避免过度筛选
+        if (trimmedContent.length() < 50) {
             log.debug("内容太短: {} 字符", trimmedContent.length());
             return false;
         }
         
-        // 2. 单词数验证：至少20个单词
+        // 2. 单词数验证：降低阈值到10个单词
         int wordCount = countWords(trimmedContent);
-        if (wordCount < 20) {
+        if (wordCount < 10) {
             log.debug("单词数太少: {} 个单词", wordCount);
             return false;
         }
         
-        // 3. 句子数验证：至少2个句子
+        // 3. 句子数验证：降低阈值到1个句子，避免过度筛选
         String[] sentences = trimmedContent.split("[.!?]+");
         long sentenceCount = Arrays.stream(sentences)
                 .filter(sentence -> sentence.trim().length() > 0)
                 .count();
         
-        if (sentenceCount < 2) {
+        if (sentenceCount < 1) {
             log.debug("句子数太少: {} 个句子", sentenceCount);
             return false;
         }
         
-        // 4. 检查是否包含大量无意义内容（噪音词汇）
+        // 4. 检查是否包含大量无意义内容（噪音词汇）- 放宽限制
         String[] noisePatterns = {
             "click here", "read more", "subscribe", "newsletter",
             "advertisement", "sponsored", "cookie", "privacy policy",
@@ -544,26 +585,26 @@ public class ScraperServiceImpl implements ScraperService {
             }
         }
         
-        // 如果包含太多噪音词汇，可能不是有效内容
-        if (noiseCount > 3) {
+        // 放宽噪音词汇限制，从3个提高到5个
+        if (noiseCount > 5) {
             log.debug("包含太多噪音词汇: {} 个", noiseCount);
             return false;
         }
         
-        // 5. 检查内容密度：有效词汇与总字符的比例
+        // 5. 检查内容密度：有效词汇与总字符的比例 - 降低阈值
         int validWordCount = countWords(trimmedContent);
         double contentDensity = (double) validWordCount / trimmedContent.length();
         
-        // 内容密度应该至少为0.1（10%的字符是有效单词）
-        if (contentDensity < 0.1) {
+        // 降低内容密度要求，从0.1降低到0.05（5%的字符是有效单词）
+        if (contentDensity < 0.05) {
             log.debug("内容密度太低: {:.2f}", contentDensity);
             return false;
         }
         
-        // 6. 检查是否包含足够的实质性信息
+        // 6. 检查是否包含足够的实质性信息 - 降低要求
         // 计算平均句子长度，过短可能表示内容质量不高
         double avgSentenceLength = (double) validWordCount / sentenceCount;
-        if (avgSentenceLength < 5) {
+        if (avgSentenceLength < 3) {  // 从5个单词降低到3个单词
             log.debug("平均句子长度太短: {:.1f} 个单词", avgSentenceLength);
             return false;
         }
@@ -578,13 +619,13 @@ public class ScraperServiceImpl implements ScraperService {
             }
         }
         
-        // 检查是否有单词重复率过高
+        // 检查是否有单词重复率过高 - 放宽限制
         int totalWords = words.length;
         long highFrequencyWords = wordFrequency.values().stream()
-                .filter(count -> count > totalWords * 0.1) // 重复率超过10%
+                .filter(count -> count > totalWords * 0.15) // 重复率超过15%（从10%提高）
                 .count();
         
-        if (highFrequencyWords > totalWords * 0.2) { // 如果超过20%的单词重复率过高
+        if (highFrequencyWords > totalWords * 0.3) { // 如果超过30%的单词重复率过高（从20%提高）
             log.debug("内容重复率过高: {} 个高频词", highFrequencyWords);
             return false;
         }
@@ -612,5 +653,144 @@ public class ScraperServiceImpl implements ScraperService {
                 trimmedContent.length(), validWordCount, sentenceCount, contentDensity);
         
         return true;
+    }
+    
+    /**
+     * 备用内容提取方法
+     * 当Readability4J提取内容过短时使用
+     */
+    private String extractContentFallback(Document doc) {
+        try {
+            // 尝试从常见的文章容器中提取内容
+            String[] contentSelectors = {
+                "article", 
+                ".article-content", 
+                ".post-content", 
+                ".entry-content", 
+                ".content", 
+                ".main-content",
+                "[role='main']",
+                ".story-body",
+                ".article-body"
+            };
+            
+            for (String selector : contentSelectors) {
+                var elements = doc.select(selector);
+                if (!elements.isEmpty()) {
+                    String content = elements.first().text();
+                    if (content != null && content.length() > 200) {
+                        log.info("备用方法从选择器 '{}' 提取到内容: {} 字符", selector, content.length());
+                        return content;
+                    }
+                }
+            }
+            
+            // 如果上述方法都失败，尝试从body中提取，但排除导航、侧边栏等
+            var body = doc.body();
+            if (body != null) {
+                // 移除导航、侧边栏、广告等元素
+                body.select("nav, .nav, .navigation, .sidebar, .ad, .advertisement, .ads, .social, .share, .comments").remove();
+                
+                String content = body.text();
+                if (content != null && content.length() > 200) {
+                    log.info("备用方法从body提取到内容: {} 字符", content.length());
+                    return content;
+                }
+            }
+            
+        } catch (Exception e) {
+            log.error("备用内容提取失败", e);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 内容质量评估类
+     */
+    public static class ContentQuality {
+        public enum QualityLevel {
+            HIGH,    // 高质量：内容完整，长度充足
+            MEDIUM,  // 中等质量：内容基本完整，但可能较短
+            LOW      // 低质量：内容可能被截断或不完整
+        }
+        
+        private final QualityLevel quality;
+        private final String reason;
+        private final int confidence; // 0-100，置信度
+        
+        public ContentQuality(QualityLevel quality, String reason, int confidence) {
+            this.quality = quality;
+            this.reason = reason;
+            this.confidence = confidence;
+        }
+        
+        public QualityLevel getQuality() { return quality; }
+        public String getReason() { return reason; }
+        public int getConfidence() { return confidence; }
+    }
+    
+    /**
+     * 评估内容质量
+     */
+    private ContentQuality assessContentQuality(String content, String url) {
+        if (content == null || content.trim().isEmpty()) {
+            return new ContentQuality(ContentQuality.QualityLevel.LOW, "内容为空", 100);
+        }
+        
+        int length = content.length();
+        
+        // 检查是否以不完整的句子结尾
+        boolean endsWithIncompleteSentence = content.trim().matches(".*[a-zA-Z]\\s*$");
+        
+        // 检查是否包含截断指示词
+        String lowerContent = content.toLowerCase();
+        boolean hasTruncationIndicators = lowerContent.contains("...") || 
+                                        lowerContent.contains("continue reading") ||
+                                        lowerContent.contains("read more") ||
+                                        lowerContent.contains("click here");
+        
+        // 检查内容长度是否合理
+        boolean isVeryShort = length < 500;
+        boolean isShort = length < 1000;
+        
+        // 检查句子完整性
+        String[] sentences = content.split("[.!?]+");
+        boolean hasIncompleteSentences = sentences.length > 0 && 
+                                       sentences[sentences.length - 1].trim().length() < 10;
+        
+        // 综合评估
+        if (isVeryShort || (isShort && (endsWithIncompleteSentence || hasIncompleteSentences))) {
+            String reason = isVeryShort ? "内容过短" : "内容可能被截断";
+            return new ContentQuality(ContentQuality.QualityLevel.LOW, reason, 85);
+        } else if (isShort || hasTruncationIndicators) {
+            return new ContentQuality(ContentQuality.QualityLevel.MEDIUM, "内容较短但基本完整", 70);
+        } else {
+            return new ContentQuality(ContentQuality.QualityLevel.HIGH, "内容完整", 90);
+        }
+    }
+    
+    /**
+     * 为低质量内容添加警告标记
+     */
+    private String addContentQualityWarning(String content, ContentQuality quality) {
+        StringBuilder warning = new StringBuilder();
+        warning.append("\n\n--- 内容质量提示 ---\n");
+        warning.append("⚠️ 检测到内容可能不完整：").append(quality.getReason()).append("\n");
+        warning.append("📊 置信度：").append(quality.getConfidence()).append("%\n");
+        warning.append("💡 建议：您可以点击原文链接查看完整内容\n");
+        warning.append("🔗 原文链接：").append(extractOriginalUrl(content)).append("\n");
+        warning.append("--- 内容结束 ---\n\n");
+        
+        return content + warning.toString();
+    }
+    
+    /**
+     * 从内容中提取原始URL（如果存在）
+     */
+    private String extractOriginalUrl(String content) {
+        // 这里可以从内容中提取URL，或者从上下文获取
+        // 暂时返回占位符
+        return "请查看文章详情页面的原文链接";
     }
 }

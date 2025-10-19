@@ -93,9 +93,9 @@
       />
       <el-select v-model="statusFilter" placeholder="状态筛选">
         <el-option label="全部" value="" />
-        <el-option label="未复习" value="unreviewed" />
+        <el-option label="新单词" value="new" />
         <el-option label="已掌握" value="mastered" />
-        <el-option label="复习中" value="reviewing" />
+        <el-option label="学习中" value="learning" />
       </el-select>
     </div>
 
@@ -112,16 +112,16 @@
       >
         <!-- 状态指示区域 - 为所有状态提供直观的视觉提示 -->
         <div class="word-status">
-          <!-- 复习中状态：显示状态指示器和进度条 -->
-          <div class="review-progress" v-if="word.reviewStatus === 'reviewing' && !word.noLongerReview">
+          <!-- 学习中状态：显示状态指示器和进度条 -->
+          <div class="review-progress" v-if="word.reviewStatus === 'learning' && !word.noLongerReview">
             <!-- 新的进度条实现 - 与对勾对齐 -->
             <div class="aligned-progress-container">
               <!-- 状态指示器和进度条标题 -->
               <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
                 <div style="display: flex; align-items: center;">
-                  <div class="status-indicator reviewing" style="margin-right: 8px; margin-bottom: 0;">
+                  <div class="status-indicator learning" style="margin-right: 8px; margin-bottom: 0;">
                     <span class="status-icon">•</span>
-                    <span>复习中</span>
+                    <span>学习中</span>
                   </div>
                 </div>
                 <span>{{ word.nextReviewTime ? formatNextReviewTime(word.nextReviewTime) : '-' }}</span>
@@ -155,16 +155,16 @@
               </div>
             </div>
           </div>
-          <!-- 复习中但已不再巩固状态：仅显示状态指示器 -->
-          <div class="status-indicator reviewing" v-else-if="word.reviewStatus === 'reviewing' && word.noLongerReview">
+          <!-- 学习中但已不再巩固状态：仅显示状态指示器 -->
+          <div class="status-indicator learning" v-else-if="word.reviewStatus === 'learning' && word.noLongerReview">
             <span class="status-icon">•</span>
-            <span>复习中</span>
+            <span>学习中</span>
           </div>
 
-          <!-- 未复习状态：显示状态指示器 -->
-          <div class="status-indicator unreviewed" v-else-if="word.reviewStatus === 'unreviewed'">
+          <!-- 新单词状态：显示状态指示器 -->
+          <div class="status-indicator new" v-else-if="word.reviewStatus === 'new'">
             <span class="status-icon">•</span>
-            <span>未复习</span>
+            <span>新单词</span>
           </div>
           <!-- 已掌握状态：显示状态指示器和进度条 -->
           <div v-else-if="word.reviewStatus === 'mastered' && !word.noLongerReview" class="review-progress">
@@ -319,14 +319,14 @@
           >
             <!-- 状态指示区域 -->
             <div class="word-status">
-              <!-- 复习中状态：显示状态指示器和进度条 -->
-              <div class="review-progress" v-if="word.reviewStatus === 'reviewing' && !word.noLongerReview">
+              <!-- 学习中状态：显示状态指示器和进度条 -->
+              <div class="review-progress" v-if="word.reviewStatus === 'learning' && !word.noLongerReview">
                 <div class="aligned-progress-container">
                   <div class="stat-header" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 12px; color: #606266;">
                     <div style="display: flex; align-items: center;">
-                      <div class="status-indicator reviewing" style="margin-right: 8px; margin-bottom: 0;">
+                      <div class="status-indicator learning" style="margin-right: 8px; margin-bottom: 0;">
                         <span class="status-icon">•</span>
-                        <span>复习中</span>
+                        <span>学习中</span>
                       </div>
                     </div>
                     <span>{{ word.nextReviewTime ? formatNextReviewTime(word.nextReviewTime) : '-' }}</span>
@@ -355,15 +355,15 @@
                   </div>
                 </div>
               </div>
-              <!-- 复习中但已不再巩固状态：仅显示状态指示器 -->
-              <div class="status-indicator reviewing" v-else-if="word.reviewStatus === 'reviewing' && word.noLongerReview">
+              <!-- 学习中但已不再巩固状态：仅显示状态指示器 -->
+              <div class="status-indicator learning" v-else-if="word.reviewStatus === 'learning' && word.noLongerReview">
                 <span class="status-icon">•</span>
-                <span>复习中</span>
+                <span>学习中</span>
               </div>
-              <!-- 未复习状态：显示状态指示器 -->
-              <div class="status-indicator unreviewed" v-else-if="word.reviewStatus === 'unreviewed'">
+              <!-- 新单词状态：显示状态指示器 -->
+              <div class="status-indicator new" v-else-if="word.reviewStatus === 'new'">
                 <span class="status-icon">•</span>
-                <span>未复习</span>
+                <span>新单词</span>
               </div>
               <!-- 已掌握状态：显示状态指示器和进度条 -->
               <div v-else-if="word.reviewStatus === 'mastered' && !word.noLongerReview" class="review-progress">
@@ -865,7 +865,7 @@ const shouldReviewWord = (word: WordItem) => {
   }
 
   // 如果没有nextReviewTime，根据reviewStatus判断
-  return word.reviewStatus === 'unreviewed' || word.reviewStatus === 'overdue' || word.reviewStatus === 'reviewing'
+  return word.reviewStatus === 'new' || word.reviewStatus === 'overdue' || word.reviewStatus === 'learning'
 }
 
 // 获取需要速刷的单词数量 - 与闪卡式复习和批量听写保持一致
@@ -890,7 +890,7 @@ const paginatedWords = computed(() => {
   return filteredWords.value.slice(start, end)
 })
 
-// 叠层视图数据 - 按状态排序：未复习 → 复习中 → 已掌握
+// 叠层视图数据 - 按状态排序：新单词 → 学习中 → 已掌握
 const visibleStackWords = computed(() => {
   // 速刷模式使用速刷单词列表
   if (isSpeedReviewMode.value && speedReviewWords.value.length > 0) {
@@ -911,7 +911,7 @@ const visibleStackWords = computed(() => {
 
   // 普通模式按状态优先级排序
   const sortedWords = [...filteredWords.value].sort((a, b) => {
-    const statusOrder = { 'unreviewed': 0, 'reviewing': 1, 'mastered': 2, 'overdue': 0 }
+    const statusOrder = { 'new': 0, 'learning': 1, 'mastered': 2, 'overdue': 0 }
     return statusOrder[a.reviewStatus] - statusOrder[b.reviewStatus]
   })
 
@@ -1125,7 +1125,7 @@ const startWordSpeedReview = async () => {
       phonetic: word.phonetic || word.pronunciation || '', // 使用后端返回的phonetic字段
       example: word.example || '', // 使用后端返回的example字段
       // 后端API返回的review_status映射为difficulty字段
-      reviewStatus: mapBackendStatusToFrontend(word.difficulty || word.reviewStatus || 'new') as 'unreviewed' | 'reviewing' | 'mastered' | 'overdue',
+      reviewStatus: mapBackendStatusToFrontend(word.difficulty || word.reviewStatus || 'new') as 'new' | 'learning' | 'mastered' | 'overdue',
       reviewCount: word.reviewCount || 0, // 添加reviewCount字段
       createdAt: word.createdAt || new Date().toISOString(),
       // 后端API返回的next_review_at映射为dueDate字段
@@ -1439,8 +1439,8 @@ const initStatusChart = () => {
           }
         },
         data: [
-          { value: 0, name: '未复习', itemStyle: { color: '#409eff', shadowBlur: 10, shadowColor: 'rgba(64, 158, 255, 0.5)' } },
-          { value: 0, name: '复习中', itemStyle: { color: '#e6a23c', shadowBlur: 10, shadowColor: 'rgba(230, 162, 60, 0.5)' } },
+          { value: 0, name: '新单词', itemStyle: { color: '#409eff', shadowBlur: 10, shadowColor: 'rgba(64, 158, 255, 0.5)' } },
+          { value: 0, name: '学习中', itemStyle: { color: '#e6a23c', shadowBlur: 10, shadowColor: 'rgba(230, 162, 60, 0.5)' } },
           { value: 0, name: '已掌握', itemStyle: { color: '#67c23a', shadowBlur: 10, shadowColor: 'rgba(103, 194, 58, 0.5)' } }
         ]
       }]
@@ -1472,16 +1472,16 @@ const doUpdateStatusChart = () => {
 
   // 统计不同状态的单词数量
   const statusCounts = {
-    unreviewed: words.value.filter(w => w.reviewStatus === 'unreviewed').length,
-    reviewing: words.value.filter(w => w.reviewStatus === 'reviewing').length,
+    new: words.value.filter(w => w.reviewStatus === 'new').length,
+    learning: words.value.filter(w => w.reviewStatus === 'learning').length,
     mastered: words.value.filter(w => w.reviewStatus === 'mastered').length
   }
 
   // 准备图表数据
   const chartData = [
     {
-      value: statusCounts.unreviewed,
-      name: '未复习',
+      value: statusCounts.new,
+      name: '新单词',
       itemStyle: {
         color: 'rgba(64, 158, 255, 0.8)',
         shadowBlur: 10,
@@ -1489,8 +1489,8 @@ const doUpdateStatusChart = () => {
       }
     },
     {
-      value: statusCounts.reviewing,
-      name: '复习中',
+      value: statusCounts.learning,
+      name: '学习中',
       itemStyle: {
         color: 'rgba(230, 162, 60, 0.8)',
         shadowBlur: 10,
@@ -1608,7 +1608,7 @@ const loadWords = async () => {
         }
 
         // 计算是否需要复习（基于状态和时间）
-        // 待复习定义：不晚于今日晚24点，包括未复习(unreviewed)、复习中(reviewing)和已掌握(mastered)的单词
+        // 待复习定义：不晚于今日晚24点，包括新单词(new)、学习中(learning)和已掌握(mastered)的单词
         const needsReview = !noLongerReview && (
           (nextReviewTime && (() => {
             if (nextReviewTime) {
@@ -1619,7 +1619,7 @@ const loadWords = async () => {
             }
             return false
           })()) ||
-          (!nextReviewTime && (frontendStatus === 'unreviewed' || frontendStatus === 'overdue' || frontendStatus === 'reviewing'))
+          (!nextReviewTime && (frontendStatus === 'new' || frontendStatus === 'overdue' || frontendStatus === 'learning'))
         );
 
         return {
@@ -1725,10 +1725,10 @@ const loadStats = async () => {
 const mapBackendStatusToFrontend = (backendStatus: string): string => {
   const statusMap: Record<string, string> = {
     'mastered': 'mastered',
-    'learning': 'reviewing',
-    'new': 'unreviewed'
+    'learning': 'learning',
+    'new': 'new'
   }
-  return statusMap[backendStatus] || 'unreviewed'
+  return statusMap[backendStatus] || 'new'
 }
 
 // 映射后端状态到masteryLevel（用于向后兼容）
@@ -1953,11 +1953,11 @@ const formatCreatedTime = (createdTime: string): string => {
 // 获取复习状态对应的CSS类
 const getReviewStatusClass = (status: string): string => {
   const statusMap: Record<string, string> = {
-    'unreviewed': 'status-unreviewed',
+    'new': 'status-new',
     'mastered': 'status-mastered',
-    'reviewing': 'status-reviewing'
+    'learning': 'status-learning'
   }
-  return statusMap[status] || 'status-unreviewed'
+  return statusMap[status] || 'status-new'
 }
 
 // 显示学习模式引导
@@ -2197,7 +2197,7 @@ const setWordAsNoLongerReview = async (word: WordItem) => {
 
     // 设置加载状态
     const isReviewing = ref(true)
-    const reviewingWordId = ref(word.id)
+    const learningWordId = ref(word.id)
 
     // 设置nextReviewTime为100年后，这样单词就不会再进入复习流程
     const farFutureDate = new Date()
@@ -2249,7 +2249,7 @@ const setWordAsNoLongerReview = async (word: WordItem) => {
   } finally {
     // 重置复习状态
     // isReviewing.value = false
-    // reviewingWordId.value = null
+    // learningWordId.value = null
   }
 }
 
@@ -2364,7 +2364,7 @@ const startBatchDictation = async () => {
       phonetic: word.phonetic || '',
       example: word.example || '暂无例句',
       // 后端API返回的review_status映射为difficulty字段
-      reviewStatus: mapBackendStatusToFrontend(word.difficulty || word.reviewStatus || 'new') as 'unreviewed' | 'reviewing' | 'mastered' | 'overdue',
+      reviewStatus: mapBackendStatusToFrontend(word.difficulty || word.reviewStatus || 'new') as 'new' | 'learning' | 'mastered' | 'overdue',
       reviewCount: word.reviewCount || 0, // 添加reviewCount字段
       createdAt: word.createdAt || new Date().toISOString(),
       // 后端API返回的next_review_at映射为dueDate字段
@@ -2403,7 +2403,7 @@ const startBatchDictation = async () => {
     // 发生错误时，也尝试从本地获取听写单词作为备选
     if (words.value.length > 0) {
       const localDictationWords = words.value.filter((word: WordItem) =>
-        word.reviewStatus === 'reviewing' &&
+        word.reviewStatus === 'learning' &&
         word.nextReviewTime &&
         new Date(word.nextReviewTime) <= new Date()
       )
@@ -3012,7 +3012,7 @@ const showDictationHint = () => {
 
 
 /* 现代状态光晕 - 参考文章卡片设计，使用渐变边框 + 内发光 */
-.word-card.el-card[data-status="unreviewed"] {
+.word-card.el-card[data-status="new"] {
   border: 2px solid transparent !important;
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
   background-clip: padding-box !important;
@@ -3023,7 +3023,7 @@ const showDictationHint = () => {
   position: relative !important;
 }
 
-.word-card.el-card[data-status="unreviewed"]::before {
+.word-card.el-card[data-status="new"]::before {
   content: '';
   position: absolute;
   top: 0;
@@ -3039,7 +3039,7 @@ const showDictationHint = () => {
   z-index: -1;
 }
 
-.word-card.el-card[data-status="reviewing"] {
+.word-card.el-card[data-status="learning"] {
   border: 2px solid transparent !important;
   background: linear-gradient(135deg, var(--glass-white) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
   background-clip: padding-box !important;
@@ -3050,7 +3050,7 @@ const showDictationHint = () => {
   position: relative !important;
 }
 
-.word-card.el-card[data-status="reviewing"]::before {
+.word-card.el-card[data-status="learning"]::before {
   content: '';
   position: absolute;
   top: 0;
@@ -3177,7 +3177,7 @@ const showDictationHint = () => {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
-.status-indicator.unreviewed {
+.status-indicator.new {
   color: white;
   background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
@@ -3195,7 +3195,7 @@ const showDictationHint = () => {
   box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
 }
 
-.status-indicator.reviewing {
+.status-indicator.learning {
   color: white;
   background: linear-gradient(135deg, #FF9500 0%, #FFCC02 100%);
   box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);

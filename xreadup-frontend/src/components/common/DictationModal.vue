@@ -89,7 +89,7 @@ interface WordItem {
   id: string;
   word: string;
   translation: string;
-  reviewStatus: 'unreviewed' | 'reviewing' | 'mastered' | 'overdue';
+  reviewStatus: 'new' | 'learning' | 'mastered' | 'overdue';
   noLongerReview: boolean;
   nextReviewTime?: string;
 }

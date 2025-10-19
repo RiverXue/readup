@@ -29,7 +29,7 @@ export interface WordItem {
   example?: string;
   
   /** 复习状态 */
-  reviewStatus: 'unreviewed' | 'reviewing' | 'mastered' | 'overdue';
+  reviewStatus: 'new' | 'learning' | 'mastered' | 'overdue';
   
   /** 复习次数 */
   reviewCount: number;

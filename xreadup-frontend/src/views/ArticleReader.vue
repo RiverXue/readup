@@ -246,6 +246,45 @@
 
 
 
+      <!-- 内容质量提示 - 现代化卡片设计 -->
+      <div v-if="contentQualityWarning" class="content-quality-card">
+        <div class="quality-card-header">
+          <div class="quality-icon">
+            <el-icon v-if="contentQualityWarning.confidence >= 80"><WarningFilled /></el-icon>
+            <el-icon v-else><InfoFilled /></el-icon>
+          </div>
+          <div class="quality-title">
+            <h4>{{ contentQualityWarning.title }}</h4>
+            <p class="quality-subtitle">{{ contentQualityWarning.description }}</p>
+          </div>
+          <el-button 
+            type="text" 
+            size="small" 
+            @click="dismissQualityWarning"
+            class="close-btn"
+          >
+            <el-icon><Close /></el-icon>
+          </el-button>
+        </div>
+        
+        <div class="quality-card-content">
+          <div class="quality-info">
+            <div class="info-item">
+              <span class="info-label">检测结果</span>
+              <span class="info-value">{{ contentQualityWarning.reason }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">置信度</span>
+              <span class="info-value confidence">{{ contentQualityWarning.confidence }}%</span>
+            </div>
+          </div>
+          
+          <div class="quality-suggestion">
+            <p>{{ contentQualityWarning.suggestion }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- 双语阅读区 -->
       <div class="bilingual-content">
         <!-- 付费用户：行间翻译 -->
@@ -796,6 +835,18 @@ const subscriptionInfo = ref({
   totalArticles: 3
 })
 const showUpgradeTip = ref(true)
+
+// 内容质量警告
+interface ContentQualityWarning {
+  title: string
+  description: string
+  reason: string
+  confidence: number
+  suggestion: string
+}
+
+const contentQualityWarning = ref<ContentQualityWarning | null>(null)
+
 // 首次使用引导状态
 const showFirstUseGuide = ref(false)
 // 侧边栏折叠状态
@@ -1243,6 +1294,33 @@ const chineseParagraphs = computed(() => {
   return paragraphsByNewline
 })
 
+// 检测内容质量
+const checkContentQuality = (content: string): ContentQualityWarning | null => {
+  if (!content || content.length < 500) {
+    return {
+      title: '⚠️ 内容质量提示',
+      description: '检测到文章内容可能不完整',
+      reason: content.length < 500 ? '内容过短' : '内容可能被截断',
+      confidence: 85,
+      suggestion: '建议使用右下角的"查看原文"按钮访问完整内容'
+    }
+  } else if (content.length < 1000) {
+    return {
+      title: '💡 内容提示',
+      description: '文章内容较短，但基本完整',
+      reason: '内容较短但基本完整',
+      confidence: 70,
+      suggestion: '如需更多详细信息，可使用右下角的"查看原文"按钮'
+    }
+  }
+  return null
+}
+
+// 关闭内容质量警告
+const dismissQualityWarning = () => {
+  contentQualityWarning.value = null
+}
+
 // 获取文章
 const loadArticle = async () => {
   try {
@@ -1263,6 +1341,9 @@ const loadArticle = async () => {
       source: data.article?.source || '',
       description: data.article?.description || ''
     }
+
+    // 检测内容质量
+    contentQualityWarning.value = checkContentQuality(article.value.enContent)
 
     // 初始化内容项
     updateContentItems()
@@ -3780,6 +3861,184 @@ onUnmounted(async () => {
 /* 双语阅读区悬停效果 */
 .bilingual-content:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 内容质量提示卡片 - 参考首页UI设计 */
+.content-quality-card {
+  margin-bottom: var(--space-6);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(248, 250, 252, 0.9) 50%, 
+    rgba(241, 245, 249, 0.95) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 12px 48px rgba(0, 0, 0, 0.15),
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.content-quality-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 16px 64px rgba(0, 0, 0, 0.2),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* 卡片头部 */
+.quality-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.quality-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, 
+    rgba(255, 149, 0, 0.1) 0%, 
+    rgba(255, 193, 7, 0.05) 50%, 
+    rgba(255, 149, 0, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warm-orange);
+  font-size: 20px;
+  box-shadow: 
+    0 4px 12px rgba(255, 149, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.quality-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.quality-title h4 {
+  margin: 0 0 var(--space-2) 0;
+  color: var(--text-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-family: var(--font-family-display);
+  line-height: 1.3;
+}
+
+.quality-subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+.close-btn {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* 卡片内容 */
+.quality-card-content {
+  padding: var(--space-4) var(--space-6) var(--space-5);
+}
+
+.quality-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.info-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-family: var(--font-family-display);
+}
+
+.info-value.confidence {
+  color: var(--warm-orange);
+  font-size: var(--text-base);
+}
+
+.quality-suggestion {
+  padding: var(--space-4);
+  background: linear-gradient(135deg, 
+    rgba(0, 122, 255, 0.05) 0%, 
+    rgba(90, 200, 250, 0.03) 50%, 
+    rgba(0, 122, 255, 0.05) 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 122, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quality-suggestion::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    var(--primary-500) 0%, 
+    var(--warm-orange) 50%, 
+    var(--primary-500) 100%);
+  border-radius: var(--radius-sm);
+}
+
+.quality-suggestion p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 文章尾部悬停效果 */

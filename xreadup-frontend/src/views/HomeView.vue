@@ -115,7 +115,7 @@ const fetchLearningStats = async () => {
             // 如果主逻辑筛选结果为0，尝试使用错误处理中的逻辑（检查reviewStatus）
             if (locallyDueForReview === 0) {
               const errorHandlingDueForReview = wordsList.filter((word: any) =>
-                word.reviewStatus === 'reviewing' &&
+                word.reviewStatus === 'learning' &&
                 (word.nextReviewTime || word.nextReviewAt) &&
                 new Date(word.nextReviewTime || word.nextReviewAt) <= new Date()
               ).length
