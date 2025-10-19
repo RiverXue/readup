@@ -13,9 +13,9 @@
           </div>
         </div>
         <div class="header-actions">
-          <el-button @click="goBack" type="primary" plain>
-            <el-icon><ArrowLeft /></el-icon>
-            返回阅读
+          <el-button @click="goToHome" type="primary" plain>
+            <el-icon><HomeFilled /></el-icon>
+            返回首页
           </el-button>
         </div>
       </div>
@@ -221,7 +221,7 @@ import { useUserStore } from '@/stores/user'
 import { assessUserLevel, getLevelDisplayName, getLevelProgress } from '@/utils/levelAssessment'
 import { LEARNING_THRESHOLDS, isStrong, isWeak } from '@/utils/learningThresholds'
 import { 
-  Document, ArrowLeft, CircleClose, Trophy, Star, StarFilled, 
+  Document, HomeFilled, CircleClose, Trophy, Star, StarFilled, 
   Reading, View, Clock, User, Delete, TrendCharts 
 } from '@element-plus/icons-vue'
 
@@ -832,13 +832,9 @@ const clearChat = () => {
   chatHistory.value = []
 }
 
-// 返回阅读
-const goBack = () => {
-  if (currentArticle.value?.id) {
-    router.push(`/article/${currentArticle.value.id}`)
-  } else {
-    router.push('/')
-  }
+// 返回首页
+const goToHome = () => {
+  router.push('/')
 }
 
 // 格式化消息
@@ -867,7 +863,7 @@ onMounted(async () => {
 /* 页面整体布局 */
 .ai-tutor-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #f2f2f7 0%, #e5e5ea 100%);
   padding: 20px;
 }
 
@@ -896,7 +892,7 @@ onMounted(async () => {
 .tutor-avatar {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -911,7 +907,7 @@ onMounted(async () => {
   font-size: 28px;
   font-weight: 700;
   color: #2d3748;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -985,7 +981,7 @@ onMounted(async () => {
 .user-avatar {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1289,7 +1285,7 @@ onMounted(async () => {
 }
 
 .message.user .message-avatar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   color: white;
 }
 
@@ -1318,7 +1314,7 @@ onMounted(async () => {
 }
 
 .message.user .message-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   color: white;
 }
 

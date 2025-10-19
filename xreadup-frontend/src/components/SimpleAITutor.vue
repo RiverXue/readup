@@ -377,7 +377,7 @@ watch(visible, (newVal) => {
 
 .ai-tutor-dialog :deep(.el-dialog__header) {
   padding: 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   color: white;
 }
 
@@ -398,7 +398,7 @@ watch(visible, (newVal) => {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   color: white;
 }
 
@@ -497,7 +497,7 @@ watch(visible, (newVal) => {
 }
 
 .card-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   color: white;
   padding: 12px 16px;
 }
