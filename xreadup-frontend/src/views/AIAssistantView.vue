@@ -25,8 +25,8 @@
     <div class="main-content">
       <!-- 左侧：用户信息和学习诊断 -->
       <div class="left-sidebar">
-      <!-- 用户学习画像 -->
-      <div class="user-profile-card">
+        <!-- 用户学习画像 -->
+        <div class="user-profile-card">
           <div class="card-header">
             <h3>👤 学习画像</h3>
           </div>
@@ -37,7 +37,11 @@
           </div>
               <div class="user-details">
                 <h4>{{ userStore.userInfo?.username || '学习者' }}</h4>
-            <p>{{ userProfile.currentLevel || '初学者' }}</p>
+                <div class="user-level-info">
+                  <span class="level-icon">{{ getLevelIcon(userProfile.currentLevel as any) }}</span>
+                  <span class="level-name">{{ getLevelDisplayName(userProfile.currentLevel as any) }}</span>
+                </div>
+                <p class="level-description">{{ getLevelDescription(userProfile.currentLevel as any) }}</p>
           </div>
         </div>
             <div class="learning-stats">
@@ -52,7 +56,19 @@
           <div class="stat-item">
             <div class="stat-value">{{ userProfile.masteredWords || 0 }}</div>
             <div class="stat-label">已掌握词汇</div>
-              </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ userProfile.readingStreak || 0 }}</div>
+            <div class="stat-label">连续学习</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ userProfile.averageReadTime || 0 }}min</div>
+            <div class="stat-label">平均阅读时长</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ userProfile.vocabularyCount || 0 }}</div>
+            <div class="stat-label">生词本词汇</div>
+          </div>
             </div>
           </div>
         </div>
@@ -63,15 +79,25 @@
             <h3>📊 学习诊断</h3>
           </div>
           <div class="diagnosis-content">
-            <div class="level-indicator">
-              <div class="current-level">
-                <span class="level-label">当前水平</span>
-                <span class="level-value">{{ userProfile.currentLevel || '初学者' }}</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress" :style="{width: getLevelProgressValue() + '%'}"></div>
+            <!-- 学习效率分析 -->
+            <div class="efficiency-analysis">
+              <h4>📈 学习效率分析</h4>
+              <div class="efficiency-metrics">
+                <div class="metric-item">
+                  <span class="metric-label">阅读效率</span>
+                  <span class="metric-value">{{ Math.round((userProfile.totalArticlesRead || 0) / Math.max(userProfile.learningDays || 1, 1)) }}篇/天</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">词汇掌握率</span>
+                  <span class="metric-value">{{ userProfile.vocabularyCount > 0 ? Math.round((userProfile.masteredWords || 0) / userProfile.vocabularyCount * 100) : 0 }}%</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">学习坚持度</span>
+                  <span class="metric-value">{{ userProfile.readingStreak > 7 ? '优秀' : userProfile.readingStreak > 3 ? '良好' : '需提升' }}</span>
+                </div>
               </div>
             </div>
+            
             <div class="strengths-weaknesses">
               <div class="strengths">
                 <h4>✅ 学习优势</h4>
@@ -85,6 +111,15 @@
                   <li v-for="weakness in userProfile.weakAreas" :key="weakness">{{ weakness }}</li>
                 </ul>
               </div>
+            </div>
+            
+            <!-- 学习建议 -->
+            <div class="learning-recommendations" v-if="diagnosis.recommendations && diagnosis.recommendations.length > 0">
+              <h4>💡 学习建议</h4>
+              <ul>
+                <li v-for="recommendation in diagnosis.recommendations" :key="recommendation">{{ recommendation }}</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -106,7 +141,6 @@
         </div>
       </div>
       </div>
-    </div>
 
       <!-- 右侧：AI对话区域 -->
       <div class="right-content">
@@ -124,63 +158,52 @@
 
         <!-- 对话内容区域 -->
         <div class="chat-content">
-        <!-- 个性化问题推荐 -->
-        <div class="questions-section" v-if="!aiAnswer && chatHistory.length === 0">
-          <div class="section-header">
-              <h3>🎯 个性化学习指导</h3>
-              <p>Rayda老师为您量身定制的学习建议</p>
-          </div>
-          <div class="questions-grid">
-            <div 
-              v-for="question in smartQuestions" 
-              :key="question.id"
-              @click="askSuggestedQuestion(question.text)"
-              class="question-card"
-              :class="question.type"
-            >
-              <div class="question-icon">{{ question.icon }}</div>
-              <div class="question-content">
-                <div class="question-text">{{ question.text }}</div>
-                <div class="question-type">{{ getQuestionTypeLabel(question.type) }}</div>
-              </div>
+          <!-- 个性化问题推荐 -->
+          <div class="questions-section" v-if="chatHistory.length === 0">
+            <div class="section-header">
+                <h3>🎯 个性化学习指导</h3>
+                <p>Rayda老师为您量身定制的学习建议</p>
             </div>
-          </div>
-        </div>
-
-        <!-- 对话历史 -->
-        <div class="chat-section" v-else>
-            <div class="chat-messages">
-            <div 
-              v-for="message in chatHistory" 
-              :key="message.id" 
-                class="message"
-              :class="message.type"
-            >
-                <div class="message-avatar" v-if="message.type === 'ai'">
-                  <el-icon><Star /></el-icon>
-              </div>
-                <div class="message-content">
-                  <div class="message-text" v-html="formatMessage(message.content)"></div>
-                <div class="message-time">{{ formatTime(message.timestamp) }}</div>
-            </div>
-          </div>
-
-              <!-- AI回答 -->
-              <div v-if="aiAnswer" class="message ai">
-                <div class="message-avatar">
-              <el-icon><Star /></el-icon>
-            </div>
-                <div class="message-content">
-                  <div class="message-text" v-html="formatMessage(aiAnswer)"></div>
-                  <div class="message-time">{{ formatTime(Date.now()) }}</div>
+            <div class="questions-grid">
+              <div 
+                v-for="question in smartQuestions" 
+                :key="question.id"
+                @click="askSuggestedQuestion(question.text)"
+                class="question-card"
+                :class="question.type"
+              >
+                <div class="question-icon">{{ question.icon }}</div>
+                <div class="question-content">
+                  <div class="question-text">{{ question.text }}</div>
+                  <div class="question-type">{{ getQuestionTypeLabel(question.type) }}</div>
                 </div>
               </div>
+            </div>
           </div>
-        </div>
+
+          <!-- 对话历史 -->
+          <div class="chat-section" v-else>
+            <div class="chat-messages">
+              <div 
+                v-for="message in chatHistory" 
+                :key="message.id" 
+                class="message"
+                :class="message.type"
+              >
+                <div class="message-avatar" v-if="message.type === 'ai'">
+                  <el-icon><Star /></el-icon>
+                </div>
+                <div class="message-content">
+                  <div class="message-text" v-html="formatMessage(message.content)"></div>
+                  <div class="message-time">{{ formatTime(message.timestamp) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
       </div>
 
       <!-- 输入区域 -->
-        <div class="chat-input">
+      <div class="chat-input">
           <div class="input-container">
           <el-input
             v-model="aiQuestion"
@@ -218,7 +241,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { aiApi, articleApi, vocabularyApi, learningApi, request as api } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
-import { assessUserLevel, getLevelDisplayName, getLevelProgress } from '@/utils/levelAssessment'
+import { assessUserLevel, getLevelDisplayName, getLevelProgress, getLevelDescription, getLevelIcon } from '@/utils/levelAssessment'
 import { LEARNING_THRESHOLDS, isStrong, isWeak } from '@/utils/learningThresholds'
 import { 
   Document, HomeFilled, CircleClose, Trophy, Star, StarFilled, 
@@ -764,9 +787,17 @@ const submitAIQuestion = async () => {
       // 设置AI回答 - 直接使用res.data.answer
       const answerText = res.data.answer || '抱歉，我暂时无法回答这个问题。'
       console.log('AI回答文本:', answerText)
-      aiAnswer.value = answerText
       
-      // 清空输入框
+      // 添加AI回答到对话历史
+      chatHistory.value.push({
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: answerText,
+        timestamp: Date.now()
+      })
+      
+      // 清空AI回答临时变量和输入框
+      aiAnswer.value = ''
       aiQuestion.value = ''
     } else if (res.data && res.data.success && res.data.data) {
       console.log('进入成功分支 - 标准ApiResponse格式')
@@ -784,9 +815,17 @@ const submitAIQuestion = async () => {
       // 设置AI回答 - 从响应对象中提取answer字段
       const answerText = aiResponse?.answer || '抱歉，我暂时无法回答这个问题。'
       console.log('AI回答文本:', answerText)
-      aiAnswer.value = answerText
       
-      // 清空输入框
+      // 添加AI回答到对话历史
+      chatHistory.value.push({
+        id: (Date.now() + 1).toString(),
+        type: 'ai',
+        content: answerText,
+        timestamp: Date.now()
+      })
+      
+      // 清空AI回答临时变量和输入框
+      aiAnswer.value = ''
       aiQuestion.value = ''
     } else {
       console.log('进入错误分支')
@@ -865,6 +904,8 @@ onMounted(async () => {
   min-height: 100vh;
   background: linear-gradient(135deg, #f2f2f7 0%, #e5e5ea 100%);
   padding: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 页面头部 */
@@ -926,6 +967,9 @@ onMounted(async () => {
   gap: 20px;
   max-width: 1400px;
   margin: 0 auto;
+  align-items: start;
+  flex: 1;
+  height: 0;
 }
 
 /* 左侧边栏 */
@@ -933,6 +977,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: fit-content;
 }
 
 /* 卡片通用样式 */
@@ -997,11 +1042,29 @@ onMounted(async () => {
   color: #2d3748;
 }
 
-.user-details p {
-  margin: 4px 0 0 0;
+.user-level-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 6px 0;
+}
+
+.level-icon {
+  font-size: 16px;
+}
+
+.level-name {
   font-size: 14px;
-  color: #718096;
+  font-weight: 600;
+  color: #2d3748;
   text-transform: capitalize;
+}
+
+.level-description {
+  margin: 0;
+  font-size: 12px;
+  color: #718096;
+  line-height: 1.4;
 }
 
 .learning-stats {
@@ -1034,6 +1097,87 @@ onMounted(async () => {
   padding: 20px;
 }
 
+/* 学习效率分析 */
+.efficiency-analysis {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.efficiency-analysis h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.efficiency-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #718096;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* 学习建议 */
+.learning-recommendations {
+  margin-top: 20px;
+  padding: 16px;
+  background: #e6f7ff;
+  border-radius: 12px;
+  border-left: 4px solid #007AFF;
+}
+
+.learning-recommendations h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.learning-recommendations ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learning-recommendations li {
+  font-size: 14px;
+  color: #2d3748;
+  margin-bottom: 8px;
+  padding: 4px 0;
+  position: relative;
+  padding-left: 16px;
+}
+
+.learning-recommendations li:before {
+  content: '💡';
+  position: absolute;
+  left: 0;
+  top: 4px;
+}
+
 .level-indicator {
   margin-bottom: 20px;
   padding: 16px;
@@ -1042,23 +1186,40 @@ onMounted(async () => {
 }
 
 .current-level {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .level-label {
   font-size: 14px;
   color: #718096;
   font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
 }
 
-.level-value {
+.level-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.level-display .level-icon {
+  font-size: 20px;
+}
+
+.level-display .level-value {
   font-size: 18px;
   font-weight: 700;
   color: #2d3748;
   text-transform: capitalize;
+}
+
+.level-description {
+  margin: 0;
+  font-size: 13px;
+  color: #718096;
+  line-height: 1.4;
 }
 
 .progress-bar {
@@ -1144,6 +1305,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 1065px;
+  max-height: 80vh;
 }
 
 /* 对话头部 */
@@ -1190,7 +1353,40 @@ onMounted(async () => {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  max-height: 600px;
+  min-height: 300px;
+}
+
+/* 欢迎内容 */
+.welcome-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.welcome-message {
+  text-align: center;
+  max-width: 400px;
+}
+
+.welcome-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.welcome-message h3 {
+  margin: 0 0 12px 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.welcome-message p {
+  margin: 8px 0;
+  font-size: 16px;
+  color: #718096;
+  line-height: 1.5;
 }
 
 /* 问题推荐区域 */
@@ -1200,58 +1396,58 @@ onMounted(async () => {
 
 .section-header h3 {
   margin: 0 0 8px 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #2d3748;
 }
 
 .section-header p {
-  margin: 0 0 32px 0;
-  font-size: 16px;
+  margin: 0 0 20px 0;
+  font-size: 14px;
   color: #718096;
 }
 
 .questions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  max-width: 1000px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  max-width: 800px;
   margin: 0 auto;
 }
 
 .question-card {
-  background: #f8f9fa;
+  background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-align: left;
+  text-align: center;
 }
 
 .question-card:hover {
-  border-color: #667eea;
-  background: white;
+  border-color: #007AFF;
+  background: #f8f9ff;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.15);
 }
 
 .question-icon {
   font-size: 24px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .question-text {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: #2d3748;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.4;
 }
 
 .question-type {
   font-size: 12px;
-  color: #667eea;
+  color: #007AFF;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1362,6 +1558,15 @@ onMounted(async () => {
   .main-content {
     grid-template-columns: 300px 1fr;
   }
+  
+  .right-content {
+    min-height: 450px;
+    max-height: 70vh;
+  }
+  
+  .chat-content {
+    min-height: 250px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1380,6 +1585,12 @@ onMounted(async () => {
   
   .right-content {
     order: 1;
+    min-height: 400px;
+    max-height: 60vh;
+  }
+  
+  .chat-content {
+    min-height: 200px;
   }
   
   .header-content {
@@ -1390,6 +1601,15 @@ onMounted(async () => {
   
   .questions-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .question-card {
+    padding: 12px;
+  }
+  
+  .question-text {
+    font-size: 13px;
   }
   
   .learning-stats {

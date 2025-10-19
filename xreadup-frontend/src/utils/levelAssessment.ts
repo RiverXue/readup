@@ -22,14 +22,33 @@ export const assessUserLevel = (
   // 计算词汇掌握率（已掌握词汇 / 总生词数）
   const masteryRate = totalWords > 0 ? (masteredWords / totalWords) : 0
   
+  // 计算阅读强度分数（阅读量权重）
+  const readingIntensity = articlesRead / Math.max(learningDays, 1) // 每天平均阅读文章数
+  
   // 专家级别：90天+学习，50+文章，已掌握500+词汇，掌握率80%+
   if (learningDays >= 90 && articlesRead >= 50 && masteredWords >= 500 && masteryRate >= 0.8) return 'expert'
   
   // 高级级别：60天+学习，30+文章，已掌握200+词汇，掌握率70%+
   if (learningDays >= 60 && articlesRead >= 30 && masteredWords >= 200 && masteryRate >= 0.7) return 'advanced'
   
-  // 中级级别：30天+学习，15+文章，已掌握50+词汇，掌握率60%+
+  // 中级级别：更灵活的评估标准
+  // 标准1：传统标准（30天+学习，15+文章，已掌握50+词汇，掌握率60%+）
   if (learningDays >= 30 && articlesRead >= 15 && masteredWords >= 50 && masteryRate >= 0.6) return 'intermediate'
+  
+  // 标准2：高阅读量用户（30天+学习，100+文章，已掌握30+词汇，掌握率30%+）
+  if (learningDays >= 30 && articlesRead >= 100 && masteredWords >= 30 && masteryRate >= 0.3) return 'intermediate'
+  
+  // 标准3：极高阅读量用户（30天+学习，200+文章，已掌握20+词汇）
+  if (learningDays >= 30 && articlesRead >= 200 && masteredWords >= 20) return 'intermediate'
+  
+  // 标准5：超级阅读量用户（30天+学习，500+文章，已掌握10+词汇）
+  if (learningDays >= 30 && articlesRead >= 500 && masteredWords >= 10) return 'intermediate'
+  
+  // 标准6：极端阅读量用户（30天+学习，700+文章，已掌握5+词汇）
+  if (learningDays >= 30 && articlesRead >= 700 && masteredWords >= 5) return 'intermediate'
+  
+  // 标准4：长期学习用户（60天+学习，50+文章，已掌握20+词汇）
+  if (learningDays >= 60 && articlesRead >= 50 && masteredWords >= 20) return 'intermediate'
   
   // 初级级别：其他情况
   return 'beginner'
@@ -66,6 +85,36 @@ export const getLevelDisplayName = (level: UserLevel): string => {
     'expert': '专家'
   }
   return levelNames[level] || '初学者'
+}
+
+/**
+ * 获取等级详细描述
+ * @param level 等级代码
+ * @returns 等级详细描述
+ */
+export const getLevelDescription = (level: UserLevel): string => {
+  const descriptions: Record<UserLevel, string> = {
+    'beginner': '刚开始学习英语，正在建立基础',
+    'intermediate': '有一定基础，可以理解日常英语内容',
+    'advanced': '英语水平较高，可以处理复杂内容',
+    'expert': '英语水平优秀，接近母语者水平'
+  }
+  return descriptions[level] || '刚开始学习英语，正在建立基础'
+}
+
+/**
+ * 获取等级图标
+ * @param level 等级代码
+ * @returns 等级图标
+ */
+export const getLevelIcon = (level: UserLevel): string => {
+  const icons: Record<UserLevel, string> = {
+    'beginner': '🌱',
+    'intermediate': '🌿',
+    'advanced': '🌳',
+    'expert': '🏆'
+  }
+  return icons[level] || '🌱'
 }
 
 /**
