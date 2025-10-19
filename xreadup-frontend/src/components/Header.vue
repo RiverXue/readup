@@ -69,7 +69,7 @@
             <img :src="userStore.userInfo.avatar" alt="用户头像">
           </div>
           <div class="user-avatar" v-else>
-            <span>{{ getAvatarText }}</span>
+            <span class="user-initial">{{ getAvatarText }}</span>
           </div>
           <div class="user-details">
             <div class="username">{{ userStore.userInfo?.username || '用户' }}</div>
@@ -355,7 +355,7 @@ const handleUserCommand = async (command: string) => {
   font-size: var(--text-2xl);
   font-weight: var(--font-weight-bold);
   font-family: var(--font-family-display);
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -449,8 +449,8 @@ const handleUserCommand = async (command: string) => {
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
-  background: var(--gradient-primary);
-  color: var(--text-inverse);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -458,8 +458,14 @@ const handleUserCommand = async (command: string) => {
   font-weight: var(--font-weight-semibold);
   overflow: hidden;
   transition: all var(--transition-normal);
-  box-shadow: var(--shadow-ios-light);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-initial {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
 }
 
 .user-avatar:hover {
