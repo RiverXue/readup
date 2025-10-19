@@ -157,26 +157,26 @@
     </div>
 
     <!-- 主内容区：文章与翻译 -->
-    <div class="main-content" :class="{ 'main-content-expanded': isSidebarCollapsed }">
+    <div class="article-reader-main-content" :class="{ 'main-content-expanded': isSidebarCollapsed }">
       <!-- 文章标题与元数据 -->
       <div class="article-header">
         <!-- 标题和来源标签区域 -->
         <div class="article-title-section">
           <div class="title-row">
-            <h1 class="article-title">{{ article.title }}</h1>
-            <!-- 来源标签 - 放在标题右侧 -->
+            <!-- 来源标签 - 放在标题之前，实现文字环绕 -->
             <el-tag size="large" type="success" class="source-tag" v-if="article.source">
               <el-icon><OfficeBuilding /></el-icon>
               {{ article.source }}
             </el-tag>
+            <h1 class="article-title">{{ article.title }}</h1>
           </div>
         </div>
 
         <!-- 封面图片区域 - 参考主流媒体网站布局 -->
         <div class="article-cover-section" v-if="article.image">
           <div class="cover-image-wrapper">
-            <img 
-              :src="article.image" 
+            <img
+              :src="article.image"
               :alt="article.title"
               class="cover-image"
               @error="handleImageError"
@@ -458,12 +458,12 @@
             <span>发布时间：{{ formatPublishTime(article.publishedAt) }}</span>
           </div>
         </div>
-        
+
         <!-- 原文链接 - 使用ArticleCard的角落样式 -->
         <div class="original-link-corner" v-if="article.url">
-          <el-button 
-            type="text" 
-            size="small" 
+          <el-button
+            type="text"
+            size="small"
             @click="openOriginalArticle(article.url!)"
             class="corner-link-btn"
           >
@@ -1187,7 +1187,7 @@ const loadArticle = async () => {
 
     // 初始化内容项
     updateContentItems()
-    
+
     // 调试信息
     // console.log('ArticleReader加载的文章数据:', article.value)
     // console.log('文章来源:', article.value.source)
@@ -1671,7 +1671,7 @@ const formatPublishTime = (publishedAt: string | Date): string => {
   const date = new Date(publishedAt)
   const now = new Date()
   const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-  
+
   if (diffInHours < 1) {
     return '刚刚'
   } else if (diffInHours < 24) {
@@ -1945,11 +1945,6 @@ onMounted(async () => {
 
   // 确保页面加载时直接显示顶部
   window.scrollTo(0, 0);
-  // 同时确保主内容区也滚动到顶部
-  const mainContent = document.querySelector('.main-content');
-  if (mainContent) {
-    (mainContent as HTMLElement).scrollTop = 0;
-  }
 
   // 初始化TTS控制组件
   if (ttsControlRef.value) {
@@ -2029,6 +2024,7 @@ onUnmounted(async () => {
   position: relative;
   z-index: 20;
   height: 100%;
+  min-height: 100vh;
 }
 
 /* 侧边栏分区样式 */
@@ -2087,40 +2083,53 @@ onUnmounted(async () => {
   left: 0; /* 完全贴边 */
 }
 
-/* 主内容区样式 */
-.main-content {
+/* 主内容区样式 - 重置App.vue的main-content样式影响 */
+.article-reader-main-content {
   flex: 1;
-  height: 100vh;
+  height: 100%;
   overflow-y: auto;
-  padding: 20px;
   background-color: #fff;
   transition: all 0.3s ease;
+  /* 重置App.vue的main-content样式 */
+  margin: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  position: static !important;
+  min-height: auto !important;
+}
+
+/* 重置App.vue的main-content::before伪元素 */
+.article-reader-main-content::before {
+  display: none !important;
 }
 
 /* 主内容区展开状态 */
-.main-content.main-content-expanded {
+.article-reader-main-content.main-content-expanded {
   margin-left: 0;
 }
 
 /* 侧边栏收起时的英文内容样式 - 沉浸式阅读体验 */
 /* 为免费用户布局（上下排列）的英文内容设置样式 */
-.sidebar.sidebar-collapsed ~ .main-content .english-content {
+.sidebar.sidebar-collapsed ~ .article-reader-main-content .english-content {
   max-width: 1500px; /* 扩大内容宽度 */
 }
 
-.sidebar.sidebar-collapsed ~ .main-content .english-content .paragraph {
+.sidebar.sidebar-collapsed ~ .article-reader-main-content .english-content .paragraph {
   font-size: 18px;  /* 增大字体大小 */
   line-height: 1.8; /* 调整行高，提升阅读舒适度 */
 }
 
 /* 为付费用户布局（行间翻译）的英文内容设置样式 */
-.sidebar.sidebar-collapsed ~ .main-content .free-bilingual-layout {
+.sidebar.sidebar-collapsed ~ .article-reader-main-content .free-bilingual-layout {
   max-width: 1500px; /* 扩大整个布局宽度 */
   margin: 0 auto;
   transition: max-width 0.3s ease;
 }
 
-.sidebar.sidebar-collapsed ~ .main-content .free-bilingual-layout .english-sentence {
+.sidebar.sidebar-collapsed ~ .article-reader-main-content .free-bilingual-layout .english-sentence {
   font-size: 18px;  /* 增大字体大小 */
   line-height: 1.8; /* 调整行高，提升阅读舒适度 */
   transition: font-size 0.3s ease, line-height 0.3s ease;
@@ -2493,21 +2502,59 @@ onUnmounted(async () => {
 }
 
 .title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
   margin-bottom: 16px;
+  /* 清除浮动，确保容器包含浮动元素 */
+  overflow: hidden;
 }
 
 .article-title {
-  flex: 1;
   margin: 0;
   font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
   line-height: 1.3;
-  margin-right: 20px;
+  text-align: left;
+  /* 移除固定右边距，让文字自然环绕 */
+}
+
+/* 来源标签浮动到右侧，实现文字环绕 - 使用角落链接按钮系统样式 */
+.source-tag {
+  float: right;
+  margin: 0 0 16px 20px;
+  /* 确保标签有足够的空间，避免文字过于拥挤 */
+  min-width: 120px;
+  max-width: 200px;
+  /* 确保标签在文字流中正确显示 */
+  vertical-align: top;
+  /* 创建文字环绕形状 */
+  shape-outside: margin-box;
+  shape-margin: 12px;
+
+  /* 应用角落链接按钮系统样式 - 使用更柔和的颜色 */
+  background: rgba(142, 142, 147, 0.1) !important;
+  color: #8E8E93 !important;
+  border: 1px solid rgba(142, 142, 147, 0.2) !important;
+  border-radius: 16px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  box-shadow: 0 2px 8px rgba(142, 142, 147, 0.1) !important;
+}
+
+/* 来源标签悬停效果 - 使用更柔和的颜色 */
+.source-tag:hover {
+  background: rgba(142, 142, 147, 0.2) !important;
+  color: #6D6D70 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(142, 142, 147, 0.2) !important;
+}
+
+.source-tag:active {
+  transform: translateY(0) !important;
+  transition: transform 0.1s ease !important;
 }
 
 .article-actions {
@@ -2631,13 +2678,14 @@ onUnmounted(async () => {
   box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
 }
 
-/* 双语阅读区样式 */
+/* 双语阅读区样式 - 应用标题部分的边框样式 */
 .bilingual-content {
   background: white;
-  border-radius: 10px;
-  padding: 30px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  margin-bottom: 24px;
   position: relative;
   z-index: 1;
 }
@@ -3445,11 +3493,14 @@ onUnmounted(async () => {
 @media (max-width: 1024px) {
   .reader-container {
     flex-direction: column;
+    height: auto;
+    min-height: 100vh;
   }
 
   .sidebar {
     width: 100%;
     height: auto;
+    min-height: auto;
     border-right: none;
     border-bottom: 1px solid #ebeef5;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -3459,14 +3510,20 @@ onUnmounted(async () => {
     display: none;
   }
 
-  .main-content {
-    height: calc(100vh - 200px); /* 减去头部和侧边栏高度 */
+  .article-reader-main-content {
+    height: auto;
+    min-height: calc(100vh - 200px); /* 减去头部和侧边栏高度 */
+    overflow-y: auto;
   }
 }
 
 @media (max-width: 768px) {
-  .main-content {
+  .article-reader-main-content {
     padding: 10px;
+    /* 重置移动端App.vue的main-content样式 */
+    margin: 0 !important;
+    border-radius: 0 !important;
+    min-height: auto !important;
   }
 
   .article-header h1 {
@@ -3485,7 +3542,13 @@ onUnmounted(async () => {
   }
 
   .bilingual-content {
-    padding: 20px 15px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .article-footer {
+    padding: 16px;
+    border-radius: 12px;
   }
 }
 
@@ -3498,7 +3561,7 @@ onUnmounted(async () => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.main-content {
+.article-reader-main-content {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -3523,6 +3586,16 @@ onUnmounted(async () => {
 }
 
 .article-header:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 双语阅读区悬停效果 */
+.bilingual-content:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 文章尾部悬停效果 */
+.article-footer:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
@@ -3568,17 +3641,14 @@ onUnmounted(async () => {
   margin-right: 4px;
 }
 
-/* 文章末尾信息样式 */
+/* 文章末尾信息样式 - 应用标题部分的边框样式 */
 .article-footer {
-  margin-top: 32px;
-  padding: 20px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.1) 0%, 
-    rgba(255, 255, 255, 0.05) 100%);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  margin-top: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
   position: relative;
   z-index: 2;
 }
@@ -3622,7 +3692,7 @@ onUnmounted(async () => {
     width: 320px;
   }
 
-  .main-content {
+  .article-reader-main-content {
     margin-left: 320px;
   }
 }
@@ -3630,11 +3700,14 @@ onUnmounted(async () => {
 @media (max-width: 768px) {
   .reader-container {
     flex-direction: column;
+    height: auto;
+    min-height: 100vh;
   }
 
   .sidebar {
     width: 100%;
     height: auto;
+    min-height: auto;
     position: relative;
     transform: none;
     transition: none;
@@ -3645,13 +3718,13 @@ onUnmounted(async () => {
     transform: none;
   }
 
-  .main-content {
+  .article-reader-main-content {
     width: 100%;
     margin-left: 0;
     order: 1;
   }
 
-  .main-content-expanded {
+  .article-reader-main-content.main-content-expanded {
     margin-left: 0;
   }
 
@@ -3687,6 +3760,15 @@ onUnmounted(async () => {
   .article-title {
     font-size: 24px;
     margin-right: 0;
+    text-align: left;
+  }
+
+  /* 移动端：来源标签回到正常流布局 */
+  .source-tag {
+    position: static;
+    float: none;
+    margin: 12px 0 0 0;
+    align-self: flex-start;
   }
 
   .article-actions {
@@ -3992,12 +4074,42 @@ onUnmounted(async () => {
   box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
 }
 
+/* 中等屏幕：调整文字环绕效果 */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .source-tag {
+    min-width: 100px;
+    max-width: 160px;
+    padding: 3px 6px !important;
+    font-size: 11px !important;
+    border-radius: 14px !important;
+  }
+}
+
 /* 响应式设计 - 文章标题区域 */
 @media (max-width: 768px) {
   .article-title-section {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .article-title {
+    font-size: 24px;
+    margin-right: 0;
+    text-align: left;
+  }
+
+  /* 移动端：来源标签回到正常流布局 */
+  .source-tag {
+    position: static;
+    float: none;
+    margin: 12px 0 0 0;
+    align-self: flex-start;
+    min-width: auto;
+    max-width: none;
+    padding: 3px 6px !important;
+    font-size: 11px !important;
+    border-radius: 14px !important;
   }
 
   .article-actions {

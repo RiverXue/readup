@@ -2,17 +2,17 @@
   <div class="app">
     <!-- 管理员布局 -->
     <AdminLayout v-if="isAdminRoute" />
-    
+
     <!-- 普通用户布局 -->
     <div v-else>
       <!-- 导航栏 -->
       <Header />
-      
+
       <!-- 主内容区域 -->
       <main class="main-content">
         <router-view />
       </main>
-      
+
       <!-- 页脚 -->
       <Footer />
     </div>
