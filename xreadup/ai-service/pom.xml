@@ -114,12 +114,6 @@
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         
-        <!-- Common模块 -->
-        <dependency>
-            <groupId>com.xreadup.ai</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
         
         <!-- 测试 -->
         <dependency>

@@ -2,6 +2,7 @@ package com.xreadup.ai.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xreadup.ai.model.dto.*;
+import com.xreadup.ai.service.filter.ContentFilterService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class AiReadingAssistantService {
     private ObjectMapper objectMapper;
 
     @Autowired
+    private ContentFilterService contentFilter;
+
+    @Autowired
     private TencentTranslateService translateService;
 
     @Autowired
@@ -49,6 +53,17 @@ public class AiReadingAssistantService {
                 emptyResponse.setFollowUpQuestion("您可以问我关于文章内容、单词解释、语法问题等。");
                 emptyResponse.setDifficulty("B1");
                 return emptyResponse;
+            }
+            
+            // 添加AI对话内容过滤 - 检查用户问题是否包含违禁内容
+            if (!contentFilter.isChatSafe(request.getQuestion())) {
+                log.warn("用户问题包含违禁内容 | 用户: {}", request.getUserId());
+                
+                AiChatResponse blockedResponse = new AiChatResponse();
+                blockedResponse.setAnswer("抱歉，您的问题包含不当内容，请重新提问。");
+                blockedResponse.setFollowUpQuestion("您可以问我关于英语学习的问题。");
+                blockedResponse.setDifficulty("B1");
+                return blockedResponse;
             }
             
             // 使用简化的智能对话功能

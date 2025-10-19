@@ -346,6 +346,7 @@ public class ArticleServiceImpl implements ArticleService {
             int savedCount = 0;
             int existingCount = 0;
             int failedScrapeCount = 0;
+            int filteredCount = 0; // 被过滤的文章数量
             // 遍历热点文章并处理每一篇
             for (GnewsResponse.GnewsArticle gnewsArticle : gnewsArticles) {
                 processedCount++;
@@ -366,7 +367,7 @@ public class ArticleServiceImpl implements ArticleService {
                 
                 if (fullContentOptional.isPresent()) {
                     String fullContent = fullContentOptional.get();
-                    log.info("成功获取文章全文，长度: {} 字符", fullContent.length());
+                    log.info("✅ 成功获取文章全文，长度: {} 字符", fullContent.length());
                     
                     // 封装Article实体
                     Article article = new Article();
@@ -395,12 +396,18 @@ public class ArticleServiceImpl implements ArticleService {
                     }
                 } else {
                     failedScrapeCount++;
-                    log.warn("未能获取热点文章全文，跳过存储({}/{}): {} - {}", processedCount, gnewsArticles.size(), title, url);
+                    log.warn("❌ 未能获取热点文章全文，跳过存储({}/{}): {} - {}", processedCount, gnewsArticles.size(), title, url);
+                    // 注意：这里可能包含因内容过滤而失败的文章
+                    // 具体的过滤日志会在ScraperServiceImpl中记录
                 }
             }
             
-            log.info("热点文章处理完成，统计信息：总获取={}篇，成功存储={}篇，已存在={}篇，抓取失败={}篇", 
-                     gnewsArticles.size(), savedCount, existingCount, failedScrapeCount);
+            log.info("📊 热点文章处理完成，统计信息：");
+            log.info("   📥 总获取: {}篇", gnewsArticles.size());
+            log.info("   ✅ 成功存储: {}篇", savedCount);
+            log.info("   🔄 已存在: {}篇", existingCount);
+            log.info("   ❌ 抓取失败: {}篇 (包含内容过滤失败)", failedScrapeCount);
+            log.info("   📈 成功率: {:.1f}%", (double)(savedCount + existingCount) / gnewsArticles.size() * 100);
             
             // 从数据库获取热点文章并返回
             LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();

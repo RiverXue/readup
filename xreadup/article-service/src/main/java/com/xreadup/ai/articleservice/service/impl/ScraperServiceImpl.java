@@ -1,11 +1,13 @@
 package com.xreadup.ai.articleservice.service.impl;
 
 import com.xreadup.ai.articleservice.service.ScraperService;
+import com.xreadup.ai.articleservice.service.filter.ContentFilterService;
 import lombok.extern.slf4j.Slf4j;
 import net.dankito.readability4j.Article;
 import net.dankito.readability4j.Readability4J;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ScraperServiceImpl implements ScraperService {
 
+    @Autowired
+    private ContentFilterService contentFilter;
+
     @Override
     @Retryable(
             value = {SocketTimeoutException.class, IOException.class}, 
@@ -33,23 +38,17 @@ public class ScraperServiceImpl implements ScraperService {
     )
     public Optional<String> scrapeArticleContent(String url) {
         try {
-            // 1. 使用 Jsoup 获取整个网页的 HTML
+            // 1. 使用 Jsoup 获取整个网页的 HTML，让 Jsoup 自动处理编码
             Document doc = Jsoup.connect(url)
                     .timeout(30000) // 从10秒提高到30秒
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
                     .header("Referer", "https://www.google.com/")
-                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8")
-                    .header("Accept-Language", "en-US,en;q=0.9")
-                    .header("Accept-Encoding", "gzip, deflate, br")
-                    .header("Cache-Control", "no-cache")
-                    .header("Pragma", "no-cache")
-                    .header("Sec-Fetch-Dest", "document")
-                    .header("Sec-Fetch-Mode", "navigate")
-                    .header("Sec-Fetch-Site", "none")
-                    .header("Upgrade-Insecure-Requests", "1")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                    .header("Accept-Language", "en-US,en;q=0.5")
+                    .maxBodySize(0) // 不限制内容大小
                     .get();
 
-            // 2. 将 HTML 文档传递给 Readability4J
+            // 2. 将 HTML 文档传递给 Readability4J，让 Readability4J 处理文本提取
             Readability4J readability = new Readability4J(url, doc.html());
 
             // 3. 解析并获取文章对象
@@ -73,7 +72,6 @@ public class ScraperServiceImpl implements ScraperService {
                     }
                     
                     // 清理文章开头常见的时间戳和来源信息格式
-                    // 例如：Updated [hour]:[minute] [AMPM] [timezone], [monthFull] [day], [year] WASHINGTON (AP) — 
                     String cleanedContent = cleanArticlePrefix(textContent);
                     log.info("清理前缀后长度: {} 字符", cleanedContent.length());
                     
@@ -84,6 +82,17 @@ public class ScraperServiceImpl implements ScraperService {
                     // 对文章内容进行智能分段处理
                     String segmentedContent = segmentArticleContent(cleanedContent);
                     log.info("分段处理后长度: {} 字符", segmentedContent.length());
+                    
+                    // 添加文章内容过滤 - 检查是否包含违禁内容
+                    log.info("🔍 开始内容安全检查: {}", url);
+                    if (!contentFilter.isArticleSafe(segmentedContent)) {
+                        log.warn("🚫 文章内容安全检查失败，包含违禁内容，跳过: {}", url);
+                        log.warn("📄 文章标题预览: {}", article.getTitle());
+                        log.warn("📝 内容长度: {} 字符", segmentedContent.length());
+                        log.warn("🔍 内容预览: {}", segmentedContent.substring(0, Math.min(200, segmentedContent.length())));
+                        return Optional.empty();
+                    }
+                    log.info("✅ 文章内容安全检查通过: {}", url);
                     
                     // 增强内容验证，确保提取的是真正的文章内容
                     if (!isValidArticleContent(segmentedContent)) {
@@ -793,4 +802,5 @@ public class ScraperServiceImpl implements ScraperService {
         // 暂时返回占位符
         return "请查看文章详情页面的原文链接";
     }
+    
 }

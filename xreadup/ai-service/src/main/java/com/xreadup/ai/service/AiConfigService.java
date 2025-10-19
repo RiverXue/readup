@@ -1,6 +1,6 @@
 package com.xreadup.ai.service;
 
-import com.xreadup.common.client.SystemConfigClient;
+import com.xreadup.ai.client.SystemConfigClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
