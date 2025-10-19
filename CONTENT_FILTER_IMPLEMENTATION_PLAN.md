@@ -110,7 +110,7 @@ CREATE TABLE filter_logs (
 );
 ```
 
-#### 1.2 专业级词库管理服务
+#### 1.2 专业级词库管理服务（学习企业级技术）
 
 ```java
 @Service
@@ -123,32 +123,42 @@ public class ProfessionalWordLibraryService {
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
     
-    @Autowired
-    private TrieMatcher trieMatcher;
+    // 学习点1：使用Trie树提高匹配性能
+    private volatile TrieNode root;
+    private final Object lock = new Object();
     
-    private static final String WORD_CACHE_KEY = "sensitive_words:";
-    private static final String TRIE_CACHE_KEY = "trie_matcher:";
+    // 学习点2：缓存策略
+    private static final String WORD_CACHE_KEY = "sensitive_words:all";
+    private static final String CACHE_TTL = "3600"; // 1小时
     
     /**
-     * 动态加载词库到内存
+     * 学习点3：@PostConstruct - 企业级初始化模式
+     * 系统启动时自动加载词库到内存
      */
     @PostConstruct
     public void loadWordLibrary() {
         try {
-            // 1. 从数据库加载所有启用的违禁词
+            log.info("开始加载违禁词库...");
+            
+            // 1. 先从Redis缓存加载
+            TrieNode cachedRoot = loadFromCache();
+            if (cachedRoot != null) {
+                this.root = cachedRoot;
+                log.info("从缓存加载词库成功");
+                return;
+            }
+            
+            // 2. 从数据库加载
             List<SensitiveWord> words = sensitiveWordMapper.findEnabledWords();
-            log.info("加载违禁词库，共 {} 个词汇", words.size());
+            log.info("从数据库加载违禁词库，共 {} 个词汇", words.size());
             
-            // 2. 构建Trie树
-            TrieNode root = buildTrieTree(words);
+            // 3. 构建Trie树（学习重点：数据结构优化）
+            this.root = buildTrieTree(words);
             
-            // 3. 缓存到Redis
-            cacheWordLibrary(root, words);
+            // 4. 缓存到Redis
+            cacheWordLibrary(this.root, words);
             
-            // 4. 更新本地Trie匹配器
-            trieMatcher.updateTrie(root);
-            
-            log.info("词库加载完成，Trie树节点数: {}", countTrieNodes(root));
+            log.info("词库加载完成，Trie树节点数: {}", countTrieNodes(this.root));
             
         } catch (Exception e) {
             log.error("词库加载失败", e);
@@ -157,7 +167,9 @@ public class ProfessionalWordLibraryService {
     }
     
     /**
-     * 构建高性能Trie树
+     * 学习点4：Trie树构建 - 企业级算法
+     * 时间复杂度：O(n*m)，空间复杂度：O(n*m)
+     * n=词汇数量，m=平均词汇长度
      */
     private TrieNode buildTrieTree(List<SensitiveWord> words) {
         TrieNode root = new TrieNode();
@@ -166,31 +178,30 @@ public class ProfessionalWordLibraryService {
             insertWord(root, word);
         }
         
-        // 构建失败指针（AC自动机）
+        // 学习点5：AC自动机 - 提高匹配效率
         buildFailureLinks(root);
         
         return root;
     }
     
     /**
-     * 插入词汇到Trie树
+     * 学习点6：Trie树插入算法
      */
     private void insertWord(TrieNode root, SensitiveWord word) {
         TrieNode current = root;
         
         for (char c : word.getWord().toCharArray()) {
+            // 学习点：使用computeIfAbsent优化
             current = current.getChildren().computeIfAbsent(c, k -> new TrieNode());
         }
         
         current.setEndOfWord(true);
         current.setSensitiveWord(word);
-        current.setRiskLevel(word.getRiskLevel());
-        current.setActionType(word.getActionType());
-        current.setReplacement(word.getReplacement());
     }
     
     /**
-     * 构建AC自动机失败指针
+     * 学习点7：AC自动机失败指针构建
+     * 这是企业级文本匹配的核心算法
      */
     private void buildFailureLinks(TrieNode root) {
         Queue<TrieNode> queue = new LinkedList<>();
@@ -212,7 +223,7 @@ public class ProfessionalWordLibraryService {
                 // 找到当前节点的失败指针
                 TrieNode failure = current.getFailure();
                 
-                // 如果失败指针有对应字符的子节点，则设置为失败指针
+                // 学习点：失败指针的查找逻辑
                 while (failure != root && !failure.getChildren().containsKey(c)) {
                     failure = failure.getFailure();
                 }
@@ -229,7 +240,8 @@ public class ProfessionalWordLibraryService {
     }
     
     /**
-     * 高性能内容过滤
+     * 学习点8：高性能内容过滤
+     * 企业级性能优化：缓存 + Trie树 + 异步处理
      */
     public FilterResult filterContent(String content, ContentType contentType) {
         if (content == null || content.trim().isEmpty()) {
@@ -240,16 +252,16 @@ public class ProfessionalWordLibraryService {
         
         try {
             // 1. 使用Trie树进行快速匹配
-            List<MatchResult> matches = trieMatcher.findMatches(content);
+            List<MatchResult> matches = findMatches(content);
             
             // 2. 应用过滤规则
             FilterResult result = applyFilterRules(content, matches, contentType);
             
-            // 3. 记录处理时间
+            // 3. 记录处理时间（学习点：性能监控）
             long processingTime = System.currentTimeMillis() - startTime;
             result.setProcessingTime(processingTime);
             
-            // 4. 记录过滤日志
+            // 4. 记录过滤日志（学习点：企业级日志）
             logFilterResult(content, result, contentType);
             
             return result;
@@ -261,151 +273,11 @@ public class ProfessionalWordLibraryService {
     }
     
     /**
-     * 应用过滤规则
+     * 学习点9：Trie树匹配算法
+     * 时间复杂度：O(n)，n=文本长度
      */
-    private FilterResult applyFilterRules(String content, List<MatchResult> matches, ContentType contentType) {
-        if (matches.isEmpty()) {
-            return FilterResult.pass();
-        }
-        
-        // 按风险等级排序
-        matches.sort((a, b) -> Integer.compare(b.getRiskLevel(), a.getRiskLevel()));
-        
-        // 检查是否有高风险词汇需要直接拦截
-        for (MatchResult match : matches) {
-            if (match.getRiskLevel() >= 4) { // 高风险
-                return FilterResult.block("内容包含高风险违禁词: " + match.getWord());
-            }
-        }
-        
-        // 应用替换规则
-        String filteredContent = content;
-        List<String> replacedWords = new ArrayList<>();
-        
-        for (MatchResult match : matches) {
-            if (match.getActionType() == ActionType.REPLACE) {
-                String replacement = match.getReplacement() != null ? 
-                    match.getReplacement() : generateReplacement(match.getWord());
-                filteredContent = filteredContent.replace(match.getWord(), replacement);
-                replacedWords.add(match.getWord());
-            }
-        }
-        
-        if (!replacedWords.isEmpty()) {
-            return FilterResult.replace(filteredContent, replacedWords);
-        }
-        
-        return FilterResult.pass();
-    }
-    
-    /**
-     * 智能生成替换词
-     */
-    private String generateReplacement(String word) {
-        // 根据词汇长度和类型生成不同的替换词
-        if (word.length() <= 2) {
-            return "**";
-        } else if (word.length() <= 4) {
-            return "***";
-        } else {
-            return "****";
-        }
-    }
-    
-    /**
-     * 动态更新词库
-     */
-    @Transactional
-    public void updateWordLibrary(SensitiveWord word) {
-        try {
-            // 1. 更新数据库
-            if (word.getId() == null) {
-                sensitiveWordMapper.insert(word);
-            } else {
-                sensitiveWordMapper.updateById(word);
-            }
-            
-            // 2. 重新加载词库
-            loadWordLibrary();
-            
-            // 3. 发送词库更新通知
-            publishWordLibraryUpdateEvent(word);
-            
-            log.info("词库更新成功: {}", word.getWord());
-            
-        } catch (Exception e) {
-            log.error("词库更新失败", e);
-            throw new RuntimeException("词库更新失败", e);
-        }
-    }
-    
-    /**
-     * 批量导入词库
-     */
-    @Transactional
-    public void importWordLibrary(List<SensitiveWord> words) {
-        try {
-            // 1. 批量插入数据库
-            sensitiveWordMapper.batchInsert(words);
-            
-            // 2. 重新加载词库
-            loadWordLibrary();
-            
-            log.info("批量导入词库成功，共 {} 个词汇", words.size());
-            
-        } catch (Exception e) {
-            log.error("批量导入词库失败", e);
-            throw new RuntimeException("批量导入词库失败", e);
-        }
-    }
-    
-    /**
-     * 词库统计分析
-     */
-    public WordLibraryStats getWordLibraryStats() {
-        WordLibraryStats stats = new WordLibraryStats();
-        
-        // 总词数
-        stats.setTotalWords(sensitiveWordMapper.countEnabledWords());
-        
-        // 按分类统计
-        stats.setCategoryStats(sensitiveWordMapper.countByCategory());
-        
-        // 按风险等级统计
-        stats.setRiskLevelStats(sensitiveWordMapper.countByRiskLevel());
-        
-        // 按处理方式统计
-        stats.setActionTypeStats(sensitiveWordMapper.countByActionType());
-        
-        return stats;
-    }
-}
-```
-
-#### 1.3 Trie树匹配器
-
-```java
-@Component
-@Slf4j
-public class TrieMatcher {
-    
-    private volatile TrieNode root;
-    private final Object lock = new Object();
-    
-    /**
-     * 更新Trie树
-     */
-    public void updateTrie(TrieNode newRoot) {
-        synchronized (lock) {
-            this.root = newRoot;
-        }
-    }
-    
-    /**
-     * 查找匹配的违禁词
-     */
-    public List<MatchResult> findMatches(String content) {
-        if (root == null || content == null || content.isEmpty()) {
+    private List<MatchResult> findMatches(String content) {
+        if (root == null || content.isEmpty()) {
             return Collections.emptyList();
         }
         
@@ -415,7 +287,7 @@ public class TrieMatcher {
         for (int i = 0; i < content.length(); i++) {
             char c = content.charAt(i);
             
-            // 沿着Trie树查找
+            // 学习点：AC自动机的核心逻辑
             while (current != root && !current.getChildren().containsKey(c)) {
                 current = current.getFailure();
             }
@@ -440,26 +312,184 @@ public class TrieMatcher {
         
         return matches;
     }
+    
+    /**
+     * 学习点10：企业级缓存策略
+     */
+    private TrieNode loadFromCache() {
+        try {
+            return (TrieNode) redisTemplate.opsForValue().get(WORD_CACHE_KEY);
+        } catch (Exception e) {
+            log.warn("从缓存加载词库失败", e);
+            return null;
+        }
+    }
+    
+    private void cacheWordLibrary(TrieNode root, List<SensitiveWord> words) {
+        try {
+            redisTemplate.opsForValue().set(WORD_CACHE_KEY, root, 3600, TimeUnit.SECONDS);
+            log.info("词库已缓存到Redis");
+        } catch (Exception e) {
+            log.warn("缓存词库到Redis失败", e);
+        }
+    }
+    
+    /**
+     * 学习点11：企业级事务管理
+     */
+    @Transactional
+    public void updateWordLibrary(SensitiveWord word) {
+        try {
+            // 1. 更新数据库
+            if (word.getId() == null) {
+                sensitiveWordMapper.insert(word);
+            } else {
+                sensitiveWordMapper.updateById(word);
+            }
+            
+            // 2. 重新加载词库
+            loadWordLibrary();
+            
+            log.info("词库更新成功: {}", word.getWord());
+            
+        } catch (Exception e) {
+            log.error("词库更新失败", e);
+            throw new RuntimeException("词库更新失败", e);
+        }
+    }
+    
+    /**
+     * 学习点12：企业级日志记录
+     */
+    private void logFilterResult(String content, FilterResult result, ContentType contentType) {
+        try {
+            FilterLog log = new FilterLog();
+            log.setContentType(contentType.name());
+            log.setOriginalContent(content);
+            log.setFilteredContent(result.getFilteredContent());
+            log.setFilterResult(result.getResultType());
+            log.setMatchedWords(result.getMatchedWords());
+            log.setProcessingTimeMs(result.getProcessingTime());
+            log.setCreatedAt(LocalDateTime.now());
+            
+            // 异步记录日志（学习点：异步处理）
+            CompletableFuture.runAsync(() -> {
+                filterLogMapper.insert(log);
+            });
+            
+        } catch (Exception e) {
+            log.error("记录过滤日志失败", e);
+        }
+    }
+}
+```
+
+#### 1.3 数据模型设计（学习企业级建模）
+
+```java
+/**
+ * 学习点13：企业级实体设计
+ * 使用Lombok简化代码，符合企业开发规范
+ */
+@Data
+@TableName("sensitive_words")
+public class SensitiveWord {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    @TableField("word")
+    private String word;
+    
+    @TableField("category")
+    private String category;
+    
+    @TableField("risk_level")
+    private Integer riskLevel;
+    
+    @TableField("action_type")
+    private ActionType actionType;
+    
+    @TableField("replacement")
+    private String replacement;
+    
+    @TableField("enabled")
+    private Boolean enabled = true;
+    
+    @TableField("created_at")
+    private LocalDateTime createdAt;
+    
+    @TableField("updated_at")
+    private LocalDateTime updatedAt;
 }
 
 /**
- * Trie树节点
+ * 学习点14：枚举设计 - 企业级代码规范
+ */
+public enum ActionType {
+    BLOCK("拦截"),
+    REPLACE("替换");
+    
+    private final String description;
+    
+    ActionType(String description) {
+        this.description = description;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+}
+
+public enum ContentType {
+    ARTICLE("文章内容"),
+    CHAT("AI对话"),
+    VOCABULARY("用户生词"),
+    TRANSLATION("翻译内容"),
+    COMMENT("用户评论");
+    
+    private final String description;
+    
+    ContentType(String description) {
+        this.description = description;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+}
+
+/**
+ * 学习点15：Trie树节点设计
+ * 企业级数据结构设计
  */
 @Data
 public class TrieNode {
+    // 子节点映射
     private Map<Character, TrieNode> children = new HashMap<>();
+    
+    // 是否为词汇结尾
     private boolean endOfWord = false;
+    
+    // 关联的违禁词对象
     private SensitiveWord sensitiveWord;
-    private int riskLevel;
-    private ActionType actionType;
-    private String replacement;
-    private TrieNode failure; // AC自动机失败指针
+    
+    // AC自动机失败指针
+    private TrieNode failure;
+    
+    /**
+     * 学习点：线程安全的节点创建
+     */
+    public TrieNode getOrCreateChild(char c) {
+        return children.computeIfAbsent(c, k -> new TrieNode());
+    }
 }
 
 /**
- * 匹配结果
+ * 学习点16：匹配结果封装
+ * 企业级数据传输对象设计
  */
 @Data
+@Builder
 public class MatchResult {
     private String word;
     private int startIndex;
@@ -467,7 +497,178 @@ public class MatchResult {
     private int riskLevel;
     private ActionType actionType;
     private String replacement;
+    
+    /**
+     * 学习点：业务方法设计
+     */
+    public boolean isHighRisk() {
+        return riskLevel >= 3;
+    }
+    
+    public String getReplacementOrDefault() {
+        return replacement != null ? replacement : "***";
+    }
 }
+
+/**
+ * 学习点17：过滤结果封装
+ * 企业级API响应设计
+ */
+@Data
+@Builder
+public class FilterResult {
+    private boolean passed;
+    private String filteredContent;
+    private List<String> matchedWords;
+    private String message;
+    private long processingTime;
+    private FilterResultType resultType;
+    
+    // 学习点：工厂方法模式
+    public static FilterResult pass() {
+        return FilterResult.builder()
+            .passed(true)
+            .resultType(FilterResultType.PASS)
+            .build();
+    }
+    
+    public static FilterResult block(String message) {
+        return FilterResult.builder()
+            .passed(false)
+            .resultType(FilterResultType.BLOCK)
+            .message(message)
+            .build();
+    }
+    
+    public static FilterResult replace(String content, List<String> words) {
+        return FilterResult.builder()
+            .passed(true)
+            .filteredContent(content)
+            .matchedWords(words)
+            .resultType(FilterResultType.REPLACE)
+            .message("内容已过滤")
+            .build();
+    }
+}
+
+public enum FilterResultType {
+    PASS, BLOCK, REPLACE, ERROR
+}
+```
+
+#### 1.4 配置管理（学习企业级配置）
+
+```java
+/**
+ * 学习点18：配置属性绑定
+ * 企业级配置管理最佳实践
+ */
+@Data
+@Component
+@ConfigurationProperties(prefix = "content-filter")
+public class ContentFilterConfig {
+    
+    // 基础配置
+    private boolean enabled = true;
+    private String defaultReplacement = "***";
+    
+    // 性能配置
+    private PerformanceConfig performance = new PerformanceConfig();
+    
+    // 缓存配置
+    private CacheConfig cache = new CacheConfig();
+    
+    // 日志配置
+    private LogConfig log = new LogConfig();
+    
+    @Data
+    public static class PerformanceConfig {
+        private int maxContentLength = 10000;
+        private int maxProcessingTime = 1000; // 毫秒
+        private boolean enableAsyncLogging = true;
+    }
+    
+    @Data
+    public static class CacheConfig {
+        private boolean enabled = true;
+        private int ttl = 3600; // 秒
+        private String keyPrefix = "content_filter:";
+    }
+    
+    @Data
+    public static class LogConfig {
+        private boolean enabled = true;
+        private String level = "INFO";
+        private boolean includeContent = false; // 是否记录内容详情
+    }
+}
+
+/**
+ * 学习点19：配置验证
+ * 企业级配置校验
+ */
+@Component
+@Validated
+public class ContentFilterConfigValidator {
+    
+    @PostConstruct
+    public void validateConfig() {
+        // 学习点：配置参数校验
+        if (contentFilterConfig.getPerformance().getMaxContentLength() <= 0) {
+            throw new IllegalArgumentException("最大内容长度必须大于0");
+        }
+        
+        if (contentFilterConfig.getCache().getTtl() <= 0) {
+            throw new IllegalArgumentException("缓存TTL必须大于0");
+        }
+    }
+}
+```
+
+#### 1.5 配置文件设计
+
+```yaml
+# application.yml - 学习企业级配置管理
+content-filter:
+  enabled: true
+  default-replacement: "***"
+  
+  # 性能配置
+  performance:
+    max-content-length: 10000
+    max-processing-time: 1000
+    enable-async-logging: true
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl: 3600
+    key-prefix: "content_filter:"
+  
+  # 日志配置
+  log:
+    enabled: true
+    level: INFO
+    include-content: false
+
+# 学习点20：环境特定配置
+---
+spring:
+  profiles: dev
+content-filter:
+  log:
+    level: DEBUG
+    include-content: true
+
+---
+spring:
+  profiles: prod
+content-filter:
+  performance:
+    max-processing-time: 500
+  log:
+    level: WARN
+    include-content: false
 ```
 
 ### 2. 后端实现
