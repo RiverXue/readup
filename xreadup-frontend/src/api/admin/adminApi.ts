@@ -259,6 +259,77 @@ export const auditArticle = (articleId: number, data: {
   return request.post(`/api/admin/article/audit/${articleId}`, data)
 }
 
+// 更新文章分类
+export const updateArticleCategory = (articleId: string, category: string) => {
+  return request.put(`/api/admin/articles/${articleId}/category`, null, {
+    params: { category }
+  })
+}
+
+// 更新文章难度
+export const updateArticleDifficulty = (articleId: string, difficulty: string) => {
+  return request.put(`/api/admin/articles/${articleId}/difficulty`, null, {
+    params: { difficulty }
+  })
+}
+
+// 标记精选文章
+export const markArticleFeatured = (articleId: string, featured: boolean) => {
+  return request.put(`/api/admin/articles/${articleId}/featured`, null, {
+    params: { featured }
+  })
+}
+
+
+// ========== 内容过滤管理相关接口 ==========
+
+// 获取文章过滤记录
+export const getArticleFilterLogs = (articleId: string) => {
+  return request.get(`/api/admin/articles/${articleId}/filter-logs`)
+}
+
+// 获取过滤记录列表
+export const getFilterLogsPage = (params?: {
+  page?: number
+  pageSize?: number
+  filterType?: string
+  status?: string
+  startDate?: string
+  endDate?: string
+}) => {
+  return request.get('/api/admin/articles/filter-logs', { params })
+}
+
+// 更新过滤记录状态
+export const updateFilterLogStatus = (logId: string, status: string, adminId?: number) => {
+  return request.put(`/api/admin/articles/filter-logs/${logId}/status`, null, {
+    params: { status, adminId }
+  })
+}
+
+// 删除过滤记录
+export const deleteFilterLog = (logId: string) => {
+  return request.delete(`/api/admin/articles/filter-logs/${logId}`)
+}
+
+// 获取过滤统计信息
+export const getFilterStatistics = () => {
+  return request.get('/api/admin/articles/filter-logs/statistics')
+}
+
+// 记录内容过滤日志
+export const logContentFilter = (data: {
+  articleId: number
+  filterType: string
+  matchedContent: string
+  filterReason?: string
+  severityLevel?: string
+  actionTaken?: string
+  adminId?: number
+}) => {
+  return request.post('/api/admin/articles/filter-logs', null, { params: data })
+}
+
 // ========== 订阅管理相关接口 ==========
 
 // 获取订阅方案列表

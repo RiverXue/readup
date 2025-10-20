@@ -276,4 +276,20 @@ CREATE TABLE `admin_user` (
                               `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
                               FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
->>>>>>> 4d05312dacfc9a0262c05916497f8a41ceb43cf4
+CREATE TABLE content_filter_log (
+                                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                    article_id BIGINT COMMENT '文章ID',
+                                    filter_type VARCHAR(50) NOT NULL COMMENT '过滤类型：sensitive_word, inappropriate_content, spam等',
+                                    matched_content TEXT COMMENT '匹配到的敏感内容',
+                                    filter_reason VARCHAR(500) COMMENT '过滤原因',
+                                    severity_level VARCHAR(20) DEFAULT 'medium' COMMENT '严重程度：low, medium, high',
+                                    action_taken VARCHAR(50) DEFAULT 'blocked' COMMENT '采取的行动：blocked, warned, allowed',
+                                    admin_id BIGINT COMMENT '处理的管理员ID',
+                                    status VARCHAR(20) DEFAULT 'active' COMMENT '状态：active, resolved, ignored',
+                                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                    INDEX idx_article_id (article_id),
+                                    INDEX idx_filter_type (filter_type),
+                                    INDEX idx_created_at (created_at),
+                                    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='内容过滤日志表';

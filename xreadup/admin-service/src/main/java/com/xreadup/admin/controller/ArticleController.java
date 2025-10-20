@@ -3,7 +3,6 @@ package com.xreadup.admin.controller;
 import com.xreadup.admin.client.ArticleServiceClient;
 import com.xreadup.admin.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
@@ -48,50 +47,17 @@ public class ArticleController {
             logger.info("获取文章列表，page: {}, pageSize: {}, title: {}, category: {}, difficulty: {}",
                     page, pageSize, title, category, difficulty);
             
-            // 创建查询DTO
-            ArticleServiceClient.ArticleQueryDTO queryDTO = new ArticleServiceClient.ArticleQueryDTO() {
-                @Override
-                public String getCategory() {
-                    return category;
-                }
-
-                @Override
-                public String getDifficultyLevel() {
-                    return difficulty;
-                }
-
-                @Override
-                public String getKeyword() {
-                    return title;
-                }
-
-                @Override
-                public Integer getPage() {
-                    return page;
-                }
-
-                @Override
-                public Integer getSize() {
-                    return pageSize;
-                }
-
-                @Override
-                public String getSortBy() {
-                    return null;
-                }
-
-                @Override
-                public Boolean getAscending() {
-                    return null;
-                }
-            };
-
-            // 调用文章服务获取文章列表
-            var response = articleServiceClient.exploreArticles(queryDTO);
+            // 直接调用article-service的explore接口
+            logger.info("开始调用article-service的explore接口...");
+            var response = articleServiceClient.exploreArticles(page, pageSize, title, category, difficulty);
+            logger.info("article-service响应: {}", response);
+            
             if (response != null && response.isSuccess() && response.getData() != null) {
+                logger.info("成功获取文章数据，文章数量: {}", response.getData().getList().size());
                 return ApiResponse.success(response.getData().getList());
             }
             
+            logger.warn("article-service返回空数据或失败");
             // 返回空文章列表
             return ApiResponse.success(java.util.Collections.emptyList());
         } catch (Exception e) {
@@ -252,6 +218,143 @@ public class ArticleController {
         } catch (Exception e) {
             logger.error("获取文章分类列表失败", e);
             return ApiResponse.fail(500, "获取文章分类列表失败");
+        }
+    }
+
+    // ========== 内容过滤管理相关接口 ==========
+
+    /**
+     * 获取文章的内容过滤记录
+     * @param articleId 文章ID
+     * @return 过滤记录列表
+     */
+    @GetMapping("/{articleId}/filter-logs")
+    @Operation(summary = "获取文章过滤记录", description = "获取指定文章的内容过滤记录")
+    public ApiResponse<List<Object>> getArticleFilterLogs(
+            @PathVariable @NotNull(message = "文章ID不能为空") Long articleId) {
+        try {
+            logger.info("获取文章过滤记录，articleId: {}", articleId);
+            return articleServiceClient.getArticleFilterLogs(articleId);
+        } catch (Exception e) {
+            logger.error("获取文章过滤记录失败", e);
+            return ApiResponse.fail(500, "获取文章过滤记录失败");
+        }
+    }
+
+    /**
+     * 获取内容过滤记录分页列表
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @param filterType 过滤类型
+     * @param status 状态
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 分页结果
+     */
+    @GetMapping("/filter-logs")
+    @Operation(summary = "获取过滤记录列表", description = "获取内容过滤记录的分页列表")
+    public ApiResponse<Object> getFilterLogsPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String filterType,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            logger.info("获取过滤记录列表，page: {}, pageSize: {}, filterType: {}, status: {}", 
+                    page, pageSize, filterType, status);
+            return articleServiceClient.getFilterLogsPage(page, pageSize, filterType, status, startDate, endDate);
+        } catch (Exception e) {
+            logger.error("获取过滤记录列表失败", e);
+            return ApiResponse.fail(500, "获取过滤记录列表失败");
+        }
+    }
+
+    /**
+     * 更新过滤记录状态
+     * @param logId 记录ID
+     * @param status 新状态
+     * @param adminId 管理员ID
+     * @return 更新结果
+     */
+    @PutMapping("/filter-logs/{logId}/status")
+    @Operation(summary = "更新过滤记录状态", description = "更新内容过滤记录的状态")
+    public ApiResponse<Boolean> updateFilterLogStatus(
+            @PathVariable @NotNull(message = "记录ID不能为空") Long logId,
+            @RequestParam @NotNull(message = "状态不能为空") String status,
+            @RequestParam(required = false) Long adminId) {
+        try {
+            logger.info("更新过滤记录状态，logId: {}, status: {}, adminId: {}", logId, status, adminId);
+            return articleServiceClient.updateFilterLogStatus(logId, status, adminId);
+        } catch (Exception e) {
+            logger.error("更新过滤记录状态失败", e);
+            return ApiResponse.fail(500, "更新过滤记录状态失败");
+        }
+    }
+
+    /**
+     * 删除过滤记录
+     * @param logId 记录ID
+     * @return 删除结果
+     */
+    @DeleteMapping("/filter-logs/{logId}")
+    @Operation(summary = "删除过滤记录", description = "删除指定的内容过滤记录")
+    public ApiResponse<Boolean> deleteFilterLog(
+            @PathVariable @NotNull(message = "记录ID不能为空") Long logId) {
+        try {
+            logger.info("删除过滤记录，logId: {}", logId);
+            return articleServiceClient.deleteFilterLog(logId);
+        } catch (Exception e) {
+            logger.error("删除过滤记录失败", e);
+            return ApiResponse.fail(500, "删除过滤记录失败");
+        }
+    }
+
+    /**
+     * 获取过滤统计信息
+     * @return 统计信息
+     */
+    @GetMapping("/filter-logs/statistics")
+    @Operation(summary = "获取过滤统计信息", description = "获取内容过滤的统计信息")
+    public ApiResponse<Object> getFilterStatistics() {
+        try {
+            logger.info("获取过滤统计信息");
+            return articleServiceClient.getFilterStatistics();
+        } catch (Exception e) {
+            logger.error("获取过滤统计信息失败", e);
+            return ApiResponse.fail(500, "获取过滤统计信息失败");
+        }
+    }
+
+    /**
+     * 记录内容过滤日志
+     * @param articleId 文章ID
+     * @param filterType 过滤类型
+     * @param matchedContent 匹配到的内容
+     * @param filterReason 过滤原因
+     * @param severityLevel 严重程度
+     * @param actionTaken 采取的行动
+     * @param adminId 管理员ID
+     * @return 记录结果
+     */
+    @PostMapping("/filter-logs")
+    @Operation(summary = "记录内容过滤日志", description = "记录内容过滤操作日志")
+    public ApiResponse<Boolean> logContentFilter(
+            @RequestParam @NotNull(message = "文章ID不能为空") Long articleId,
+            @RequestParam @NotNull(message = "过滤类型不能为空") String filterType,
+            @RequestParam @NotNull(message = "匹配内容不能为空") String matchedContent,
+            @RequestParam(required = false) String filterReason,
+            @RequestParam(defaultValue = "medium") String severityLevel,
+            @RequestParam(defaultValue = "blocked") String actionTaken,
+            @RequestParam(required = false) Long adminId) {
+        try {
+            logger.info("记录内容过滤日志，articleId: {}, filterType: {}, matchedContent: {}", 
+                    articleId, filterType, matchedContent);
+            return articleServiceClient.logContentFilter(articleId, filterType, matchedContent, 
+                    filterReason, severityLevel, actionTaken, adminId);
+        } catch (Exception e) {
+            logger.error("记录内容过滤日志失败", e);
+            return ApiResponse.fail(500, "记录内容过滤日志失败");
         }
     }
 }

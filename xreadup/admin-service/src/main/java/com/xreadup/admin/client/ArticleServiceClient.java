@@ -23,11 +23,28 @@ public interface ArticleServiceClient {
     ApiResponse<PageResult> exploreArticles(@SpringQueryMap ArticleQueryDTO query);
 
     /**
+     * 获取文章列表 - 直接参数方式
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @param title 标题关键词
+     * @param category 分类
+     * @param difficulty 难度
+     * @return 文章列表
+     */
+    @GetMapping("/api/article/explore")
+    ApiResponse<PageResult> exploreArticles(
+            @RequestParam(name = "page", defaultValue = "1") Integer page,
+            @RequestParam(name = "size", defaultValue = "10") Integer pageSize,
+            @RequestParam(name = "keyword", required = false) String title,
+            @RequestParam(name = "category", required = false) String category,
+            @RequestParam(name = "difficultyLevel", required = false) String difficulty);
+
+    /**
      * 获取文章详情
      * @param articleId 文章ID
      * @return 文章详情
      */
-    @GetMapping("/api/article/read/{articleId}")
+    @GetMapping("/{articleId}")
     ApiResponse<ArticleDTO> getArticleDetail(@PathVariable("articleId") Long articleId);
 
     /**
@@ -37,7 +54,7 @@ public interface ArticleServiceClient {
      * @param reason 审核原因
      * @return 操作结果
      */
-    @PutMapping("/api/article/audit/{articleId}")
+    @PutMapping("/audit/{articleId}")
     ApiResponse<Boolean> auditArticle(
             @PathVariable("articleId") Long articleId,
             @RequestParam String status,
@@ -49,7 +66,7 @@ public interface ArticleServiceClient {
      * @param category 分类
      * @return 操作结果
      */
-    @PutMapping("/api/article/category/{articleId}")
+    @PutMapping("/category/{articleId}")
     ApiResponse<Boolean> updateArticleCategory(
             @PathVariable("articleId") Long articleId,
             @RequestParam String category);
@@ -60,7 +77,7 @@ public interface ArticleServiceClient {
      * @param difficulty 难度
      * @return 操作结果
      */
-    @PutMapping("/api/article/difficulty/{articleId}")
+    @PutMapping("/difficulty/{articleId}")
     ApiResponse<Boolean> updateArticleDifficulty(
             @PathVariable("articleId") Long articleId,
             @RequestParam String difficulty);
@@ -71,7 +88,7 @@ public interface ArticleServiceClient {
      * @param isFeatured 是否精选
      * @return 操作结果
      */
-    @PutMapping("/api/article/featured/{articleId}")
+    @PutMapping("/featured/{articleId}")
     ApiResponse<Boolean> markArticleAsFeatured(
             @PathVariable("articleId") Long articleId,
             @RequestParam Boolean isFeatured);
@@ -80,14 +97,14 @@ public interface ArticleServiceClient {
      * 获取文章分类列表
      * @return 分类列表
      */
-    @GetMapping("/api/article/categories")
+    @GetMapping("/categories")
     ApiResponse<List<String>> getArticleCategories();
 
     /**
      * 获取文章难度列表
      * @return 难度列表
      */
-    @GetMapping("/api/article/difficulties")
+    @GetMapping("/difficulties")
     ApiResponse<List<String>> getArticleDifficulties();
 
     /**
@@ -95,7 +112,7 @@ public interface ArticleServiceClient {
      * @param articleId 文章ID
      * @return 删除结果
      */
-    @DeleteMapping("/api/article/{articleId}")
+    @DeleteMapping("/{articleId}")
     ApiResponse<Boolean> deleteArticle(@PathVariable("articleId") Long articleId);
 
     /**
@@ -103,8 +120,86 @@ public interface ArticleServiceClient {
      * @param articleId 文章ID
      * @return 发布结果
      */
-    @PutMapping("/api/article/{articleId}/publish")
+    @PutMapping("/{articleId}/publish")
     ApiResponse<Boolean> publishArticle(@PathVariable("articleId") Long articleId);
+
+    // ========== 内容过滤管理相关接口 ==========
+
+    /**
+     * 获取文章的内容过滤记录
+     * @param articleId 文章ID
+     * @return 过滤记录列表
+     */
+    @GetMapping("/filter-logs/{articleId}")
+    ApiResponse<List<Object>> getArticleFilterLogs(@PathVariable("articleId") Long articleId);
+
+    /**
+     * 获取内容过滤记录分页列表
+     * @param page 页码
+     * @param pageSize 每页大小
+     * @param filterType 过滤类型
+     * @param status 状态
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 分页结果
+     */
+    @GetMapping("/filter-logs")
+    ApiResponse<Object> getFilterLogsPage(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String filterType,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate);
+
+    /**
+     * 更新过滤记录状态
+     * @param logId 记录ID
+     * @param status 新状态
+     * @param adminId 管理员ID
+     * @return 更新结果
+     */
+    @PutMapping("/filter-logs/{logId}/status")
+    ApiResponse<Boolean> updateFilterLogStatus(
+            @PathVariable("logId") Long logId,
+            @RequestParam String status,
+            @RequestParam(required = false) Long adminId);
+
+    /**
+     * 删除过滤记录
+     * @param logId 记录ID
+     * @return 删除结果
+     */
+    @DeleteMapping("/filter-logs/{logId}")
+    ApiResponse<Boolean> deleteFilterLog(@PathVariable("logId") Long logId);
+
+    /**
+     * 获取过滤统计信息
+     * @return 统计信息
+     */
+    @GetMapping("/filter-logs/statistics")
+    ApiResponse<Object> getFilterStatistics();
+
+    /**
+     * 记录内容过滤日志
+     * @param articleId 文章ID
+     * @param filterType 过滤类型
+     * @param matchedContent 匹配到的内容
+     * @param filterReason 过滤原因
+     * @param severityLevel 严重程度
+     * @param actionTaken 采取的行动
+     * @param adminId 管理员ID
+     * @return 记录结果
+     */
+    @PostMapping("/filter-logs")
+    ApiResponse<Boolean> logContentFilter(
+            @RequestParam Long articleId,
+            @RequestParam String filterType,
+            @RequestParam String matchedContent,
+            @RequestParam(required = false) String filterReason,
+            @RequestParam(defaultValue = "medium") String severityLevel,
+            @RequestParam(defaultValue = "blocked") String actionTaken,
+            @RequestParam(required = false) Long adminId);
 
     /**
      * 文章查询DTO接口定义

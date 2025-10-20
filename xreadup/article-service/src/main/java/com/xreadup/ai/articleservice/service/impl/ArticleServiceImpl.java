@@ -18,6 +18,8 @@ import com.xreadup.ai.articleservice.model.vo.ArticleListVO;
 import com.xreadup.ai.articleservice.model.common.ApiResponse;
 import com.xreadup.ai.articleservice.model.dto.GnewsResponse;
 import com.xreadup.ai.articleservice.service.ScraperService;
+import com.xreadup.ai.articleservice.service.filter.ContentFilterService;
+import com.xreadup.ai.articleservice.service.ContentFilterLogService;
 import com.xreadup.ai.articleservice.util.DifficultyEvaluator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,8 @@ public class ArticleServiceImpl implements ArticleService {
     private final GnewsService gnewsService;
     private final ScraperService scraperService;
     private final DifficultyEvaluator difficultyEvaluator;
+    private final ContentFilterService contentFilterService;
+    private final ContentFilterLogService contentFilterLogService;
     
     @Override
     public ApiResponse<ArticleDetailVO> readArticle(Long id) {
@@ -386,11 +390,57 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setDifficultyLevel(difficultyLevel);
                     log.info("热点文章ID: {}, 标题: {}, 评估难度等级: {}", article.getId(), article.getTitle(), difficultyLevel);
                     
+                    // 敏感词过滤（先判定是否允许保存，再进行持久化后记录日志）
+                    String contentToCheckTop = article.getContentEn() != null ? article.getContentEn() : article.getTitle();
+                    if (contentToCheckTop != null && !contentToCheckTop.trim().isEmpty()) {
+                        var analysis = contentFilterService.analyze(contentToCheckTop);
+                        if (!analysis.isSafe()) {
+                            // 拦截：记录日志（无文章ID），并跳过保存
+                            try {
+                            String matched = String.join(",", analysis.getHitHighRiskWords());
+                            contentFilterLogService.logContentFilter(
+                                null,
+                                "sensitive_word",
+                                matched.isEmpty() ? "(no_word)" : matched,
+                                "命中高风险敏感词，已拦截|system_auto",
+                                "high",
+                                "blocked",
+                                -1L
+                            );
+                            } catch (Exception e) {
+                                log.warn("记录敏感词拦截日志失败: {}", e.getMessage());
+                            }
+                            log.warn("文章包含高风险敏感内容，已拦截: {}", article.getTitle());
+                            filteredCount++;
+                            continue;
+                        }
+                    }
+
                     // 插入数据库
                     int insertResult = articleMapper.insert(article);
                     if (insertResult > 0) {
                         savedCount++;
                         log.info("成功存储热点文章({}/{}): {} (ID: {})", savedCount, gnewsArticles.size(), title, article.getId());
+                        // 允许通过：持久化后记录检测日志（带articleId）
+                        if (contentToCheckTop != null && !contentToCheckTop.trim().isEmpty()) {
+                            try {
+                                var analysisAllowed = contentFilterService.analyze(contentToCheckTop);
+                                String matched = String.join(",", analysisAllowed.getHitSensitiveWords());
+                                if (!matched.isEmpty()) {
+                                    contentFilterLogService.logContentFilter(
+                                        article.getId(),
+                                        "sensitive_word",
+                                        matched,
+                                        "内容已通过检测|system_auto",
+                                        "medium",
+                                        "allowed",
+                                        -1L
+                                    );
+                                }
+                            } catch (Exception e) {
+                                log.warn("记录敏感词检测通过日志失败: {}", e.getMessage());
+                            }
+                        }
                     } else {
                         log.error("数据库插入失败，文章: {}", title);
                     }
@@ -407,6 +457,7 @@ public class ArticleServiceImpl implements ArticleService {
             log.info("   ✅ 成功存储: {}篇", savedCount);
             log.info("   🔄 已存在: {}篇", existingCount);
             log.info("   ❌ 抓取失败: {}篇 (包含内容过滤失败)", failedScrapeCount);
+            log.info("   ⛔ 过滤拦截: {}篇", filteredCount);
             log.info("   📈 成功率: {:.1f}%", (double)(savedCount + existingCount) / gnewsArticles.size() * 100);
             
             // 从数据库获取热点文章并返回
@@ -1032,7 +1083,32 @@ public class ArticleServiceImpl implements ArticleService {
                 article.setReadCount(0);
                 article.setLikeCount(0);
                 
-                // 6. 插入数据库
+                // 6. 敏感词过滤（先判定是否允许保存，再进行持久化后记录日志）
+                String contentToCheckCat = article.getContentEn() != null ? article.getContentEn() : article.getTitle();
+                if (contentToCheckCat != null && !contentToCheckCat.trim().isEmpty()) {
+                    var analysis = contentFilterService.analyze(contentToCheckCat);
+                    if (!analysis.isSafe()) {
+                        // 拦截：记录日志（无文章ID），并跳过保存
+                        try {
+                            String matched = String.join(",", analysis.getHitHighRiskWords());
+                            contentFilterLogService.logContentFilter(
+                                null,
+                                "sensitive_word",
+                                matched.isEmpty() ? "(no_word)" : matched,
+                                "命中高风险敏感词，已拦截|system_auto",
+                                "high",
+                                "blocked",
+                                -1L
+                            );
+                        } catch (Exception e) {
+                            log.warn("记录敏感词拦截日志失败: {}", e.getMessage());
+                        }
+                        log.warn("文章包含高风险敏感内容，已拦截: {}", article.getTitle());
+                        continue;
+                    }
+                }
+
+                // 7. 插入数据库
                 try {
                     int insertResult = articleMapper.insert(article);
                     if (insertResult > 0) {
@@ -1040,6 +1116,26 @@ public class ArticleServiceImpl implements ArticleService {
                         log.info("成功存储文章({}/{}): {} (ID: {})", savedCount, gnewsArticles.size(), title, article.getId());
                         log.info("存储的文章内容信息 - 长度: {}字符, 单词数: {}, 段落数: {}", 
                             fullContent.length(), article.getWordCount(), paragraphCount);
+                        // 允许通过：持久化后记录检测日志（带articleId）
+                        if (contentToCheckCat != null && !contentToCheckCat.trim().isEmpty()) {
+                            try {
+                                var analysisAllowed = contentFilterService.analyze(contentToCheckCat);
+                                String matched = String.join(",", analysisAllowed.getHitSensitiveWords());
+                                if (!matched.isEmpty()) {
+                                    contentFilterLogService.logContentFilter(
+                                        article.getId(),
+                                        "sensitive_word",
+                                        matched,
+                                        "内容已通过检测|system_auto",
+                                        "medium",
+                                        "allowed",
+                                        -1L
+                                    );
+                                }
+                            } catch (Exception e) {
+                                log.warn("记录敏感词检测通过日志失败: {}", e.getMessage());
+                            }
+                        }
                     } else {
                         failedInsertCount++;
                         log.warn("数据库插入失败({}/{}): {}", totalProcessed, gnewsArticles.size(), title);
@@ -1188,6 +1284,30 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setCreateTime(LocalDateTime.now());
                     article.setUpdateTime(LocalDateTime.now());
                     
+                    // 敏感词过滤（先判定是否允许保存，再进行持久化后记录日志）
+                    String contentToCheckBasic = article.getContentEn() != null ? article.getContentEn() : article.getTitle();
+                    if (contentToCheckBasic != null && !contentToCheckBasic.trim().isEmpty()) {
+                        var analysis = contentFilterService.analyze(contentToCheckBasic);
+                        if (!analysis.isSafe()) {
+                            // 拦截：记录日志（无文章ID），并跳过保存
+                        try {
+                            contentFilterLogService.logContentFilter(
+                                null,
+                                "sensitive_word",
+                                String.join(",", analysis.getHitHighRiskWords()),
+                                "命中高风险敏感词，已拦截|system_auto",
+                                "high",
+                                "blocked",
+                                -1L
+                            );
+                            } catch (Exception e) {
+                                log.warn("记录敏感词拦截日志失败: {}", e.getMessage());
+                            }
+                            log.warn("文章包含高风险敏感内容，已拦截: {}", article.getTitle());
+                            continue;
+                        }
+                    }
+
                     // 保存到数据库
                     articleMapper.insert(article);
                     
@@ -1196,6 +1316,26 @@ public class ArticleServiceImpl implements ArticleService {
                     articles.add(vo);
                     
                     log.info("成功保存自定义主题文章: {}", article.getTitle());
+                    // 允许通过：持久化后记录检测日志（带articleId）
+                    if (contentToCheckBasic != null && !contentToCheckBasic.trim().isEmpty()) {
+                        try {
+                            var analysisAllowed = contentFilterService.analyze(contentToCheckBasic);
+                            String matched = String.join(",", analysisAllowed.getHitSensitiveWords());
+                            if (!matched.isEmpty()) {
+                                contentFilterLogService.logContentFilter(
+                                    article.getId(),
+                                    "sensitive_word",
+                                    matched,
+                                    "内容已通过检测|system_auto",
+                                    "medium",
+                                    "allowed",
+                                    -1L
+                                );
+                            }
+                        } catch (Exception e) {
+                            log.warn("记录敏感词检测通过日志失败: {}", e.getMessage());
+                        }
+                    }
                     
                 } catch (Exception e) {
                     log.error("处理文章时出错: {}", gnewsArticle.getTitle(), e);
@@ -1309,8 +1449,54 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setCreateTime(LocalDateTime.now());
                     article.setUpdateTime(LocalDateTime.now());
                     
+                    // 敏感词过滤（先判定是否允许保存，再进行持久化后记录日志）
+                    String contentToCheck = article.getContentEn() != null ? article.getContentEn() : article.getTitle();
+                    if (contentToCheck != null && !contentToCheck.trim().isEmpty()) {
+                        var analysis = contentFilterService.analyze(contentToCheck);
+                        if (!analysis.isSafe()) {
+                            // 拦截：记录日志（无文章ID），并跳过保存
+                            try {
+                                String matchedHigh = String.join(",", analysis.getHitHighRiskWords());
+                                contentFilterLogService.logContentFilter(
+                                    null,
+                                    "sensitive_word",
+                                    matchedHigh.isEmpty() ? "(no_word)" : matchedHigh,
+                                    "命中高风险敏感词，已拦截|system_auto",
+                                    "high",
+                                    "blocked",
+                                    -1L
+                                );
+                            } catch (Exception e) {
+                                log.warn("记录敏感词拦截日志失败: {}", e.getMessage());
+                            }
+                            log.warn("文章包含高风险敏感内容，已拦截: {}", article.getTitle());
+                            continue;
+                        }
+                    }
+
                     // 保存到数据库
                     articleMapper.insert(article);
+
+                    // 允许通过：仅在命中一般敏感词时持久化（带articleId）
+                    if (contentToCheck != null && !contentToCheck.trim().isEmpty()) {
+                        try {
+                            var analysisAllowed = contentFilterService.analyze(contentToCheck);
+                            String matched = String.join(",", analysisAllowed.getHitSensitiveWords());
+                            if (!matched.isEmpty()) {
+                                contentFilterLogService.logContentFilter(
+                                    article.getId(),
+                                    "sensitive_word",
+                                    matched,
+                                    "内容已通过检测|system_auto",
+                                    "medium",
+                                    "allowed",
+                                    -1L
+                                );
+                            }
+                        } catch (Exception e) {
+                            log.warn("记录敏感词检测通过日志失败: {}", e.getMessage());
+                        }
+                    }
                     
                     // 转换为VO
                     ArticleVO vo = convertToArticleVO(article);
@@ -1411,8 +1597,54 @@ public class ArticleServiceImpl implements ArticleService {
                     article.setCreateTime(LocalDateTime.now());
                     article.setUpdateTime(LocalDateTime.now());
                     
+                    // 敏感词过滤（先判定是否允许保存，再进行持久化后记录日志）
+                    String contentToCheck2 = article.getContentEn() != null ? article.getContentEn() : article.getTitle();
+                    if (contentToCheck2 != null && !contentToCheck2.trim().isEmpty()) {
+                        var analysis2 = contentFilterService.analyze(contentToCheck2);
+                        if (!analysis2.isSafe()) {
+                            // 拦截：记录日志（无文章ID），并跳过保存
+                            try {
+                                String matchedHigh2 = String.join(",", analysis2.getHitHighRiskWords());
+                                contentFilterLogService.logContentFilter(
+                                    null,
+                                    "sensitive_word",
+                                    matchedHigh2.isEmpty() ? "(no_word)" : matchedHigh2,
+                                    "命中高风险敏感词，已拦截|system_auto",
+                                    "high",
+                                    "blocked",
+                                    -1L
+                                );
+                            } catch (Exception e) {
+                                log.warn("记录敏感词拦截日志失败: {}", e.getMessage());
+                            }
+                            log.warn("文章包含高风险敏感内容，已拦截: {}", article.getTitle());
+                            continue;
+                        }
+                    }
+
                     // 保存到数据库
                     articleMapper.insert(article);
+
+                    // 允许通过：仅在命中一般敏感词时持久化（带articleId）
+                    if (contentToCheck2 != null && !contentToCheck2.trim().isEmpty()) {
+                        try {
+                            var analysisAllowed2 = contentFilterService.analyze(contentToCheck2);
+                            String matched2 = String.join(",", analysisAllowed2.getHitSensitiveWords());
+                            if (!matched2.isEmpty()) {
+                                contentFilterLogService.logContentFilter(
+                                    article.getId(),
+                                    "sensitive_word",
+                                    matched2,
+                                    "内容已通过检测|system_auto",
+                                    "medium",
+                                    "allowed",
+                                    -1L
+                                );
+                            }
+                        } catch (Exception e) {
+                            log.warn("记录敏感词检测通过日志失败: {}", e.getMessage());
+                        }
+                    }
                     
                     // 转换为VO
                     ArticleVO vo = convertToArticleVO(article);

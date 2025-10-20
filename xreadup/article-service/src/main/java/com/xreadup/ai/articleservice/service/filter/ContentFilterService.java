@@ -75,6 +75,73 @@ public class ContentFilterService {
     }
 
     /**
+     * 单次分析：返回安全性与命中词列表，避免多次扫描
+     */
+    public AnalysisResult analyze(String content) {
+        AnalysisResult result = new AnalysisResult();
+        if (content == null || content.trim().isEmpty()) {
+            result.setSafe(true);
+            result.setHitHighRiskWords(java.util.Collections.emptyList());
+            result.setHitSensitiveWords(java.util.Collections.emptyList());
+            return result;
+        }
+
+        java.util.List<String> high = findHitHighRiskWords(content);
+        java.util.List<String> sens = findHitSensitiveWords(content);
+        result.setHitHighRiskWords(high);
+        result.setHitSensitiveWords(sens);
+        result.setSafe(high.isEmpty());
+        return result;
+    }
+
+    public static class AnalysisResult {
+        private boolean safe;
+        private java.util.List<String> hitHighRiskWords;
+        private java.util.List<String> hitSensitiveWords;
+
+        public boolean isSafe() { return safe; }
+        public void setSafe(boolean safe) { this.safe = safe; }
+        public java.util.List<String> getHitHighRiskWords() { return hitHighRiskWords; }
+        public void setHitHighRiskWords(java.util.List<String> hitHighRiskWords) { this.hitHighRiskWords = hitHighRiskWords; }
+        public java.util.List<String> getHitSensitiveWords() { return hitSensitiveWords; }
+        public void setHitSensitiveWords(java.util.List<String> hitSensitiveWords) { this.hitSensitiveWords = hitSensitiveWords; }
+    }
+
+    /**
+     * 提取命中的高风险词（用于拦截日志）
+     */
+    public java.util.List<String> findHitHighRiskWords(String content) {
+        java.util.List<String> hits = new java.util.ArrayList<>();
+        if (content == null || content.isEmpty()) {
+            return hits;
+        }
+        String lower = content.toLowerCase();
+        for (String w : HIGH_RISK_WORDS) {
+            if (lower.contains(w.toLowerCase())) {
+                hits.add(w);
+            }
+        }
+        return hits;
+    }
+
+    /**
+     * 提取命中的一般敏感词（允许通过，用于记录）
+     */
+    public java.util.List<String> findHitSensitiveWords(String content) {
+        java.util.List<String> hits = new java.util.ArrayList<>();
+        if (content == null || content.isEmpty()) {
+            return hits;
+        }
+        String lower = content.toLowerCase();
+        for (String w : ENGLISH_SENSITIVE_WORDS) {
+            if (lower.contains(w.toLowerCase())) {
+                hits.add(w);
+            }
+        }
+        return hits;
+    }
+
+    /**
      * 获取词汇在内容中的上下文
      */
     private String getWordContext(String content, String word) {
