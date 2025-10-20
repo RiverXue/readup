@@ -11,7 +11,7 @@ import java.util.List;
  * 文章服务Feign客户端
  * 用于调用article-service提供的API接口
  */
-@FeignClient(name = "article-service")
+@FeignClient(name = "article-service", path = "/api/article")
 public interface ArticleServiceClient {
 
     /**
@@ -19,7 +19,7 @@ public interface ArticleServiceClient {
      * @param query 查询条件
      * @return 文章列表
      */
-    @GetMapping("/api/article/explore")
+    @GetMapping("/explore")
     ApiResponse<PageResult> exploreArticles(@SpringQueryMap ArticleQueryDTO query);
 
     /**
@@ -31,7 +31,7 @@ public interface ArticleServiceClient {
      * @param difficulty 难度
      * @return 文章列表
      */
-    @GetMapping("/api/article/explore")
+    @GetMapping("/explore")
     ApiResponse<PageResult> exploreArticles(
             @RequestParam(name = "page", defaultValue = "1") Integer page,
             @RequestParam(name = "size", defaultValue = "10") Integer pageSize,

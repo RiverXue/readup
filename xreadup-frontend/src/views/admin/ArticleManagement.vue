@@ -203,17 +203,6 @@
                   </template>
                 </el-table-column>
                 <el-table-column prop="createdAt" label="创建时间" width="160" />
-                <el-table-column label="操作" width="120">
-                  <template #default="scope">
-                    <el-button 
-                      type="primary" 
-                      size="small" 
-                      @click="handleUpdateLogStatus(scope.row)"
-                    >
-                      更新状态
-                    </el-button>
-                  </template>
-                </el-table-column>
               </el-table>
             </div>
           </el-tab-pane>
@@ -221,7 +210,7 @@
       </div>
     </el-dialog>
 
-    <!-- 敏感词记录管理对话框 -->
+    <!-- 敏感词记录管理对话框（只读） -->
     <el-dialog
       v-model="showFilterLogsDialog"
       title="敏感词记录管理"
@@ -231,18 +220,11 @@
         <!-- 筛选条件 -->
         <div class="filter-section">
           <el-row :gutter="20">
-            <el-col :span="6">
-              <el-select v-model="filterLogsFilters.filterType" placeholder="过滤类型" clearable @change="loadFilterLogs">
-                <el-option label="敏感词" value="sensitive_word" />
-                <el-option label="不当内容" value="inappropriate_content" />
-                <el-option label="垃圾信息" value="spam" />
-              </el-select>
-            </el-col>
+            
             <el-col :span="6">
               <el-select v-model="filterLogsFilters.status" placeholder="状态" clearable @change="loadFilterLogs">
                 <el-option label="活跃" value="active" />
                 <el-option label="已解决" value="resolved" />
-                <el-option label="已忽略" value="ignored" />
               </el-select>
             </el-col>
             <el-col :span="6">
@@ -268,45 +250,9 @@
           </el-row>
         </div>
 
-        <!-- 统计信息 -->
-        <div class="statistics-section">
-          <el-row :gutter="20">
-            <el-col :span="6">
-              <el-card>
-                <div class="stat-item">
-                  <div class="stat-value">{{ filterLogsStatistics.todayCount }}</div>
-                  <div class="stat-label">今日新增</div>
-                </div>
-              </el-card>
-            </el-col>
-            <el-col :span="6">
-              <el-card>
-                <div class="stat-item">
-                  <div class="stat-value">{{ filterLogsStatistics.totalCount }}</div>
-                  <div class="stat-label">总记录数</div>
-                </div>
-              </el-card>
-            </el-col>
-            <el-col :span="6">
-              <el-card>
-                <div class="stat-item">
-                  <div class="stat-value">{{ filterLogsStatistics.activeCount }}</div>
-                  <div class="stat-label">待处理</div>
-                </div>
-              </el-card>
-            </el-col>
-            <el-col :span="6">
-              <el-card>
-                <div class="stat-item">
-                  <div class="stat-value">{{ filterLogsStatistics.resolvedCount }}</div>
-                  <div class="stat-label">已处理</div>
-                </div>
-              </el-card>
-            </el-col>
-          </el-row>
-        </div>
+        
 
-        <!-- 记录列表 -->
+        <!-- 记录列表（只读） -->
         <el-table
           v-loading="filterLogsLoading"
           :data="filterLogsData"
@@ -332,16 +278,10 @@
             </template>
           </el-table-column>
           <el-table-column prop="createdAt" label="创建时间" width="160" />
-          <el-table-column label="操作" width="200">
+          <el-table-column label="操作" width="120">
             <template #default="scope">
               <el-button type="primary" size="small" @click="handleViewArticleById(scope.row.articleId)">
                 查看文章
-              </el-button>
-              <el-button type="success" size="small" @click="handleUpdateLogStatus(scope.row)">
-                更新状态
-              </el-button>
-              <el-button type="danger" size="small" @click="handleDeleteLog(scope.row)">
-                删除
               </el-button>
             </template>
           </el-table-column>
@@ -371,7 +311,7 @@
         <el-form-item label="分类">
           <el-select v-model="editForm.category" placeholder="请选择分类" style="width: 100%">
             <el-option
-              v-for="category in uniqueCategories"
+              v-for="category in categories"
               :key="category"
               :label="category"
               :value="category"
@@ -381,7 +321,7 @@
         <el-form-item label="难度">
           <el-select v-model="editForm.difficultyLevel" placeholder="请选择难度" style="width: 100%">
             <el-option
-              v-for="difficulty in uniqueDifficulties"
+              v-for="difficulty in difficulties"
               :key="difficulty"
               :label="difficulty"
               :value="difficulty"
@@ -454,33 +394,12 @@
       </template>
     </el-dialog>
 
-    <!-- 更新记录状态对话框 -->
-    <el-dialog v-model="logStatusDialogVisible" title="更新记录状态" width="400px">
-      <el-form :model="logStatusForm" label-width="80px">
-        <el-form-item label="匹配内容">
-          <el-input v-model="logStatusForm.matchedContent" disabled />
-        </el-form-item>
-        <el-form-item label="当前状态">
-          <el-input v-model="logStatusForm.currentStatus" disabled />
-        </el-form-item>
-        <el-form-item label="新状态">
-          <el-select v-model="logStatusForm.newStatus" placeholder="选择新状态">
-            <el-option label="活跃" value="active" />
-            <el-option label="已解决" value="resolved" />
-            <el-option label="已忽略" value="ignored" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="logStatusDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirmUpdateLogStatus">确定</el-button>
-      </template>
-    </el-dialog>
+    
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
 import { adminUtils } from '@/utils/admin'
@@ -494,10 +413,7 @@ import {
   updateArticleDifficulty,
   markArticleFeatured,
   getArticleFilterLogs,
-  getFilterLogsPage,
-  updateFilterLogStatus,
-  deleteFilterLog,
-  getFilterStatistics
+  getFilterLogsPage
 } from '@/api/admin/adminApi'
 import type { AdminPermission } from '@/types/admin'
 
@@ -535,15 +451,9 @@ const showFilterLogsDialog = ref(false)
 const filterLogsLoading = ref(false)
 const filterLogsData = ref<any[]>([])
 const articleFilterLogs = ref<any[]>([])
-const filterLogsStatistics = ref({
-  todayCount: 0,
-  totalCount: 0,
-  activeCount: 0,
-  resolvedCount: 0
-})
+// 只读模式：移除统计
 
 const filterLogsFilters = ref({
-  filterType: '',
   status: '',
   dateRange: null as any
 })
@@ -752,9 +662,6 @@ const loadFilterLogs = async () => {
       pageSize: filterLogsPagination.value.pageSize
     }
     
-    if (filterLogsFilters.value.filterType) {
-      params.filterType = filterLogsFilters.value.filterType
-    }
     if (filterLogsFilters.value.status) {
       params.status = filterLogsFilters.value.status
     }
@@ -796,21 +703,7 @@ const loadArticleFilterLogs = async () => {
 }
 
 // 获取敏感词统计
-const loadFilterLogsStatistics = async () => {
-  try {
-    const response = await getFilterStatistics()
-    if (response && response.data) {
-      filterLogsStatistics.value = {
-        todayCount: response.data.todayCount || 0,
-        totalCount: response.data.totalCount || 0,
-        activeCount: response.data.activeCount || 0,
-        resolvedCount: response.data.resolvedCount || 0
-      }
-    }
-  } catch (error) {
-    console.error('获取敏感词统计失败:', error)
-  }
-}
+// 只读模式：移除统计加载
 
 // 处理搜索
 const handleSearch = () => {
@@ -833,7 +726,6 @@ const resetFilters = () => {
 // 重置敏感词记录筛选条件
 const resetFilterLogsFilters = () => {
   filterLogsFilters.value = {
-    filterType: '',
     status: '',
     dateRange: null
   }
@@ -1002,60 +894,13 @@ const handleDeleteArticle = async (article: any) => {
 }
 
 // 更新记录状态
-const handleUpdateLogStatus = (log: any) => {
-  logStatusForm.value = {
-    logId: log.id,
-    matchedContent: log.matchedContent,
-    currentStatus: log.status,
-    newStatus: log.status
-  }
-  logStatusDialogVisible.value = true
-}
+// 只读模式：移除状态更新
 
 // 确认更新记录状态
-const handleConfirmUpdateLogStatus = async () => {
-  try {
-    await updateFilterLogStatus(
-      logStatusForm.value.logId.toString(),
-      logStatusForm.value.newStatus,
-      1 // 使用默认管理员ID
-    )
-    ElMessage.success('更新记录状态成功')
-    logStatusDialogVisible.value = false
-    loadFilterLogs()
-    loadArticleFilterLogs()
-    loadFilterLogsStatistics()
-  } catch (error) {
-    console.error('更新记录状态失败:', error)
-    ElMessage.error('更新记录状态失败')
-  }
-}
+// 只读模式：移除状态更新
 
 // 删除记录
-const handleDeleteLog = async (log: any) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要删除这条敏感词记录吗？`,
-      '删除确认',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
-    await deleteFilterLog(log.id.toString())
-    ElMessage.success('删除记录成功')
-    loadFilterLogs()
-    loadArticleFilterLogs()
-    loadFilterLogsStatistics()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除记录失败:', error)
-      ElMessage.error('删除记录失败')
-    }
-  }
-}
+// 只读模式：移除删除
 
 // 关闭详情对话框
 const handleCloseDetailDialog = () => {
@@ -1088,7 +933,14 @@ const handleFilterLogsCurrentChange = (current: number) => {
 // 组件挂载时初始化数据
 onMounted(() => {
   fetchArticles()
-  loadFilterLogsStatistics()
+})
+
+// 打开敏感词记录对话框时，自动加载并重置分页到第1页
+watch(showFilterLogsDialog, (opened: boolean) => {
+  if (opened) {
+    filterLogsPagination.value.currentPage = 1
+    loadFilterLogs()
+  }
 })
 </script>
 

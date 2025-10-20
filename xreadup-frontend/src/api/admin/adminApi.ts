@@ -16,13 +16,14 @@ export const login = async (params: { username: string, password: string }) => {
 
     // 如果登录成功，后端已经完成了身份认证和角色校验
     if (response && response.data) {
+      const resp: any = response as any;
       // 更灵活地判断登录成功
-      const isLoginSuccess = response.success !== undefined ? response.success : 
-                            (response.code === 200 || response.code === 0);
+      const isLoginSuccess = resp.success !== undefined ? resp.success : 
+                            (resp.code === 200 || resp.code === 0);
       
       if (isLoginSuccess) {
         // 直接使用后端返回的管理员信息
-        const userData = response.data;
+        const userData = resp.data;
         
         // 确保返回的数据包含必要的管理员标识
         userData.isAdmin = true;
@@ -31,7 +32,7 @@ export const login = async (params: { username: string, password: string }) => {
       }
     }
 
-    return response;
+    return response as any;
   } catch (error) {
     console.error('管理员登录失败:', error);
     throw error;
@@ -66,22 +67,23 @@ export const checkAdmin = async (userId?: string | number): Promise<{ success: b
     const response = await request.get('/api/admin/check', requestConfig);
     
     // 处理响应结果
-    if (!response) {
+    const resp2: any = response as any;
+    if (!resp2) {
       console.error('检查管理员权限失败: 未获取到响应');
       return { success: false, data: { isAdmin: false } };
     }
 
     // 解析响应结果 - 兼容不同的响应格式
-    const isSuccess = response.success !== undefined ? response.success : 
-                     (response.code === 200 || response.code === 0);
+    const isSuccess = resp2.success !== undefined ? resp2.success : 
+                     (resp2.code === 200 || resp2.code === 0);
     
     if (!isSuccess) {
-      console.error('检查管理员权限失败:', response.message || '未知错误');
+      console.error('检查管理员权限失败:', (resp2 && (resp2.message || (resp2.data && resp2.data.message))) || '未知错误');
       return { success: false, data: { isAdmin: false } };
     }
 
     // 处理响应数据
-    if (!response.data) {
+    if (!resp2.data) {
       console.error('检查管理员权限失败: 响应数据为空');
       return { success: false, data: { isAdmin: false } };
     }
@@ -91,11 +93,11 @@ export const checkAdmin = async (userId?: string | number): Promise<{ success: b
       success: true,
       data: {
         // 优先使用admin字段，没有则使用isAdmin字段，默认false
-        isAdmin: response.data.admin !== undefined ? response.data.admin : 
-                (response.data.isAdmin || false),
-        admin: response.data.admin, // 保留原始admin字段
-        role: response.data.role,
-        userId: response.data.userId || userIdStr
+        isAdmin: resp2.data.admin !== undefined ? resp2.data.admin : 
+                (resp2.data.isAdmin || false),
+        admin: resp2.data.admin, // 保留原始admin字段
+        role: resp2.data.role,
+        userId: resp2.data.userId || userIdStr
       }
     };
 
@@ -228,6 +230,7 @@ export const getArticleList = (params?: {
   page?: number
   pageSize?: number
   title?: string
+  category?: string
   source?: string
   status?: string
   difficulty?: string
@@ -238,7 +241,7 @@ export const getArticleList = (params?: {
 
 // 获取文章详情
 export const getArticleDetail = (articleId: string) => {
-  return request.get(`/api/admin/articles/detail/${articleId}`)
+  return request.get(`/api/admin/articles/${articleId}`)
 }
 
 // 删除文章
