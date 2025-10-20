@@ -243,12 +243,12 @@ const paragraphsByNewline = content.split(/\n+/)
 
 | 服务名称 | 端口 | 核心职责 | 技术栈 | 状态 |
 |---------|------|----------|--------|------|
-| **Gateway** | 8080 | API 网关、路由转发、限流熔断、文档聚合 | Spring Cloud Gateway | ✅ 生产就绪 |
-| **User Service** | 8081 | 用户管理、认证授权、智能词汇系统、订阅管理 | Spring Boot 3.4.1 | ✅ 生产就绪 |
-| **Article Service** | 8082 | 文章管理、内容抓取、GNews API 集成 | Spring Boot 3.4.1 | ✅ 生产就绪 |
-| **Report Service** | 8083 | 学习统计、数据分析、报告生成、艾宾浩斯复习 | Spring Boot 3.4.1 | ✅ 生产就绪 |
-| **AI Service** | 8084 | Function Calling、智能对话、NLP 处理、腾讯云翻译 | Spring Boot 3.4.1 | ✅ 生产就绪 |
-| **Admin Service** | 8085 | 系统配置管理、管理员权限控制、后台管理 | Spring Boot 3.4.1 | ✅ 生产就绪 |
+| **Gateway** | 8080 | API 网关、路由转发、限流、CORS | Spring Cloud Gateway | ✅ 可用 |
+| **User Service** | 8081 | 用户管理、智能词汇系统、订阅管理 | Spring Boot 3.4.1 | ✅ 可用 |
+| **Article Service** | 8082 | 文章管理、内容抓取、GNews API 集成 | Spring Boot 3.4.1 | ✅ 可用 |
+| **Report Service** | 8083 | 学习统计、数据分析、报告生成、艾宾浩斯复习 | Spring Boot 3.4.1 | ✅ 可用 |
+| **AI Service** | 8084 | Function Calling、智能对话、NLP 处理、腾讯云翻译 | Spring Boot 3.4.1 | ✅ 可用 |
+| **Admin Service** | 8085 | 系统配置管理、管理员权限控制、后台管理 | Spring Boot 3.4.1 | ✅ 可用 |
 
 ### 🛠️ 基础设施
 
@@ -320,11 +320,9 @@ public class GatewayApplication {
 ```
 
 **关键特性**:
-- ✅ **智能路由**: 基于路径、方法、Header 的多维度路由规则
-- ✅ **请求限流**: 基于 Redis 的分布式限流，支持 IP、用户维度
-- ✅ **熔断降级**: 集成 Resilience4j，防止级联失败
-- ✅ **CORS 支持**: 完整的跨域配置，支持预检请求
-- ✅ **文档聚合**: 统一聚合所有微服务的 Knife4j 文档
+- ✅ **智能路由**: 基于路径规则的服务路由
+- ✅ **请求限流**: 基于 Redis 的分布式限流
+- ✅ **CORS 支持**: 跨域配置，支持预检请求
 
 **路由配置**:
 ```yaml
@@ -1554,17 +1552,9 @@ docker-compose -f docker-compose.prod.yml logs -f gateway
 
 ## 📊 API 文档
 
-### 🔗 文档访问地址
+### 🔗 文档访问说明
 
-| 服务 | Swagger UI | Knife4j 文档 |
-|------|------------|-------------|
-| **统一入口** | http://localhost:8080/swagger-ui.html | http://localhost:8080/doc.html |
-| Gateway | http://localhost:8080/swagger-ui.html | http://localhost:8080/doc.html |
-| User Service | http://localhost:8081/swagger-ui.html | http://localhost:8081/doc.html |
-| Article Service | http://localhost:8082/swagger-ui.html | http://localhost:8082/doc.html |
-| Report Service | http://localhost:8083/swagger-ui.html | http://localhost:8083/doc.html |
-| AI Service | http://localhost:8084/swagger-ui.html | http://localhost:8084/doc.html |
-| Admin Service | http://localhost:8085/swagger-ui.html | http://localhost:8085/doc.html |
+- 各微服务已配置 OpenAPI/Knife4j，可在各服务运行端口访问对应文档页面。
 
 ### 📋 API 概览统计
 

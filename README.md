@@ -92,7 +92,6 @@
 - **6个独立微服务**：Gateway、User、Article、Report、AI、Admin
 - **Spring Cloud生态**：服务注册发现、配置中心、熔断限流
 - **容器化部署**：Docker + Docker Compose，一键部署
-- **监控完善**：健康检查、性能指标、日志聚合
 
 ### 🔧 核心技术架构
 - **GNews + Readability4J组合**：新闻发现 + 内容提取的完美结合
@@ -263,9 +262,7 @@ npm run dev
 | **前端应用** | http://localhost:5173 | 主要用户界面 |
 | **管理员后台** | http://localhost:5173/admin/login | 管理员登录入口 |
 | **API网关** | http://localhost:8080 | 后端服务入口 |
-| **API文档** | http://localhost:8080/doc.html | Knife4j 聚合文档 |
 | **Nacos控制台** | http://localhost:8848/nacos | 配置与服务管理 |
-| **健康检查** | http://localhost:8080/actuator/health | 服务状态监控 |
 
 ## 📊 API 接口文档
 
@@ -415,7 +412,6 @@ GET /api/admin/system-config/all
 - **订阅管理**：多套餐方案，灵活升级降级
 - **额度控制**：实时监控使用量，智能提醒
 - **企业服务**：团队管理、批量授权、数据分析
-- **支付集成**：支持多种支付方式，安全便捷
 
 ## 📈 更新日志
 
