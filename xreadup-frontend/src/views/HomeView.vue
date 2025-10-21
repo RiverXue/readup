@@ -285,9 +285,16 @@ const quickActions = computed(() => {
         show: true
       },
       {
+        title: '体验AI助手',
+        description: '了解AI学习助手如何帮助你提升英语水平',
+        icon: 'message',
+        path: '/ai-assistant',
+        show: true
+      },
+      {
         title: '登录解锁全部功能',
         description: '登录后享受个性化学习体验',
-        icon: 'message',
+        icon: 'calendar',
         path: '/login',
         show: true
       }

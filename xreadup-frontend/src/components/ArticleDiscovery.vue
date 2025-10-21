@@ -100,41 +100,51 @@
           <!-- 会员等级标签 -->
           <span class="membership-tag pro">专业会员+</span>
         </div>
-        <!-- 为非高级会员显示提示 -->
-        <el-tooltip
-          v-if="!isProOrEnterpriseUser"
-          effect="dark"
-          content="升级到专业会员及以上解锁自定义主题搜索功能"
-          placement="top"
-        >
-          <div class="pro-feature-tag">专业会员功能</div>
-        </el-tooltip>
       </div>
 
-      <!-- 高级筛选面板 -->
-      <div class="advanced-filters" v-if="advancedFilters.useAdvanced">
-        <div class="filters-header">
-          <div class="filters-title">
-            <h4>高级筛选</h4>
-            <div class="filter-tip">
-              <el-icon><InfoFilled /></el-icon>
-              <span>注意：语言和国家不能同时使用，优先使用语言筛选</span>
-            </div>
+    </div>
+
+    <!-- 高级筛选切换按钮 -->
+    <div class="advanced-toggle" v-if="isProOrEnterpriseUser">
+      <el-button 
+        type="text" 
+        @click="advancedFilters.useAdvanced = !advancedFilters.useAdvanced"
+        :icon="advancedFilters.useAdvanced ? 'ArrowUp' : 'ArrowDown'"
+      >
+        {{ advancedFilters.useAdvanced ? '隐藏高级筛选' : '显示高级筛选' }}
+      </el-button>
+    </div>
+
+    <!-- 高级筛选面板 -->
+    <div class="advanced-filters" v-if="advancedFilters.useAdvanced && isProOrEnterpriseUser">
+      <div class="filters-header">
+        <div class="filters-title">
+          <h4>高级筛选</h4>
+          <div class="filter-tip">
+            <el-icon><InfoFilled /></el-icon>
+            <span>注意：语言和国家不能同时使用，优先使用语言筛选</span>
           </div>
-          <el-button type="text" @click="advancedFilters.useAdvanced = false">
-            <el-icon><Close /></el-icon>
-          </el-button>
         </div>
-        <div class="filters-content">
-          <div class="filter-row">
+        <el-button type="text" @click="advancedFilters.useAdvanced = false">
+          <el-icon><Close /></el-icon>
+        </el-button>
+      </div>
+      <div class="filters-content">
+        <div class="filter-row">
             <div class="filter-item">
               <label>
                 语言
-                <el-tooltip content="控制新闻的语言，如英语、中文、法语等" placement="top">
+                <el-tooltip content="控制新闻的语言，如英语、中文、法语等。选择语言后将禁用国家筛选。" placement="top">
                   <el-icon class="help-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </label>
-              <el-select v-model="advancedFilters.language" placeholder="选择语言" size="small">
+              <el-select 
+                v-model="advancedFilters.language" 
+                placeholder="选择语言" 
+                size="small"
+                clearable
+                @change="handleLanguageChange"
+              >
                 <el-option 
                   v-for="option in getLanguageOptions()" 
                   :key="option.value"
@@ -152,7 +162,7 @@
             <div class="filter-item">
               <label>
                 国家（可选）
-                <el-tooltip content="可选：控制新闻来源的国家。不选择则获取所有国家的新闻" placement="top">
+                <el-tooltip content="可选：控制新闻来源的国家。选择国家后将禁用语言筛选。" placement="top">
                   <el-icon class="help-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </label>
@@ -162,6 +172,7 @@
                 clearable 
                 size="small"
                 :disabled="!!advancedFilters.language"
+                @change="handleCountryChange"
               >
                 <el-option 
                   v-for="option in getCountryOptions()" 
@@ -177,54 +188,92 @@
                 </el-option>
               </el-select>
             </div>
-            <div class="filter-item">
-              <label>排序</label>
-              <el-select v-model="advancedFilters.sortBy" placeholder="选择排序" size="small">
-                <el-option 
-                  v-for="option in getSortOptions()" 
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
-                />
-              </el-select>
-            </div>
-          </div>
-          <div class="filter-row">
-            <div class="filter-item">
-              <label>开始日期</label>
-              <el-date-picker
-                v-model="advancedFilters.fromDate"
-                type="datetime"
-                placeholder="选择开始日期"
-                size="small"
-                format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DDTHH:mm:ssZ"
+          <div class="filter-item">
+            <label>排序</label>
+            <el-select v-model="advancedFilters.sortBy" placeholder="选择排序" size="small">
+              <el-option 
+                v-for="option in getSortOptions()" 
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
               />
-            </div>
-            <div class="filter-item">
-              <label>结束日期</label>
-              <el-date-picker
-                v-model="advancedFilters.toDate"
-                type="datetime"
-                placeholder="选择结束日期"
-                size="small"
-                format="YYYY-MM-DD HH:mm:ss"
-                value-format="YYYY-MM-DDTHH:mm:ssZ"
-              />
-            </div>
+            </el-select>
           </div>
         </div>
-      </div>
-
-      <!-- 高级筛选切换按钮 -->
-      <div class="advanced-toggle">
-        <el-button 
-          type="text" 
-          @click="advancedFilters.useAdvanced = !advancedFilters.useAdvanced"
-          :icon="advancedFilters.useAdvanced ? 'ArrowUp' : 'ArrowDown'"
-        >
-          {{ advancedFilters.useAdvanced ? '隐藏高级筛选' : '显示高级筛选' }}
-        </el-button>
+        <div class="filter-row">
+          <div class="filter-item">
+            <label>开始日期</label>
+            <el-date-picker
+              v-model="advancedFilters.fromDate"
+              type="datetime"
+              placeholder="选择开始日期"
+              size="small"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DDTHH:mm:ssZ"
+            />
+          </div>
+          <div class="filter-item">
+            <label>结束日期</label>
+            <el-date-picker
+              v-model="advancedFilters.toDate"
+              type="datetime"
+              placeholder="选择结束日期"
+              size="small"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DDTHH:mm:ssZ"
+            />
+          </div>
+        </div>
+        
+        <!-- 筛选条件预览 -->
+        <div class="filter-preview" v-if="hasActiveFilters">
+          <div class="preview-title">
+            <el-icon><Filter /></el-icon>
+            <span>当前筛选条件</span>
+          </div>
+          <div class="preview-tags">
+            <el-tag 
+              v-if="advancedFilters.language" 
+              type="primary" 
+              closable 
+              @close="advancedFilters.language = ''"
+            >
+              语言: {{ getLanguageLabel(advancedFilters.language) }}
+            </el-tag>
+            <el-tag 
+              v-if="advancedFilters.country" 
+              type="success" 
+              closable 
+              @close="advancedFilters.country = ''"
+            >
+              国家: {{ getCountryLabel(advancedFilters.country) }}
+            </el-tag>
+            <el-tag 
+              v-if="advancedFilters.sortBy" 
+              type="info" 
+              closable 
+              @close="advancedFilters.sortBy = 'publishedAt'"
+            >
+              排序: {{ getSortLabel(advancedFilters.sortBy) }}
+            </el-tag>
+            <el-tag 
+              v-if="advancedFilters.fromDate" 
+              type="warning" 
+              closable 
+              @close="advancedFilters.fromDate = ''"
+            >
+              开始: {{ formatDatePreview(advancedFilters.fromDate) }}
+            </el-tag>
+            <el-tag 
+              v-if="advancedFilters.toDate" 
+              type="warning" 
+              closable 
+              @close="advancedFilters.toDate = ''"
+            >
+              结束: {{ formatDatePreview(advancedFilters.toDate) }}
+            </el-tag>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -418,7 +467,7 @@
         <h3 class="error-title">获取文章失败</h3>
         <p class="error-message">{{ errorMessage }}</p>
         <div class="error-suggestions">
-          <div class="suggestion-item" v-if="advancedFilters.useAdvanced">
+          <div class="suggestion-item" v-if="advancedFilters.useAdvanced && isProOrEnterpriseUser">
             <el-icon><InfoFilled /></el-icon>
             <span>GNews API限制：语言和国家不能同时使用，已自动优先使用语言筛选</span>
           </div>
@@ -480,7 +529,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElButton, ElSelect, ElOption, ElTooltip, ElSkeleton, ElMessage, ElInput } from 'element-plus'
-import { TrendCharts, Document, MagicStick, Clock, Search, Close, ArrowUp, ArrowDown, InfoFilled, QuestionFilled, WarningFilled, RefreshRight, Menu, Star } from '@element-plus/icons-vue'
+import { TrendCharts, Document, MagicStick, Clock, Search, Close, ArrowUp, ArrowDown, InfoFilled, QuestionFilled, WarningFilled, RefreshRight, Menu, Star, Filter } from '@element-plus/icons-vue'
 import { articleApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
@@ -591,6 +640,48 @@ const canFetchCustomTopic = computed(() => {
   return isProOrEnterpriseUser.value
 })
 
+// 处理语言选择变化
+const handleLanguageChange = (value: string) => {
+  if (value) {
+    // 选择语言时，清空国家选择
+    advancedFilters.value.country = ''
+  }
+}
+
+// 处理国家选择变化
+const handleCountryChange = (value: string) => {
+  if (value) {
+    // 选择国家时，清空语言选择
+    advancedFilters.value.language = ''
+  }
+}
+
+// 计算是否有活跃的筛选条件
+const hasActiveFilters = computed(() => {
+  return !!(
+    advancedFilters.value.language || 
+    advancedFilters.value.country || 
+    advancedFilters.value.sortBy !== 'publishedAt' ||
+    advancedFilters.value.fromDate || 
+    advancedFilters.value.toDate
+  )
+})
+
+// 格式化日期预览
+const formatDatePreview = (dateString: string) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  } catch {
+    return dateString
+  }
+}
+
 // 获取当前发现类型
 const getDiscoveryType = () => {
   if (resultTitle.value.includes('热点')) return 'trending'
@@ -609,6 +700,11 @@ onMounted(async () => {
   await loadUserQuota()
   loadSavedArticles()
   
+  // 确保非专业会员无法使用高级筛选
+  if (!isProOrEnterpriseUser.value) {
+    advancedFilters.value.useAdvanced = false
+  }
+  
   // 确保初始状态没有错误
   clearError()
 })
@@ -620,6 +716,11 @@ watch(
     if (newTier !== oldTier) {
       console.log('用户等级发生变化，从', oldTier, '变为', newTier, '，刷新配额')
       await loadUserQuota()
+      
+      // 如果降级为非专业会员，关闭高级筛选
+      if (!isProOrEnterpriseUser.value) {
+        advancedFilters.value.useAdvanced = false
+      }
     }
   }
 )
@@ -784,8 +885,8 @@ const fetchCategoryArticles = async () => {
   try {
     let response
     
-    // 根据是否使用高级筛选选择API
-    if (advancedFilters.value.useAdvanced) {
+    // 根据是否使用高级筛选选择API（仅专业会员及以上可用）
+    if (advancedFilters.value.useAdvanced && isProOrEnterpriseUser.value) {
       // 构建参数，根据GNews API限制，不能同时使用language和country
       const params: any = {
         category: selectedCategory.value,
@@ -866,8 +967,8 @@ const fetchCustomTopicArticles = async () => {
   try {
     let response
     
-    // 根据是否使用高级筛选选择API
-    if (advancedFilters.value.useAdvanced) {
+    // 根据是否使用高级筛选选择API（仅专业会员及以上可用）
+    if (advancedFilters.value.useAdvanced && isProOrEnterpriseUser.value) {
       // 构建参数，根据GNews API限制，不能同时使用language和country
       const params: any = {
         keyword: customTopic.value,
@@ -970,33 +1071,44 @@ const fetchCustomTopicArticles = async () => {
   flex-direction: row;
   align-items: flex-start;
   gap: 20px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-bottom: 24px;
   justify-content: center;
+  overflow-x: auto;
+  padding: 10px 0;
 }
 
 /* 高级筛选面板样式 */
 .advanced-filters {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
-  border-radius: 12px;
-  padding: 20px;
-  margin: 20px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px auto;
+  max-width: 800px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .filters-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filters-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
 }
 
 .filters-title h4 {
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
   color: #303133;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
+  text-align: center;
 }
 
 .filter-tip {
@@ -1005,6 +1117,7 @@ const fetchCustomTopicArticles = async () => {
   gap: 6px;
   color: #909399;
   font-size: 12px;
+  justify-content: center;
 }
 
 .help-icon {
@@ -1016,24 +1129,27 @@ const fetchCustomTopicArticles = async () => {
 .filters-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  align-items: center;
 }
 
 .filter-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 200px;
+  gap: 6px;
+  min-width: 180px;
 }
 
 .filter-item label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #606266;
   display: flex;
@@ -1067,6 +1183,7 @@ const fetchCustomTopicArticles = async () => {
 .advanced-toggle {
   text-align: center;
   margin: 16px 0;
+  padding: 8px 0;
 }
 
 .advanced-toggle .el-button {
@@ -1076,6 +1193,35 @@ const fetchCustomTopicArticles = async () => {
 
 .advanced-toggle .el-button:hover {
   color: #66b1ff;
+}
+
+/* 筛选条件预览样式 */
+.filter-preview {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.preview-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0369a1;
+}
+
+.preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.preview-tags .el-tag {
+  font-size: 12px;
 }
 
 /* 统一按钮样式 */
@@ -1169,6 +1315,7 @@ const fetchCustomTopicArticles = async () => {
   padding: 10px;
   border-radius: 8px;
   min-width: 200px;
+  flex-shrink: 0;
 }
 
 /* 优化主题选择器布局 */
@@ -1181,6 +1328,7 @@ const fetchCustomTopicArticles = async () => {
   padding: 10px;
   border-radius: 8px;
   min-width: 300px;
+  flex-shrink: 0;
 }
 
 /* 统一输入框和选择器样式 */
@@ -1362,6 +1510,7 @@ const fetchCustomTopicArticles = async () => {
   padding: 10px;
   border-radius: 8px;
   min-width: 320px;
+  flex-shrink: 0;
 }
 
 /* 文章结果区域样式 */
@@ -2072,6 +2221,17 @@ const fetchCustomTopicArticles = async () => {
 }
 
 /* 响应式设计优化 */
+@media (max-width: 1200px) {
+  .action-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .trending-selector, .category-selector, .custom-search {
+    min-width: 280px;
+  }
+}
+
 @media (max-width: 768px) {
   .article-discovery {
     padding: 16px;
@@ -2080,6 +2240,7 @@ const fetchCustomTopicArticles = async () => {
   .action-buttons {
     flex-direction: column;
     gap: 16px;
+    flex-wrap: wrap;
   }
 
   .trending-selector, .category-selector, .custom-search {
