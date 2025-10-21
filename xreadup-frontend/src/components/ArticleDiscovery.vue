@@ -1198,20 +1198,21 @@ const fetchCustomTopicArticles = async () => {
 /* 筛选条件预览样式 */
 .filter-preview {
   margin-top: 16px;
-  padding: 12px;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  padding: 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
   border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .preview-title {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-size: 13px;
   font-weight: 500;
-  color: #0369a1;
+  color: #606266;
 }
 
 .preview-tags {
@@ -1222,6 +1223,7 @@ const fetchCustomTopicArticles = async () => {
 
 .preview-tags .el-tag {
   font-size: 12px;
+  border-radius: 4px;
 }
 
 /* 统一按钮样式 */
