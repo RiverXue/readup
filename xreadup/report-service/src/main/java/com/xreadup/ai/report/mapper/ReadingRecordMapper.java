@@ -16,6 +16,9 @@ public interface ReadingRecordMapper extends BaseMapper<ReadingRecord> {
     @Select("SELECT COALESCE(SUM(read_time_sec)/60, 0) FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) = #{date}")
     Integer getTodayReadingMinutes(@Param("userId") Long userId, @Param("date") LocalDate date);
 
+    @Select("SELECT COALESCE(COUNT(*), 0) FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) = #{date}")
+    Integer getTodayArticlesRead(@Param("userId") Long userId, @Param("date") LocalDate date);
+
     @Select("SELECT COALESCE(SUM(read_time_sec)/60, 0) FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) >= #{startDate}")
     Integer getTotalReadingMinutesSince(@Param("userId") Long userId, @Param("startDate") LocalDate startDate);
 
@@ -28,7 +31,7 @@ public interface ReadingRecordMapper extends BaseMapper<ReadingRecord> {
     @Select("SELECT COALESCE(COUNT(*), 0) FROM reading_log WHERE user_id = #{userId}")
     Integer getTotalArticlesRead(@Param("userId") Long userId);
 
-    @Select("SELECT DATE(finished_at) as date, COALESCE(SUM(read_time_sec)/60, 0) as minutes, COALESCE(COUNT(*), 0) as articles FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) >= DATE_SUB(CURDATE(), INTERVAL #{days} DAY) GROUP BY DATE(finished_at) ORDER BY DATE(finished_at)")
+    @Select("SELECT DATE(finished_at) as date, COALESCE(SUM(read_time_sec)/60, 0) as minutes, COALESCE(COUNT(*), 0) as articles FROM reading_log WHERE user_id = #{userId} GROUP BY DATE(finished_at) ORDER BY DATE(finished_at) DESC LIMIT #{days}")
     List<ReadingTimeData.DailyReading> getDailyReadings(@Param("userId") Long userId, @Param("days") int days);
 
     @Select("SELECT a.difficulty_level as difficulty, COALESCE(COUNT(*), 0) as count, COALESCE(SUM(r.read_time_sec)/60, 0) as totalMinutes FROM reading_log r LEFT JOIN article a ON r.article_id = a.id WHERE r.user_id = #{userId} GROUP BY a.difficulty_level")
@@ -36,4 +39,7 @@ public interface ReadingRecordMapper extends BaseMapper<ReadingRecord> {
 
     @Select("SELECT id, user_id, article_id, read_time_sec, finished_at FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) BETWEEN #{startDate} AND #{endDate} ORDER BY finished_at")
     List<ReadingRecord> getReadingRecordsByDateRange(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Select("SELECT DATE(finished_at) as date, COALESCE(SUM(read_time_sec)/60, 0) as minutes, COALESCE(COUNT(*), 0) as articles FROM reading_log WHERE user_id = #{userId} AND DATE(finished_at) BETWEEN #{startDate} AND #{endDate} GROUP BY DATE(finished_at) ORDER BY DATE(finished_at) ASC")
+    List<ReadingTimeData.DailyReading> getDailyReadingsByDateRange(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

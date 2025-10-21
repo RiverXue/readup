@@ -7,6 +7,7 @@ import java.util.List;
  */
 public class ReadingTimeData {
     private Integer todayMinutes;
+    private Integer todayArticles;
     private Integer weeklyAverageMinutes;
     private Integer totalMinutes;
     private Integer totalArticles;
@@ -29,6 +30,14 @@ public class ReadingTimeData {
 
     public void setTodayMinutes(Integer todayMinutes) {
         this.todayMinutes = todayMinutes;
+    }
+
+    public Integer getTodayArticles() {
+        return todayArticles;
+    }
+
+    public void setTodayArticles(Integer todayArticles) {
+        this.todayArticles = todayArticles;
     }
 
     public Integer getWeeklyAverageMinutes() {
@@ -88,6 +97,7 @@ public class ReadingTimeData {
         private String date;
         private Integer minutes;
         private Integer articles;
+        private Integer newWords;
 
         public DailyReading() {}
 
@@ -119,6 +129,14 @@ public class ReadingTimeData {
 
         public void setArticles(Integer articles) {
             this.articles = articles;
+        }
+
+        public Integer getNewWords() {
+            return newWords;
+        }
+
+        public void setNewWords(Integer newWords) {
+            this.newWords = newWords;
         }
     }
 
