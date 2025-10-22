@@ -1,852 +1,633 @@
 <template>
-  <div class="report-container">
-    <h2>学习报告</h2>
-
-    <!-- 统计卡片 -->
-    <div class="stats-cards">
-      <el-card v-for="stat in statsCards" :key="stat.title" class="stat-card">
-        <div class="stat-icon">
-          <el-icon :size="40" :color="stat.color">
-            <component :is="stat.icon" />
-          </el-icon>
+  <div class="enhanced-report-container">
+    <!-- 页面头部 -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1>📊 学习报告</h1>
+        <div class="header-actions">
+          <el-button @click="refreshData" :loading="loading.all" type="primary">
+            <el-icon><Refresh /></el-icon>
+            刷新数据
+          </el-button>
+          <el-button @click="showAchievements" type="success">
+            <el-icon><Trophy /></el-icon>
+            查看成就
+          </el-button>
         </div>
-        <div class="stat-content">
-          <h3>{{ stat.title }}</h3>
-          <p class="stat-value">{{ stat.value }}</p>
-          <p class="stat-desc">{{ stat.desc }}</p>
         </div>
-      </el-card>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="charts-area">
-      <el-card class="chart-card">
-        <template #header>
-          <h3>词汇增长曲线</h3>
-        </template>
-        <div ref="growthChart" class="chart-container"></div>
-      </el-card>
-
-      <el-card class="chart-card">
-        <template #header>
-          <h3>每日阅读时长</h3>
-        </template>
-        <div ref="readingChart" class="chart-container"></div>
-      </el-card>
-    </div>
-
-    <!-- 学习成就 -->
-    <div class="achievements">
-      <h3>学习成就</h3>
-      <div class="achievement-list">
-        <el-card v-for="achievement in achievements" :key="achievement.id"
-                 class="achievement-item"
-                 :class="{ 'achieved': achievement.achieved }">
-          <div class="achievement-icon">
-            <el-icon :size="30" :color="achievement.achieved ? '#67c23a' : '#909399'">
-              <Trophy />
-            </el-icon>
-          </div>
-          <div class="achievement-content">
-            <h4>{{ achievement.name }}</h4>
-            <p>{{ achievement.description }}</p>
-            <el-progress
-              v-if="achievement.progress < 100"
-              :percentage="achievement.progress"
-              :color="achievement.achieved ? '#67c23a' : '#409eff'"
-            />
-          </div>
-        </el-card>
-      </div>
+    <!-- 主要内容区域 -->
+    <div class="main-content">
+       <!-- 数据概览 -->
+       <DataOverviewSection 
+         :dashboardData="dashboardData"
+         :loading="loading.overview"
+         @cardClick="(type: string) => handleCardClick({ type: type as any })"
+       />
+      
+      <!-- 图表展示 -->
+      <ChartsSection 
+        :vocabularyData="vocabularyData"
+        :readingData="readingData"
+        :loading="loading.charts"
+        @chartClick="handleChartClick"
+      />
+      
+      <!-- 学习报告 -->
+      <ReportsSection 
+        :todaySummary="todaySummary"
+        :weeklyInsights="weeklyInsights"
+        :loading="loading.reports"
+      />
+      
+       <!-- 数据对比 -->
+       <ComparisonSection 
+         :currentData="currentData"
+         :historicalData="historicalData"
+         :loading="loading.comparison"
+         @comparisonChange="(type: string) => handleComparisonChange({ type: type as any })"
+       />
+      
+      
+      <!-- 学习成就区域 -->
+      <AchievementSection 
+        :achievementData="achievementData"
+        :loading="loading.achievements"
+        @achievementClick="handleAchievementClick"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import * as echarts from 'echarts'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { reportApi, vocabularyApi, learningApi } from '@/utils/api'
+import { reportApi, learningApi } from '@/utils/api'
 import { useUserStore } from '@/stores/user'
-// 图标通过全局注册，无需单独导入
+import { dataCache } from '@/utils/dataCache'
+import { reportDataService } from '@/services/reportDataService'
+import { 
+  getRealAchievementDate, 
+  getRealStreakDate, 
+  getFirstLearningDate, 
+  getFirstWeekDate, 
+  getFirstMonthDate,
+  getWeekKey 
+} from '@/utils/dateUtils'
+import type { 
+  DashboardData, 
+  VocabularyGrowthData, 
+  ReadingTimeData, 
+  TodaySummary, 
+  WeeklyInsights, 
+  AchievementData, 
+  DailyReading, 
+  LoadingState,
+  ChartClickEvent,
+  CardClickEvent,
+  ComparisonChangeEvent,
+  AchievementClickEvent
+} from '@/types/report'
 
-const growthChart = ref<HTMLElement>()
-const readingChart = ref<HTMLElement>()
-let growthChartInstance: echarts.ECharts | null = null
-let readingChartInstance: echarts.ECharts | null = null
+// 组件导入
+import DataOverviewSection from './components/DataOverviewSection.vue'
+import ChartsSection from './components/ChartsSection.vue'
+import ReportsSection from './components/ReportsSection.vue'
+import ComparisonSection from './components/ComparisonSection.vue'
+import AchievementSection from './components/AchievementSection.vue'
 
 const userStore = useUserStore()
 
-const statsCards = ref([
-  {
-    title: '生词量',
-    value: '0',
-    desc: '生词本中添加的单词总数',
-    icon: 'Collection',
-    color: '#409eff'
-  },
-  {
-    title: '连续打卡',
-    value: '0天',
-    desc: '连续学习天数',
-    icon: 'Clock',
-    color: '#67c23a'
-  },
-  {
-    title: '今日阅读',
-    value: '0分钟',
-    desc: '今日阅读时长',
-    icon: 'Reading',
-    color: '#e6a23c'
-  },
-  {
-    title: '完成文章',
-    value: '0篇',
-    desc: '已完成阅读',
-    icon: 'Document',
-    color: '#909399'
-  }
-])
+// 响应式数据
+const dashboardData = ref<DashboardData | null>(null)
+const vocabularyData = ref<VocabularyGrowthData | null>(null)
+const readingData = ref<ReadingTimeData | null>(null)
+const todaySummary = ref<TodaySummary | null>(null)
+const weeklyInsights = ref<WeeklyInsights | null>(null)
+const currentData = ref<DailyReading[] | null>(null)
+const historicalData = ref<DailyReading[] | null>(null)
+const achievementData = ref<AchievementData | null>(null)
 
-const achievements = ref([
-  {
-    id: 1,
-    name: '初出茅庐',
-    description: '完成第一篇英语文章阅读',
-    progress: 0,
-    achieved: false
-  },
-  {
-    id: 2,
-    name: '词汇达人',
-    description: '累计学习100个新单词',
-    progress: 0,
-    achieved: false
-  },
-  {
-    id: 3,
-    name: '坚持不懈',
-    description: '连续7天完成阅读任务',
-    progress: 0,
-    achieved: false
-  },
-  {
-    id: 4,
-    name: '阅读高手',
-    description: '累计阅读10篇英语文章',
-    progress: 0,
-    achieved: false
-  }
-])
-
-onMounted(async () => {
-  // 先初始化图表，然后再加载数据
-  initCharts()
-  await loadReportData()
-  window.addEventListener('resize', handleResize)
+// 加载状态
+const loading = ref<LoadingState>({
+  all: false,
+  overview: false,
+  charts: false,
+  reports: false,
+  comparison: false,
+  achievements: false
 })
 
-onUnmounted(() => {
-  if (growthChartInstance) {
-    growthChartInstance.dispose()
+// 使用统一的数据缓存服务
+
+// 计算属性
+const userId = computed(() => {
+  if (!userStore.isLoggedIn || !userStore.userInfo?.id) {
+    console.warn('用户未登录或用户信息缺失')
+    return null
   }
-  if (readingChartInstance) {
-    readingChartInstance.dispose()
-  }
-  window.removeEventListener('resize', handleResize)
+  const id = userStore.userInfo.id.toString()
+  console.log('userId computed:', id, 'userStore.userInfo:', userStore.userInfo, 'isLoggedIn:', userStore.isLoggedIn)
+  return id
 })
 
-// 定义学习报告数据接口
-interface ReportData {
-  completedArticles: number
-  totalWords: number
-  streakDays: number
-  totalReadingTime: number
-  dates: string[]
-  vocabularyCounts: number[]
-  readingTimes: number[]
-}
 
-// 辅助函数：生成指定天数的日期数组（从今天往前推）
-const generateDateArray = (days: number): string[] => {
-  const today = new Date();
-  const dates: string[] = [];
-  
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    dates.push(date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }));
+// 方法
+const loadAllData = async () => {
+  console.log('loadAllData called, userId:', userId.value, 'userStore.userInfo:', userStore.userInfo)
+  if (!userId.value) {
+    ElMessage.warning('请先登录后再查看学习报告')
+    return
   }
-  
-  return dates;
-}
 
-// 辅助函数：将数组填充或截断到指定长度
-const padOrTruncateArray = (arr: number[], targetLength: number): number[] => {
-  const result = [...arr];
+  loading.value.all = true
   
-  // 如果数组长度小于目标长度，用0填充
-  while (result.length < targetLength) {
-    result.push(0);
-  }
-  
-  // 如果数组长度大于目标长度，截断
-  if (result.length > targetLength) {
-    result.length = targetLength;
-  }
-  
-  return result;
-}
-
-// 辅助函数：将阅读数据映射到对应的日期位置
-const mapReadingDataToDates = (dailyReadings: any[], dates: string[]): number[] => {
-  // 创建日期到分钟数的映射
-  const readingMap = new Map<string, number>();
-  
-  dailyReadings.forEach(item => {
-    if (!item.date || typeof item.minutes !== 'number') return;
-    
-    // 将API返回的日期格式转换为与dates数组匹配的格式
-    let dateKey = item.date;
-    if (dateKey.includes('-')) {
-      const parts = dateKey.split('-');
-      dateKey = `${parts[1]}/${parts[2]}`;
-    }
-    
-    readingMap.set(dateKey, item.minutes);
-  });
-  
-  // 根据dates数组生成对应的分钟数数组
-  return dates.map(date => readingMap.get(date) || 0);
-}
-
-// 在顶部添加接口定义
-const reportData = ref<ReportData>({
-  completedArticles: 0,
-  totalWords: 0,
-  streakDays: 0,
-  totalReadingTime: 0,
-  dates: [],
-  vocabularyCounts: [],
-  readingTimes: []
-})
-
-const loadReportData = async () => {
   try {
-    const userId = userStore.userInfo?.id
-    if (!userId) {
-      ElMessage.warning('请先登录以查看学习报告')
-      // 重置为0数据
-      reportData.value = {
-        completedArticles: 0,
-        totalWords: 0,
-        streakDays: 0,
-        totalReadingTime: 0,
-        dates: [],
-        vocabularyCounts: [],
-        readingTimes: []
-      }
-      return
+    // 使用统一的数据服务加载所有数据
+    const result = await reportDataService.loadAllData(userId.value)
+    
+    // 处理数据
+    await processAllData(result)
+    
+    // 显示成功消息（如果没有错误）
+    if (result.errors.length === 0) {
+      ElMessage.success('数据加载完成')
     }
-
-    // 仪表盘综合数据
-    const dashboardRes = await reportApi.getDashboardData(String(userId))
-    // 更灵活地处理后端返回的数据格式
-    const dash = dashboardRes?.data || {}
-    console.log('Dashboard API response:', dashboardRes)
-
-    // 词汇增长曲线
-    const growthRes = await reportApi.getGrowthCurve(String(userId), 7)
-    const growth = growthRes?.data || {}
-    console.log('Growth API response:', growthRes)
-
-    // 每日阅读时长
-    const readingRes = await reportApi.getReadingTime(String(userId))
-    const reading = readingRes?.data || {}
-    console.log('Reading API response:', readingRes)
-
-    // 尝试从词汇统计API获取数据
-    try {
-      const vocabularyStatsRes = await vocabularyApi.getVocabularyStats(String(userId))
-      if (vocabularyStatsRes) {
-        // 增强数据解析 - 适配report-service返回的today/summary数据结构
-        const vocabularyStatsData = vocabularyStatsRes.data || {};
-
-        // 更新词汇统计数据
-        reportData.value.totalWords = vocabularyStatsData.totalWords || reportData.value.totalWords || 0;
-      }
-    } catch (error) {
-      console.warn('词汇统计API调用失败，使用dashboard数据作为备选:', error)
-      // 不影响主流程，继续使用dashboard数据
-    }
-
-    // 尝试从dailyCheckIn接口直接获取连续打卡天数
-    let dailyCheckInData: number | undefined;
-    try {
-      const checkInResponse = await learningApi.dailyCheckIn(userId);
-      if (typeof checkInResponse.data === 'number') {
-        dailyCheckInData = checkInResponse.data;
-        console.log('从dailyCheckIn接口获取连续打卡天数:', dailyCheckInData);
-      }
-    } catch (checkInError) {
-      console.warn('获取连续打卡天数失败，使用dashboard数据作为备选:', checkInError);
-      // 不影响主流程，继续使用dashboard数据
-    }
-
-    // 词汇增长数据解析
-    const growthData = growth?.data || growth || {};
-    const readingTimeData = reading?.data || reading || {};
-
-    reportData.value = {
-      // 完成文章数：优先从reading API获取，其次是dashboard
-      completedArticles: typeof readingTimeData.totalArticles === 'number' ? readingTimeData.totalArticles :
-                        (typeof dash.completedArticles === 'number' ? dash.completedArticles : 0),
-
-      // 总词汇量：优先从词汇统计API获取，其次是dashboard或growth API
-      totalWords: typeof reportData.value.totalWords === 'number' ? reportData.value.totalWords :
-                 (typeof growthData.totalWords === 'number' ? growthData.totalWords :
-                 (typeof dash.totalWords === 'number' ? dash.totalWords : 0)),
-
-      // 连续打卡天数：优先从dailyCheckIn接口获取，其次是dashboard
-    streakDays: typeof dailyCheckInData === 'number' ? dailyCheckInData :
-               (typeof dash?.currentStreak === 'number' ? dash.currentStreak :
-               (typeof dash?.streakDays === 'number' ? dash.streakDays : 0)),
-
-      // 总阅读时长：优先从reading API获取，其次是dashboard
-      totalReadingTime: typeof readingTimeData.todayMinutes === 'number' ? readingTimeData.todayMinutes :
-                        (typeof dash.totalReadingTime === 'number' ? dash.totalReadingTime : 0),
-
-      // 生成完整的7天日期数组（从今天往前推6天）
-      dates: Array.isArray(growthData.dates) ? growthData.dates : generateDateArray(7),
-
-      // 词汇增长曲线数据：从growth API的counts字段获取，不足则补0
-      vocabularyCounts: Array.isArray(growthData.counts) ? 
-                        padOrTruncateArray(growthData.counts, 7) : 
-                        Array(7).fill(0),
-
-      // 每日阅读时长数据：将dailyReadings数据匹配到正确的日期位置
-      readingTimes: Array.isArray(readingTimeData.dailyReadings) ? 
-                   mapReadingDataToDates(readingTimeData.dailyReadings, generateDateArray(7)) :
-                   Array(7).fill(0)
-    }
-
-    console.log('Processed report data:', reportData.value);
-
-    // 确保数据长度匹配（以防growthData.dates提供了不同长度的数据）
-    const dateLength = reportData.value.dates.length;
-
-    // 确保词汇量数据长度与日期长度匹配
-    if (reportData.value.vocabularyCounts.length < dateLength) {
-      const padding = Array(dateLength - reportData.value.vocabularyCounts.length).fill(0);
-      reportData.value.vocabularyCounts = [...reportData.value.vocabularyCounts, ...padding];
-    } else if (reportData.value.vocabularyCounts.length > dateLength) {
-      reportData.value.vocabularyCounts = reportData.value.vocabularyCounts.slice(0, dateLength);
-    }
-
-    // 确保阅读时长数据长度与日期长度匹配
-    if (reportData.value.readingTimes.length < dateLength) {
-      const padding = Array(dateLength - reportData.value.readingTimes.length).fill(0);
-      reportData.value.readingTimes = [...reportData.value.readingTimes, ...padding];
-    } else if (reportData.value.readingTimes.length > dateLength) {
-      reportData.value.readingTimes = reportData.value.readingTimes.slice(0, dateLength);
-    }
-
-    // 检查数据是否都是0，如果是，可能需要提供一些有意义的模拟数据（可选）
-    // 这里已经有了基本的空数据处理，可以根据需要添加更复杂的模拟数据生成逻辑
-
-    // 更新图表和统计卡片数据
-    updateCharts()
-    updateStatsCards()
   } catch (error) {
-    console.error('获取报告数据失败:', error)
-    ElMessage.error('获取报告数据失败，请稍后重试')
+    console.error('数据加载失败:', error)
+    ElMessage.error('数据加载失败，请稍后重试')
+  } finally {
+    loading.value.all = false
   }
 }
 
-// 更新图表数据
-const updateCharts = () => {
-  // 更新词汇增长图表
-  if (growthChartInstance && reportData.value.dates.length > 0) {
-    // 确保数据长度匹配
-    const vocabularyData = reportData.value.vocabularyCounts.slice(0, reportData.value.dates.length)
+// 移除重复的加载方法，统一使用 reportDataService
 
-    // 完全重新设置图表选项，而不仅仅是更新部分数据
-    growthChartInstance.setOption({
-      title: { text: '词汇增长趋势', left: 'center' },
-      tooltip: { trigger: 'axis' },
-      xAxis: {
-        type: 'category',
-        data: reportData.value.dates
-      },
-      yAxis: { type: 'value' },
-      series: [{
-        data: vocabularyData,
-        type: 'line',
-        smooth: true,
-        areaStyle: {},
-        // 添加线条颜色和点标记以提高可视化效果
-        lineStyle: { color: '#409eff' },
-        itemStyle: { color: '#409eff' }
-      }]
+const processAllData = async (result: any) => {
+  try {
+    // 使用nextTick确保DOM更新完成
+    await nextTick()
+    
+    // 明确数据来源，确保数据完整性
+    dashboardData.value = result.dashboard
+    vocabularyData.value = result.dashboard?.vocabularyData || null
+    readingData.value = result.dashboard?.readingData || null
+    todaySummary.value = result.todaySummary
+    weeklyInsights.value = result.weeklyInsights
+    
+    console.log('Processed data:', {
+      dashboard: dashboardData.value,
+      vocabulary: vocabularyData.value,
+      reading: readingData.value,
+      today: todaySummary.value,
+      weekly: weeklyInsights.value
+    })
+    
+    // 并行处理对比数据和成就数据，避免使用setTimeout
+    await Promise.all([
+      processComparisonData(),
+      processAchievementData()
+    ])
+    
+    // 确保DOM更新完成
+    await nextTick()
+  } catch (error) {
+    console.error('处理数据时出错:', error)
+    ElMessage.error('数据处理失败，请刷新页面重试')
+  }
+}
+
+const processComparisonData = async () => {
+  try {
+    console.log('processComparisonData called, readingData:', readingData.value)
+    
+    if (readingData.value?.dailyReadings && readingData.value.dailyReadings.length > 0) {
+      currentData.value = readingData.value.dailyReadings.slice(-7)
+      console.log('currentData set:', currentData.value)
+      
+      // 获取真实的历史数据
+      const endDate = new Date()
+      endDate.setDate(endDate.getDate() - 7) // 上周结束日期
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - 14) // 上周开始日期
+      
+      const startDateStr = startDate.toISOString().split('T')[0]
+      const endDateStr = endDate.toISOString().split('T')[0]
+      
+      console.log('请求历史数据:', {
+        userId: userId.value,
+        startDate: startDateStr,
+        endDate: endDateStr
+      })
+      
+      const response = await reportApi.getHistoricalData(
+        userId.value!.toString(),
+        startDateStr,
+        endDateStr
+      )
+      
+      console.log('历史数据API响应:', response.data)
+      
+      if (response.data && response.data.dailyReadings && response.data.dailyReadings.length > 0) {
+        // 处理历史数据格式
+        historicalData.value = response.data.dailyReadings
+        console.log('历史数据加载成功:', historicalData.value)
+      } else {
+        console.warn('历史数据为空或格式不正确，响应:', response.data)
+        historicalData.value = []
+      }
+    } else {
+      console.warn('readingData.dailyReadings为空或不存在')
+      currentData.value = []
+      historicalData.value = []
+    }
+  } catch (error) {
+    console.error('处理对比数据失败:', error)
+    currentData.value = []
+    historicalData.value = []
+  }
+}
+
+const processAchievementData = async () => {
+  try {
+    if (dashboardData.value) {
+      achievementData.value = generateAchievementData()
+    }
+  } catch (error) {
+    console.error('处理成就数据失败:', error)
+  }
+}
+
+const generateAchievementData = () => {
+  if (!dashboardData.value) return null
+  
+  const data = dashboardData.value
+  const achievements = []
+  const milestones = []
+  
+  // 基于真实数据生成成就
+    if (data.currentStreak >= 7) {
+      achievements.push({
+        id: 'streak_7',
+        title: '一周坚持',
+        description: '连续学习7天',
+        icon: '🔥',
+        unlockedAt: getRealStreakDate(data.readingData?.dailyReadings, 7),
+        type: 'streak' as const
+      })
+    }
+  
+  if (data.currentStreak >= 30) {
+    achievements.push({
+      id: 'streak_30',
+      title: '月度坚持',
+      description: '连续学习30天',
+      icon: '💪',
+      unlockedAt: getRealStreakDate(data.readingData?.dailyReadings, 30),
+      type: 'streak' as const
     })
   }
-
-  // 更新阅读时长图表
-  if (readingChartInstance && reportData.value.dates.length > 0) {
-    // 确保数据长度匹配
-    const readingData = reportData.value.readingTimes.slice(0, reportData.value.dates.length)
-
-    // 完全重新设置图表选项，而不仅仅是更新部分数据
-    readingChartInstance.setOption({
-      title: { text: '每日阅读时长', left: 'center' },
-      tooltip: { trigger: 'axis' },
-      xAxis: {
-        type: 'category',
-        data: reportData.value.dates
-      },
-      yAxis: { type: 'value', name: '分钟' },
-      series: [{
-        data: readingData,
-        type: 'bar',
-        itemStyle: { color: '#409eff' }
-      }]
+  
+  if (data.vocabularyData?.totalWords >= 50) {
+    achievements.push({
+      id: 'vocab_50',
+      title: '词汇入门',
+      description: '掌握50个词汇',
+      icon: '📝',
+      unlockedAt: getRealAchievementDate(data.vocabularyData?.dates, 'words', 50),
+      type: 'vocabulary' as const
     })
   }
-
-  console.log('图表数据已更新:', {
-    dates: reportData.value.dates,
-    vocabularyCounts: reportData.value.vocabularyCounts,
-    readingTimes: reportData.value.readingTimes
+  
+  if (data.vocabularyData?.totalWords >= 100) {
+    achievements.push({
+      id: 'vocab_100',
+      title: '词汇达人',
+      description: '掌握100个词汇',
+      icon: '📚',
+      unlockedAt: getRealAchievementDate(data.vocabularyData?.dates, 'words', 100),
+      type: 'vocabulary' as const
+    })
+  }
+  
+  if (data.readingData?.totalArticles >= 5) {
+    achievements.push({
+      id: 'reader_5',
+      title: '阅读新手',
+      description: '阅读5篇文章',
+      icon: '📖',
+      unlockedAt: getRealAchievementDate(data.readingData?.dailyReadings, 'articles', 5),
+      type: 'reading' as const
+    })
+  }
+  
+  if (data.readingData?.totalArticles >= 10) {
+    achievements.push({
+      id: 'reader_10',
+      title: '阅读达人',
+      description: '阅读10篇文章',
+      icon: '📚',
+      unlockedAt: getRealAchievementDate(data.readingData?.dailyReadings, 'articles', 10),
+      type: 'reading' as const
+    })
+  }
+  
+  if (data.readingData?.totalMinutes >= 1000) {
+    achievements.push({
+      id: 'reading_1000',
+      title: '阅读大师',
+      description: '累计阅读1000分钟',
+      icon: '⏰',
+      unlockedAt: getRealAchievementDate(data.readingData?.dailyReadings, 'minutes', 1000),
+      type: 'reading' as const
+    })
+  }
+  
+  // 生成里程碑数据
+  milestones.push({
+    id: 'first_day',
+    title: '第一天',
+    description: '开始学习之旅',
+    date: getFirstLearningDate(data.readingData?.dailyReadings),
+    achieved: data.totalDays >= 1,
+    type: 'time' as const
   })
-}
-
-// 更新统计卡片数据
-const updateStatsCards = () => {
-  statsCards.value[0].value = String(reportData.value.totalWords || 0)
-  statsCards.value[1].value = `${reportData.value.streakDays || 0}天`
-  statsCards.value[2].value = `${reportData.value.totalReadingTime || 0}分钟`
-  statsCards.value[3].value = `${reportData.value.completedArticles || 0}篇`
-
-  // 更新成就进度
-  updateAchievements()
-}
-
-// 更新成就进度
-const updateAchievements = () => {
-  // 初出茅庐：完成第一篇英语文章阅读
-  achievements.value[0].progress = reportData.value.completedArticles >= 1 ? 100 : 0
-  achievements.value[0].achieved = reportData.value.completedArticles >= 1
-
-  // 词汇达人：累计学习100个新单词 - 使用Math.round修复浮点数精度问题
-  achievements.value[1].progress = Math.round(Math.min((reportData.value.totalWords / 100) * 100, 100))
-  achievements.value[1].achieved = reportData.value.totalWords >= 100
-
-  // 坚持不懈：连续7天完成阅读任务 - 使用Math.round修复浮点数精度问题
-  achievements.value[2].progress = Math.round(Math.min((reportData.value.streakDays / 7) * 100, 100))
-  achievements.value[2].achieved = reportData.value.streakDays >= 7
-
-  // 阅读高手：累计阅读10篇英语文章 - 使用Math.round修复浮点数精度问题
-  achievements.value[3].progress = Math.round(Math.min((reportData.value.completedArticles / 10) * 100, 100))
-  achievements.value[3].achieved = reportData.value.completedArticles >= 10
-}
-const initCharts = () => {
-  // 先初始化空图表
-  if (growthChart.value) {
-    growthChartInstance = echarts.init(growthChart.value)
-    growthChartInstance.setOption({
-      title: { text: '词汇增长趋势', left: 'center' },
-      tooltip: { trigger: 'axis' },
-      xAxis: {
-        type: 'category',
-        data: []
-      },
-      yAxis: { type: 'value' },
-      series: [{
-        data: [],
-        type: 'line',
-        smooth: true,
-        areaStyle: {}
-      }]
-    })
-  }
-
-  if (readingChart.value) {
-    readingChartInstance = echarts.init(readingChart.value)
-    readingChartInstance.setOption({
-      title: { text: '每日阅读时长', left: 'center' },
-      tooltip: { trigger: 'axis' },
-      xAxis: {
-        type: 'category',
-        data: []
-      },
-      yAxis: { type: 'value', name: '分钟' },
-      series: [{
-        data: [],
-        type: 'bar',
-        itemStyle: { color: '#409eff' }
-      }]
-    })
+  
+  milestones.push({
+    id: 'first_week',
+    title: '第一周',
+    description: '坚持学习一周',
+    date: getFirstWeekDate(data.readingData?.dailyReadings),
+    achieved: data.totalDays >= 7,
+      type: 'time' as const
+  })
+  
+  milestones.push({
+    id: 'first_month',
+    title: '第一个月',
+    description: '坚持学习一个月',
+    date: getFirstMonthDate(data.readingData?.dailyReadings),
+    achieved: data.totalDays >= 30,
+      type: 'time' as const
+  })
+  
+  milestones.push({
+    id: 'vocab_milestone',
+    title: '词汇里程碑',
+    description: '掌握100个词汇',
+    date: getRealAchievementDate(data.vocabularyData?.dates, 'words', 100),
+    achieved: data.vocabularyData?.totalWords >= 100,
+    type: 'vocabulary' as const
+  })
+  
+  milestones.push({
+    id: 'reading_milestone',
+    title: '阅读里程碑',
+    description: '阅读10篇文章',
+    date: getRealAchievementDate(data.readingData?.dailyReadings, 'articles', 10),
+    achieved: data.readingData?.totalArticles >= 10,
+    type: 'reading' as const
+  })
+  
+  // 按时间排序成就和里程碑
+  achievements.sort((a: any, b: any) => new Date(a.unlockedAt).getTime() - new Date(b.unlockedAt).getTime())
+  milestones.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  
+  return {
+    achievements,
+    milestones,
+    totalAchievements: achievements.length,
+    totalMilestones: milestones.length
   }
 }
 
+// 日期处理函数已移至 @/utils/dateUtils.ts
 
+const showAchievements = () => {
+  // 显示成就详情弹窗
+  console.log('显示成就详情')
+}
 
-const handleResize = () => {
-  if (growthChartInstance) {
-    growthChartInstance.resize()
-  }
-  if (readingChartInstance) {
-    readingChartInstance.resize()
+// 数据交互功能
+const handleCardClick = (event: CardClickEvent) => {
+  console.log('卡片点击:', event.type)
+  
+  switch (event.type) {
+    case 'vocabulary':
+      ElMessage.info('查看词汇详情')
+      // 可以跳转到词汇详情页面或显示词汇弹窗
+      break
+    case 'reading':
+      ElMessage.info('查看阅读详情')
+      // 可以跳转到阅读详情页面或显示阅读弹窗
+      break
+    case 'articles':
+      ElMessage.info('查看文章详情')
+      // 可以跳转到文章列表页面
+      break
+    case 'streak':
+      ElMessage.info('查看连续学习详情')
+      // 可以显示连续学习历史
+      break
+    default:
+      console.log('未知卡片类型:', event.type)
   }
 }
+
+const handleChartClick = (event: ChartClickEvent) => {
+  console.log('图表点击:', event.type, event.data)
+  
+  switch (event.type) {
+    case 'vocabulary':
+      if (event.date) {
+        ElMessage.info(`查看 ${event.date} 的词汇详情`)
+        // 可以显示该日期的详细词汇数据
+      }
+      break
+    case 'reading':
+      if (event.date) {
+        ElMessage.info(`查看 ${event.date} 的阅读详情`)
+        // 可以显示该日期的详细阅读数据
+      }
+      break
+    case 'difficulty':
+      ElMessage.info(`查看 ${event.data.difficulty} 难度文章详情`)
+      // 可以显示该难度级别的文章列表
+      break
+    case 'efficiency':
+      ElMessage.info('查看学习效率详情')
+      // 可以显示学习效率分析详情
+      break
+    default:
+      console.log('未知图表类型:', event.type)
+  }
+}
+
+const handleComparisonChange = (event: ComparisonChangeEvent) => {
+  console.log('对比类型变更:', event.type)
+  
+  // 根据对比类型加载不同的历史数据
+  const days = event.type === 'weekly' ? 7 : event.type === 'monthly' ? 30 : 365
+  loadHistoricalData(days)
+}
+
+const handleAchievementClick = (event: AchievementClickEvent) => {
+  console.log('成就点击:', event.achievement)
+  ElMessage.success(`恭喜获得成就：${event.achievement.title}`)
+  // 可以显示成就详情弹窗
+}
+
+// 加载历史数据用于对比
+const loadHistoricalData = async (days: number) => {
+  if (!userId.value) return
+  
+  loading.value.comparison = true
+  try {
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+    
+    const data = await reportDataService.loadHistoricalData(
+      userId.value,
+      startDate.toISOString().split('T')[0],
+      endDate.toISOString().split('T')[0]
+    )
+    
+    historicalData.value = data.dailyReadings || []
+    ElMessage.success(`已加载最近${days}天的历史数据`)
+  } catch (error) {
+    console.error('加载历史数据失败:', error)
+    ElMessage.error('历史数据加载失败')
+  } finally {
+    loading.value.comparison = false
+  }
+}
+
+// 事件处理（已在上方定义，这里删除重复定义）
+
+// 图表点击和对比变更方法已在上方定义
+
+const refreshData = () => {
+  if (userId.value) {
+    reportDataService.clearUserCache(userId.value)
+  }
+  loadAllData()
+}
+
+// getWeekKey 函数已移至 @/utils/dateUtils.ts
+
+// 生命周期
+onMounted(() => {
+  console.log('ReportPage mounted, userStore:', userStore)
+  console.log('isLoggedIn:', userStore.isLoggedIn)
+  console.log('userInfo:', userStore.userInfo)
+  console.log('token:', userStore.token)
+  
+  if (userStore.isLoggedIn) {
+    loadAllData()
+  } else {
+    ElMessage.warning('请先登录')
+  }
+})
 </script>
 
 <style scoped>
-@import '@/assets/design-system.css';
-
-.report-container {
-  max-width: 1200px;
+.enhanced-report-container {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: var(--space-6);
-  animation: fadeInUp 0.8s ease-out;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-2xl);
-  position: relative;
+  padding: 24px;
+  background: #f8f9fa;
   min-height: 100vh;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.report-container h2 {
-  font-size: var(--text-4xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--space-8);
-  text-align: center;
-  position: relative;
-  padding: var(--space-8) var(--space-6);
-  background: var(--bg-primary);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-3xl);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  transition: all var(--transition-normal);
-}
-
-.report-container h2::after {
-  content: '';
-  position: absolute;
-  bottom: -var(--space-3);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 3px;
-  background: var(--ios-blue);
-  border-radius: var(--radius-sm);
-}
-
-.report-container h2:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  border-color: rgba(0, 122, 255, 0.2);
-}
-
-.stats-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-6);
-  margin-bottom: var(--space-12);
-}
-
-.stat-card {
+.header-content {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: var(--space-6);
-  background: var(--bg-primary);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-2xl);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 1px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  transition: all var(--transition-normal);
-  overflow: hidden;
-  position: relative;
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left var(--transition-slow);
-}
-
-.stat-card:hover::before {
-  left: 100%;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 
-    0 12px 48px rgba(0, 0, 0, 0.18),
-    0 4px 16px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 122, 255, 0.3);
-}
-
-.stat-icon {
-  margin-right: var(--space-4);
-}
-
-.stat-content h3 {
-  margin: 0 0 var(--space-1) 0;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.stat-value {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-weight-bold);
-  margin: var(--space-1) 0;
-  color: var(--primary-600);
-}
-
-.stat-desc {
+.header-content h1 {
   margin: 0;
-  color: var(--text-tertiary);
-  font-size: var(--text-sm);
+  font-size: 32px;
+  font-weight: 700;
+  color: #2d3748;
+  background: linear-gradient(135deg, #409eff, #67c23a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.charts-area {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-6);
-  margin-bottom: var(--space-12);
-}
-
-.chart-card {
-  padding: var(--space-6);
-  background: var(--bg-primary);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-2xl);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 1px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
-}
-
-.chart-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
-  pointer-events: none;
-  animation: liquidFlow 30s ease-in-out infinite;
-}
-
-.chart-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 
-    0 12px 48px rgba(0, 0, 0, 0.18),
-    0 4px 16px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 122, 255, 0.3);
-}
-
-@keyframes liquidFlow {
-  0%, 100% { 
-    opacity: 0.1;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 0.2;
-    transform: scale(1.02);
-  }
-}
-
-.chart-container {
-  width: 100%;
-  height: 300px;
-}
-
-.achievements h3 {
-  margin-bottom: var(--space-8);
-  font-size: var(--text-2xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  padding: var(--space-6) var(--space-8);
-  background: var(--bg-primary);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-2xl);
-  box-shadow: 
-    0 6px 24px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  text-align: center;
-  position: relative;
-  transition: all var(--transition-normal);
-}
-
-.achievements h3::after {
-  content: '';
-  position: absolute;
-  bottom: -var(--space-2);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 2px;
-  background: var(--ios-blue);
-  border-radius: var(--radius-sm);
-}
-
-.achievements h3:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  border-color: rgba(0, 122, 255, 0.2);
-}
-
-.achievement-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-4);
-}
-
-.achievement-item {
+.header-actions {
   display: flex;
-  align-items: center;
-  padding: var(--space-6);
-  background: var(--bg-primary);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: var(--radius-2xl);
-  box-shadow: 
-    0 6px 24px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 1px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.03);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
+  gap: 12px;
 }
 
-.achievement-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left var(--transition-slow);
-}
-
-.achievement-item:hover::before {
-  left: 100%;
-}
-
-.achievement-item:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 
-    0 10px 36px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    0 2px 6px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 122, 255, 0.3);
-}
-
-.achievement-item.achieved {
-  border-color: var(--ios-green);
-  background: rgba(52, 199, 89, 0.1);
-  box-shadow: 
-    0 6px 24px rgba(52, 199, 89, 0.2),
-    0 2px 8px rgba(52, 199, 89, 0.1),
-    0 1px 4px rgba(52, 199, 89, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(52, 199, 89, 0.1);
-}
-
-.achievement-item.achieved:hover {
-  border-color: var(--ios-green);
-  box-shadow: 
-    0 10px 36px rgba(52, 199, 89, 0.3),
-    0 4px 12px rgba(52, 199, 89, 0.15),
-    0 2px 6px rgba(52, 199, 89, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(52, 199, 89, 0.15);
-}
-
-.achievement-icon {
-  margin-right: var(--space-4);
-}
-
-.achievement-content h4 {
-  margin: 0 0 5px 0;
-}
-
-.achievement-content p {
-  margin: 0 0 10px 0;
-  color: #606266;
-  font-size: 14px;
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
 @media (max-width: 768px) {
-  .stats-cards {
-    grid-template-columns: 1fr 1fr;
+  .enhanced-report-container {
+    padding: 16px;
   }
-
-  .charts-area {
-    grid-template-columns: 1fr;
+  
+  .page-header {
+    padding: 16px;
   }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .header-content h1 {
+    font-size: 24px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .main-content {
+    gap: 24px;
+  }
+}
 
-  .achievement-list {
-    grid-template-columns: 1fr;
+@media (max-width: 480px) {
+  .enhanced-report-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    padding: 12px;
+  }
+  
+  .header-content h1 {
+    font-size: 20px;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .header-actions .el-button {
+    width: 100%;
   }
 }
 </style>

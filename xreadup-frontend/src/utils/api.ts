@@ -358,7 +358,7 @@ export const reportApi = {
   getGrowthCurve: (userId: string, days: number) => api.get(`/api/report/growth-curve?userId=${userId}&days=${days}`),
 
   // 获取阅读时长数据
-  getReadingTime: (userId: string) => api.get(`/api/report/reading-time?userId=${userId}`),
+  getReadingTime: (userId: string, days: number = 7) => api.get(`/api/report/reading-time?userId=${userId}&days=${days}`),
 
   // 设置单词为不再巩固
   setWordAsNoLongerReview: (wordId: string | number) => {
@@ -368,7 +368,17 @@ export const reportApi = {
       return Promise.reject(new Error('无效的单词ID'));
     }
     return api.post(`/api/report/no-longer-review/${numericWordId}`);
-  }
+  },
+
+  // 获取历史数据
+  getHistoricalData: (userId: string, startDate: string, endDate: string) => 
+    api.get(`/api/report/historical-data?userId=${userId}&startDate=${startDate}&endDate=${endDate}`),
+
+  // 获取今日小结
+  getTodaySummary: (userId: string) => api.get(`/api/report/today/summary?userId=${userId}`),
+
+  // 获取学习周报
+  getWeeklyInsights: (userId: string) => api.get(`/api/report/weekly/insights?userId=${userId}`)
 }
 
 // 订阅相关API
