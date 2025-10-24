@@ -53,7 +53,7 @@
             <div class="filter-header">
               <el-icon class="filter-icon"><Search /></el-icon>
               <h4>搜索文章</h4>
-            </div>
+          </div>
             <el-input
               v-model="searchQuery"
               placeholder="输入关键词搜索..."
@@ -77,7 +77,7 @@
                 @click="filters.difficulty = ''; handleFilterChange()"
               >
                 全部
-              </div>
+          </div>
               <div 
                 v-for="level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']"
                 :key="level"
@@ -89,9 +89,9 @@
                 @click="filters.difficulty = level; handleFilterChange()"
               >
                 {{ level }}
-              </div>
-            </div>
           </div>
+                </div>
+              </div>
           
           <!-- 分类筛选 -->
           <div class="filter-section">
@@ -106,18 +106,18 @@
                 @click="filters.category = ''; handleFilterChange()"
               >
                 全部
-              </div>
+                      </div>
               <div 
                 v-for="option in getCategoryOptions()" 
-                :key="option.value"
+                      :key="option.value"
                 class="category-tag"
                 :class="{ active: filters.category === option.value }"
                 @click="filters.category = option.value; handleFilterChange()"
-              >
+                    >
                 {{ option.label }}
-              </div>
-            </div>
-          </div>
+                      </div>
+                </div>
+                </div>
           
           <!-- 排序方式 -->
           <div class="filter-section">
@@ -128,19 +128,35 @@
             <div class="sort-options">
               <div 
                 class="sort-option"
-                :class="{ active: sortBy === 'newest' }"
-                @click="sortBy = 'newest'; handleSortChange()"
+                :class="{ active: sortBy === 'publishedAt' }"
+                @click="sortBy = 'publishedAt'; handleSortChange()"
               >
                 <el-icon><Clock /></el-icon>
-                <span>最新</span>
+                <span>最新发布</span>
               </div>
               <div 
                 class="sort-option"
-                :class="{ active: sortBy === 'popular' }"
-                @click="sortBy = 'popular'; handleSortChange()"
+                :class="{ active: sortBy === 'readCount' }"
+                @click="sortBy = 'readCount'; handleSortChange()"
+              >
+                <el-icon><TrendCharts /></el-icon>
+                <span>阅读最多</span>
+              </div>
+              <div 
+                class="sort-option"
+                :class="{ active: sortBy === 'likeCount' }"
+                @click="sortBy = 'likeCount'; handleSortChange()"
               >
                 <el-icon><Star /></el-icon>
-                <span>热门</span>
+                <span>最受欢迎</span>
+              </div>
+              <div 
+                class="sort-option"
+                :class="{ active: sortBy === 'wordCount' }"
+                @click="sortBy = 'wordCount'; handleSortChange()"
+              >
+                <el-icon><Document /></el-icon>
+                <span>篇幅长度</span>
               </div>
             </div>
           </div>
@@ -167,10 +183,10 @@
           <div class="view-toggle">
             <el-radio-group v-model="viewMode" size="small">
               <el-radio-button label="card">
-                <el-icon><Grid /></el-icon>
+                <el-icon><View /></el-icon>
               </el-radio-button>
               <el-radio-button label="list">
-                <el-icon><Menu /></el-icon>
+                <el-icon><List /></el-icon>
               </el-radio-button>
             </el-radio-group>
           </div>
@@ -200,43 +216,57 @@
           </div>
         </div>
         
-        <!-- 文章列表 - 列表视图 -->
-        <div v-else class="article-table">
-          <el-table :data="articles" style="width: 100%">
-            <el-table-column prop="title" label="标题" min-width="200">
-              <template #default="scope">
-                <div class="article-title-cell" @click="handleArticleClick(scope.row.id)">
-                  <span class="article-title-text">{{ scope.row.title }}</span>
-                  <el-tag v-if="scope.row.status === 'featured'" size="small" type="warning">精选</el-tag>
+        <!-- 文章列表 - 高密度列表视图 -->
+        <div v-else class="article-list-container">
+          <div 
+            v-for="article in articles" 
+            :key="article.id" 
+            class="article-list-item"
+            @click="handleArticleClick(article.id)"
+          >
+            <!-- 文章内容 -->
+            <div class="article-list-content">
+              <!-- 顶部信息栏 -->
+              <div class="article-list-header">
+                <div class="source-info">
+                  <span class="source-name" v-if="article.source">{{ formatSourceName(article.source) }}</span>
+                  <span class="publish-time" v-if="article.publishedAt">{{ formatPublishTime(article.publishedAt) }}</span>
                 </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="category" label="分类" width="100">
-              <template #default="scope">
-                <el-tag size="small">{{ formatCategory(scope.row.category) }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="difficulty" label="难度" width="80">
-              <template #default="scope">
-                <el-tag size="small" :type="getDifficultyTagType(scope.row.difficulty)">
-                  {{ scope.row.difficulty }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="wordCount" label="词数" width="80" />
-            <el-table-column prop="readTime" label="时长" width="80">
-              <template #default="scope">
-                <span>{{ scope.row.readTime || 0 }}分钟</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="120">
-              <template #default="scope">
-                <el-button type="primary" size="small" @click="handleArticleClick(scope.row.id)">
+                <div class="category-tags">
+                  <span class="category-tag">{{ formatCategory(article.category) }}</span>
+                  <span class="difficulty-tag">{{ getDifficultyText(article.difficulty) }}</span>
+                </div>
+              </div>
+
+              <!-- 标题 -->
+              <h3 class="article-list-title">{{ article.title }}</h3>
+
+              <!-- 摘要 -->
+              <p class="article-list-description">
+                {{ article.description || (article.enContent ? truncateText(article.enContent, 200) + '...' : '暂无描述') }}
+              </p>
+
+              <!-- 底部元信息 -->
+              <div class="article-list-footer">
+                <div class="reading-info">
+                  <span class="read-time">{{ getEstimatedReadTime(article) }}分钟阅读</span>
+                  <span class="word-count" v-if="article.wordCount">{{ formatWordCount(article.wordCount) }}词</span>
+                  <span class="read-count" v-if="article.readCount">{{ article.readCount }}阅读</span>
+                </div>
+                <div class="article-actions">
+                  <el-button 
+                    type="primary" 
+                    size="small"
+                    class="read-button"
+                    @click.stop="handleArticleClick(article.id)"
+                  >
+                    <el-icon><ArrowRight /></el-icon>
                   阅读
                 </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- 分页控件 -->
@@ -274,7 +304,9 @@ import {
   TrendCharts,
   Sort,
   Star,
-  Refresh
+  Refresh,
+  View,
+  List
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { debounce } from 'lodash-es'
@@ -311,7 +343,7 @@ const viewMode = ref('card')
 const isFilterPanelCollapsed = ref(false)
 
 // 排序方式
-const sortBy = ref('newest')
+const sortBy = ref('publishedAt')
 
 // 搜索查询
 const searchQuery = ref('')
@@ -357,7 +389,7 @@ const handleSearch = debounce(() => {
 const resetFilters = () => {
   filters.difficulty = ''
   filters.category = ''
-  sortBy.value = 'newest'
+  sortBy.value = 'publishedAt'
   searchQuery.value = ''
   
   pagination.currentPage = 1
@@ -382,6 +414,99 @@ const handleArticleClick = (articleId: number | string) => {
   router.push(`/article/${articleId}`)
 }
 
+// 处理图片加载错误
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.src = '/default-article.jpg'
+}
+
+// 格式化来源名称
+const formatSourceName = (source: string) => {
+  if (!source) return ''
+  
+  // 如果已经是简短的域名，直接返回
+  if (!source.includes('/') && !source.includes('.')) {
+    return source
+  }
+  
+  try {
+    // 确保有协议
+    const urlString = source.startsWith('http') ? source : `https://${source}`
+    const url = new URL(urlString)
+    
+    // 提取域名并清理
+    let hostname = url.hostname
+      .replace('www.', '')
+      .replace(/^https?:\/\//, '')
+      .split('/')[0]
+      .split('?')[0]
+      .split('#')[0]
+    
+    // 移除常见的子域名前缀
+    const commonPrefixes = ['m.', 'mobile.', 'en.', 'zh.', 'api.']
+    for (const prefix of commonPrefixes) {
+      if (hostname.startsWith(prefix)) {
+        hostname = hostname.substring(prefix.length)
+        break
+      }
+    }
+    
+    return hostname
+  } catch {
+    // 如果URL解析失败，尝试简单的字符串处理
+    return source
+      .replace(/^https?:\/\//, '')
+      .replace('www.', '')
+      .split('/')[0]
+      .split('?')[0]
+      .split('#')[0]
+      .split('%')[0] // 移除URL编码字符
+  }
+}
+
+// 格式化发布时间
+const formatPublishTime = (publishedAt: string | Date) => {
+  if (!publishedAt) return ''
+  const date = new Date(publishedAt)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+  
+  if (diffHours < 1) return '刚刚'
+  if (diffHours < 24) return `${diffHours}小时前`
+  if (diffDays < 7) return `${diffDays}天前`
+  return date.toLocaleDateString()
+}
+
+// 获取难度文本
+const getDifficultyText = (difficulty: string | number) => {
+  if (!difficulty) return '未知'
+  return String(difficulty)
+}
+
+// 截断文本
+const truncateText = (text: string, maxLength: number): string => {
+  if (!text || text.length <= maxLength) return text
+  return text.substring(0, maxLength)
+}
+
+// 格式化词数
+const formatWordCount = (wordCount: number) => {
+  if (wordCount < 1000) return wordCount.toString()
+  return (wordCount / 1000).toFixed(1) + 'k'
+}
+
+// 估算阅读时间
+const getEstimatedReadTime = (article: any) => {
+  if (article.readTime) return article.readTime
+  if (article.wordCount) {
+    // 按每分钟200词计算
+    return Math.max(1, Math.ceil(article.wordCount / 200))
+  }
+  return 5 // 默认5分钟
+}
+
 // 获取文章列表
 const fetchArticles = async () => {
   loading.value = true
@@ -397,9 +522,9 @@ const fetchArticles = async () => {
     if (filters.category) params.category = filters.category
     if (searchQuery.value) params.keyword = searchQuery.value
     
-    // 添加排序方式
-    if (sortBy.value === 'newest') params.sort = 'create_time,desc'
-    else if (sortBy.value === 'popular') params.sort = 'read_count,desc'
+    // 添加排序方式 - 直接使用后端支持的字段名
+    params.sortBy = sortBy.value
+    params.ascending = false // 默认降序排列
     
     const res = await articleApi.getArticles(params)
     
@@ -723,276 +848,91 @@ onMounted(() => {
   border-color: rgba(0, 122, 255, 0.2);
 }
 
-/* 左侧筛选面板 */
-.filter-panel {
-  width: 280px;
-  padding: var(--space-6);
-  background: var(--bg-primary);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    0 1px 4px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
+/* 筛选面板样式 - 使用全局设计系统 */
+
+/* 确保筛选面板中的标签样式正确应用 */
+.filter-panel .difficulty-tag {
+  padding: var(--space-2) var(--space-3) !important;
+  border-radius: var(--radius-lg) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-weight-medium) !important;
+  cursor: pointer !important;
+  transition: all var(--transition-normal) !important;
+  border: 2px solid transparent !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  color: var(--text-secondary) !important;
+  text-align: center !important;
+  min-width: 40px !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
-.filter-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.01) 0%, rgba(90, 200, 250, 0.005) 50%, rgba(0, 122, 255, 0.01) 100%);
-  pointer-events: none;
-  animation: liquidFlow 40s ease-in-out infinite;
-}
-
-.filter-panel-collapsed {
-  width: 60px;
-  padding: var(--space-4);
-}
-
-.filter-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-6);
-  position: relative;
-  z-index: 2;
-}
-
-.filter-panel-header h3 {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.filter-section {
-  margin-bottom: var(--space-6);
-  position: relative;
-  z-index: 2;
-}
-
-.filter-section h4 {
-  font-size: var(--text-sm);
-  margin: 0 0 var(--space-4) 0;
-  color: var(--text-primary);
-  font-weight: var(--font-weight-semibold);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  position: relative;
-}
-
-.filter-section h4::after {
-  content: '';
-  position: absolute;
-  bottom: -var(--space-2);
-  left: 0;
-  width: 30px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--ios-blue), rgba(0, 122, 255, 0.3));
-  border-radius: var(--radius-sm);
-}
-
-/* 筛选面板重新设计样式 */
-
-/* 筛选区域标题 */
-.filter-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(0, 122, 255, 0.1);
-}
-
-.filter-icon {
-  color: var(--ios-blue);
-  font-size: 16px;
-}
-
-.filter-header h4 {
-  margin: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-}
-
-/* 搜索框样式 */
-.search-input {
-  width: 100%;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  border-radius: var(--radius-lg);
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 122, 255, 0.2);
-  transition: all var(--transition-normal);
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  border-color: rgba(0, 122, 255, 0.4);
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  border-color: var(--ios-blue);
-  box-shadow: 
-    0 4px 12px rgba(0, 122, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-/* 难度标签样式 */
-.difficulty-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.difficulty-tag {
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-lg);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  border: 2px solid transparent;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  color: var(--text-secondary);
-  text-align: center;
-  min-width: 40px;
-  position: relative;
-  overflow: hidden;
-}
-
-.difficulty-tag::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left var(--transition-slow);
-}
-
-.difficulty-tag:hover::before {
-  left: 100%;
-}
-
-.difficulty-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.difficulty-tag.active {
-  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
-  color: var(--text-inverse);
-  border-color: var(--ios-blue);
+.filter-panel .difficulty-tag.active {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--ios-blue) !important;
   box-shadow: 
     0 4px 12px rgba(0, 122, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
-/* 难度等级颜色 */
-.difficulty-tag.level-A1,
-.difficulty-tag.level-A2 {
-  border-color: #67c23a;
+.filter-panel .difficulty-tag.level-A1,
+.filter-panel .difficulty-tag.level-A2 {
+  border-color: #67c23a !important;
 }
 
-.difficulty-tag.level-A1.active,
-.difficulty-tag.level-A2.active {
-  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
-  border-color: #67c23a;
+.filter-panel .difficulty-tag.level-A1.active,
+.filter-panel .difficulty-tag.level-A2.active {
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%) !important;
+  border-color: #67c23a !important;
 }
 
-.difficulty-tag.level-B1,
-.difficulty-tag.level-B2 {
-  border-color: #e6a23c;
+.filter-panel .difficulty-tag.level-B1,
+.filter-panel .difficulty-tag.level-B2 {
+  border-color: #e6a23c !important;
 }
 
-.difficulty-tag.level-B1.active,
-.difficulty-tag.level-B2.active {
-  background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%);
-  border-color: #e6a23c;
+.filter-panel .difficulty-tag.level-B1.active,
+.filter-panel .difficulty-tag.level-B2.active {
+  background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%) !important;
+  border-color: #e6a23c !important;
 }
 
-.difficulty-tag.level-C1,
-.difficulty-tag.level-C2 {
-  border-color: #f56c6c;
+.filter-panel .difficulty-tag.level-C1,
+.filter-panel .difficulty-tag.level-C2 {
+  border-color: #f56c6c !important;
 }
 
-.difficulty-tag.level-C1.active,
-.difficulty-tag.level-C2.active {
-  background: linear-gradient(135deg, #f56c6c 0%, #f89898 100%);
-  border-color: #f56c6c;
+.filter-panel .difficulty-tag.level-C1.active,
+.filter-panel .difficulty-tag.level-C2.active {
+  background: linear-gradient(135deg, #f56c6c 0%, #f89898 100%) !important;
+  border-color: #f56c6c !important;
 }
 
-/* 分类标签样式 */
-.category-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+.filter-panel .category-tag {
+  padding: var(--space-2) var(--space-4) !important;
+  border-radius: var(--radius-3xl) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-weight-medium) !important;
+  cursor: pointer !important;
+  transition: all var(--transition-normal) !important;
+  border: 2px solid rgba(0, 122, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  color: var(--text-secondary) !important;
+  text-align: center !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
-.category-tag {
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-3xl);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  border: 2px solid rgba(0, 122, 255, 0.2);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  color: var(--text-secondary);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.category-tag::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left var(--transition-slow);
-}
-
-.category-tag:hover::before {
-  left: 100%;
-}
-
-.category-tag:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: rgba(0, 122, 255, 0.4);
-}
-
-.category-tag.active {
-  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
-  color: var(--text-inverse);
-  border-color: var(--ios-blue);
+.filter-panel .category-tag.active {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--ios-blue) !important;
   box-shadow: 
     0 4px 12px rgba(0, 122, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
 /* 排序选项样式 */
@@ -1204,26 +1144,230 @@ onMounted(() => {
   height: 100%;
 }
 
-/* 文章列表视图 */
-.article-table {
+/* 文章列表视图 - 高密度设计 */
+.article-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   margin-bottom: var(--space-6);
 }
 
-.article-title-cell {
+.article-list-item {
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.article-list-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+/* 文章内容区域 */
+.article-list-content {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* 文章头部信息 */
+.article-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.source-info {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  cursor: pointer;
 }
 
-.article-title-text {
+.source-name {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.publish-time {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* 文章列表中的标签样式 - 简单信息标签 */
+.article-list-item .category-tag {
+  padding: var(--space-1) var(--space-2) !important;
+  background: rgba(0, 122, 255, 0.1) !important;
+  color: var(--ios-blue) !important;
+  border-radius: var(--radius-full) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-weight-medium) !important;
+  border: 1px solid rgba(0, 122, 255, 0.2) !important;
+  cursor: default !important;
+  backdrop-filter: none !important;
+  position: static !important;
+  overflow: visible !important;
+  min-width: auto !important;
+  text-align: left !important;
+}
+
+.article-list-item .difficulty-tag {
+  padding: var(--space-1) var(--space-2) !important;
+  background: rgba(255, 149, 0, 0.1) !important;
+  color: var(--ios-orange) !important;
+  border-radius: var(--radius-full) !important;
+  font-size: var(--text-xs) !important;
+  font-weight: var(--font-weight-medium) !important;
+  border: 1px solid rgba(255, 149, 0, 0.2) !important;
+  cursor: default !important;
+  backdrop-filter: none !important;
+  position: static !important;
+  overflow: visible !important;
+  min-width: auto !important;
+  text-align: left !important;
+}
+
+/* 文章标题 */
+.article-list-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 文章描述 */
+.article-list-description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 文章底部信息 */
+.article-list-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.reading-info {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.read-time,
+.word-count,
+.read-count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.read-time {
   color: var(--ios-blue);
-  transition: color var(--transition-normal);
 }
 
-.article-title-text:hover {
-  text-decoration: underline;
-  color: var(--primary-600);
+.word-count {
+  color: var(--ios-green);
+}
+
+.read-count {
+  color: var(--text-secondary);
+}
+
+.article-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.read-button {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-xs);
+  box-shadow: 
+    0 2px 8px rgba(0, 122, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.read-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.read-button:hover::before {
+  left: 100%;
+}
+
+.read-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 4px 12px rgba(0, 122, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .article-list-content {
+    padding: var(--space-3);
+  }
+  
+  .article-list-header {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  
+  .article-list-footer {
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: stretch;
+  }
+  
+  .reading-info {
+    justify-content: space-around;
+  }
+  
+  .article-actions {
+    justify-content: center;
+  }
 }
 
 /* 分页容器 */

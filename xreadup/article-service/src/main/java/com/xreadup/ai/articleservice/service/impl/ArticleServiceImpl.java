@@ -109,8 +109,45 @@ public class ArticleServiceImpl implements ArticleService {
                 queryWrapper.eq(Article::getDifficultyLevel, query.getDifficultyLevel());
             }
             
-            // 根据发布时间排序
-            queryWrapper.orderByDesc(Article::getPublishedAt);
+            // 根据排序参数进行排序
+            if (StringUtils.isNotBlank(query.getSortBy())) {
+                switch (query.getSortBy()) {
+                    case "publishedAt":
+                        if (query.getAscending() != null && query.getAscending()) {
+                            queryWrapper.orderByAsc(Article::getPublishedAt);
+                        } else {
+                            queryWrapper.orderByDesc(Article::getPublishedAt);
+                        }
+                        break;
+                    case "readCount":
+                        if (query.getAscending() != null && query.getAscending()) {
+                            queryWrapper.orderByAsc(Article::getReadCount);
+                        } else {
+                            queryWrapper.orderByDesc(Article::getReadCount);
+                        }
+                        break;
+                    case "likeCount":
+                        if (query.getAscending() != null && query.getAscending()) {
+                            queryWrapper.orderByAsc(Article::getLikeCount);
+                        } else {
+                            queryWrapper.orderByDesc(Article::getLikeCount);
+                        }
+                        break;
+                    case "wordCount":
+                        if (query.getAscending() != null && query.getAscending()) {
+                            queryWrapper.orderByAsc(Article::getWordCount);
+                        } else {
+                            queryWrapper.orderByDesc(Article::getWordCount);
+                        }
+                        break;
+                    default:
+                        queryWrapper.orderByDesc(Article::getPublishedAt);
+                        break;
+                }
+            } else {
+                // 默认按发布时间排序
+                queryWrapper.orderByDesc(Article::getPublishedAt);
+            }
             
             // 执行分页查询
             Page<Article> page = new Page<>(query.getPage(), query.getSize());
