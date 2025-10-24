@@ -33,61 +33,13 @@
       </div>
     </div>
 
-    <!-- 快捷筛选标签 -->
-    <div class="quick-filter-tags">
-      <div class="filter-group">
-        <span class="filter-label">难度:</span>
-        <el-radio-group v-model="filters.difficulty" size="small" @change="handleFilterChange">
-          <el-radio-button label="">全部</el-radio-button>
-          <el-radio-button label="A1">A1</el-radio-button>
-          <el-radio-button label="A2">A2</el-radio-button>
-          <el-radio-button label="B1">B1</el-radio-button>
-          <el-radio-button label="B2">B2</el-radio-button>
-          <el-radio-button label="C1">C1</el-radio-button>
-          <el-radio-button label="C2">C2</el-radio-button>
-        </el-radio-group>
-      </div>
-      
-      <div class="filter-group">
-        <span class="filter-label">分类:</span>
-        <el-radio-group v-model="filters.category" size="small" @change="handleFilterChange">
-          <el-radio-button label="">全部</el-radio-button>
-          <el-radio-button 
-            v-for="option in getCategoryOptions()" 
-            :key="option.value"
-            :label="option.value"
-          >
-            {{ option.label }}
-          </el-radio-button>
-        </el-radio-group>
-      </div>
-      
-      <div class="filter-group">
-        <span class="filter-label">排序:</span>
-        <el-radio-group v-model="sortBy" size="small" @change="handleSortChange">
-          <el-radio-button label="newest">最新</el-radio-button>
-          <el-radio-button label="popular">热门</el-radio-button>
-        </el-radio-group>
-      </div>
-      
-      <div class="search-box">
-        <el-input
-          v-model="searchQuery"
-          placeholder="搜索文章标题或内容"
-          prefix-icon="Search"
-          clearable
-          @input="handleSearch"
-          size="small"
-        />
-      </div>
-    </div>
 
     <!-- 主体内容区 -->
     <div class="main-content">
-      <!-- 左侧高级筛选面板 -->
+      <!-- 左侧筛选面板 -->
       <div class="filter-panel" :class="{ 'filter-panel-collapsed': isFilterPanelCollapsed }">
         <div class="filter-panel-header">
-          <h3>高级筛选</h3>
+          <h3>筛选</h3>
           <el-button type="text" @click="toggleFilterPanel">
             <el-icon>
               <component :is="isFilterPanelCollapsed ? 'ArrowRight' : 'ArrowLeft'" />
@@ -96,173 +48,114 @@
         </div>
         
         <div class="filter-panel-content" v-show="!isFilterPanelCollapsed">
-          <!-- 阅读状态筛选 -->
+          <!-- 搜索框 -->
           <div class="filter-section">
-            <h4>阅读状态</h4>
-            <el-checkbox-group v-model="filters.readStatus" @change="handleFilterChange">
-              <el-checkbox label="read">已读</el-checkbox>
-              <el-checkbox label="unread">未读</el-checkbox>
-            </el-checkbox-group>
-          </div>
-          
-          <!-- 文章状态筛选 -->
-          <div class="filter-section">
-            <h4>文章状态</h4>
-            <el-checkbox-group v-model="filters.articleStatus" @change="handleFilterChange">
-              <el-checkbox label="normal">普通</el-checkbox>
-              <el-checkbox label="featured">精选</el-checkbox>
-            </el-checkbox-group>
-          </div>
-          
-          <!-- 词汇量范围筛选 -->
-          <div class="filter-section">
-            <h4>词汇量范围</h4>
-            <el-slider
-              v-model="filters.wordCountRange"
-              range
-              :min="0"
-              :max="2000"
-              :step="100"
-              @change="handleFilterChange"
-            />
-            <div class="range-labels">
-              <span>{{ filters.wordCountRange[0] }}</span>
-              <span>{{ filters.wordCountRange[1] }}</span>
+            <div class="filter-header">
+              <el-icon class="filter-icon"><Search /></el-icon>
+              <h4>搜索文章</h4>
             </div>
-          </div>
-          
-          <!-- 阅读时长筛选 -->
-          <div class="filter-section">
-            <h4>预计阅读时长</h4>
-            <el-slider
-              v-model="filters.readTimeRange"
-              range
-              :min="0"
-              :max="30"
-              :step="5"
-              @change="handleFilterChange"
+            <el-input
+              v-model="searchQuery"
+              placeholder="输入关键词搜索..."
+              prefix-icon="Search"
+              clearable
+              @input="handleSearch"
+              class="search-input"
             />
-            <div class="range-labels">
-              <span>{{ filters.readTimeRange[0] }}分钟</span>
-              <span>{{ filters.readTimeRange[1] }}分钟</span>
-            </div>
           </div>
           
-          <!-- 高级筛选切换 -->
-          <div class="advanced-toggle">
-            <el-button 
-              type="text" 
-              @click="advancedFilters.useAdvanced = !advancedFilters.useAdvanced"
-              :icon="advancedFilters.useAdvanced ? 'ArrowUp' : 'ArrowDown'"
-            >
-              {{ advancedFilters.useAdvanced ? '隐藏高级筛选' : '显示高级筛选' }}
-            </el-button>
-          </div>
-
-          <!-- 高级筛选面板 -->
-          <div class="advanced-filters" v-if="advancedFilters.useAdvanced">
-            <div class="filters-header">
-              <div class="filters-title">
-                <h4>高级筛选</h4>
-                <div class="filter-tip">
-                  <el-icon><InfoFilled /></el-icon>
-                  <span>注意：语言和国家不能同时使用，优先使用语言筛选</span>
-                </div>
+          <!-- 难度筛选 -->
+          <div class="filter-section">
+            <div class="filter-header">
+              <el-icon class="filter-icon"><TrendCharts /></el-icon>
+              <h4>难度等级</h4>
+            </div>
+            <div class="difficulty-tags">
+              <div 
+                class="difficulty-tag"
+                :class="{ active: filters.difficulty === '' }"
+                @click="filters.difficulty = ''; handleFilterChange()"
+              >
+                全部
+              </div>
+              <div 
+                v-for="level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']"
+                :key="level"
+                class="difficulty-tag"
+                :class="{ 
+                  active: filters.difficulty === level,
+                  [`level-${level}`]: true
+                }"
+                @click="filters.difficulty = level; handleFilterChange()"
+              >
+                {{ level }}
               </div>
             </div>
-            <div class="filters-content">
-              <div class="filter-row">
-                <div class="filter-item">
-                  <label>
-                    语言
-                    <el-tooltip content="控制新闻的语言，如英语、中文、法语等" placement="top">
-                      <el-icon class="help-icon"><QuestionFilled /></el-icon>
-                    </el-tooltip>
-                  </label>
-                  <el-select v-model="advancedFilters.language" placeholder="选择语言" size="small">
-                    <el-option 
-                      v-for="option in getLanguageOptions()" 
-                      :key="option.value"
-                      :label="getLanguageLabel(option.value)"
-                      :value="option.value"
-                    >
-                      <div class="option-content">
-                        <span class="option-flag">{{ option.flag }}</span>
-                        <span class="option-label">{{ option.label }}</span>
-                        <span class="option-desc">{{ option.description }}</span>
-                      </div>
-                    </el-option>
-                  </el-select>
-                </div>
-                <div class="filter-item">
-                  <label>
-                    国家（可选）
-                    <el-tooltip content="可选：控制新闻来源的国家。不选择则获取所有国家的新闻" placement="top">
-                      <el-icon class="help-icon"><QuestionFilled /></el-icon>
-                    </el-tooltip>
-                  </label>
-                  <el-select 
-                    v-model="advancedFilters.country" 
-                    placeholder="不限国家" 
-                    clearable 
-                    size="small"
-                    :disabled="!!advancedFilters.language"
-                  >
-                    <el-option 
-                      v-for="option in getCountryOptions()" 
-                      :key="option.value"
-                      :label="getCountryLabel(option.value)"
-                      :value="option.value"
-                    >
-                      <div class="option-content">
-                        <span class="option-flag">{{ option.flag }}</span>
-                        <span class="option-label">{{ option.label }}</span>
-                        <span class="option-desc">{{ option.description }}</span>
-                      </div>
-                    </el-option>
-                  </el-select>
-                </div>
-                <div class="filter-item">
-                  <label>排序</label>
-                  <el-select v-model="advancedFilters.sortBy" placeholder="选择排序" size="small">
-                    <el-option 
-                      v-for="option in getSortOptions()" 
-                      :key="option.value"
-                      :label="option.label"
-                      :value="option.value"
-                    />
-                  </el-select>
-                </div>
+          </div>
+          
+          <!-- 分类筛选 -->
+          <div class="filter-section">
+            <div class="filter-header">
+              <el-icon class="filter-icon"><Collection /></el-icon>
+              <h4>文章分类</h4>
+            </div>
+            <div class="category-tags">
+              <div 
+                class="category-tag"
+                :class="{ active: filters.category === '' }"
+                @click="filters.category = ''; handleFilterChange()"
+              >
+                全部
               </div>
-              <div class="filter-row">
-                <div class="filter-item">
-                  <label>开始日期</label>
-                  <el-date-picker
-                    v-model="advancedFilters.fromDate"
-                    type="datetime"
-                    placeholder="选择开始日期"
-                    size="small"
-                    format="YYYY-MM-DD HH:mm:ss"
-                    value-format="YYYY-MM-DDTHH:mm:ssZ"
-                  />
-                </div>
-                <div class="filter-item">
-                  <label>结束日期</label>
-                  <el-date-picker
-                    v-model="advancedFilters.toDate"
-                    type="datetime"
-                    placeholder="选择结束日期"
-                    size="small"
-                    format="YYYY-MM-DD HH:mm:ss"
-                    value-format="YYYY-MM-DDTHH:mm:ssZ"
-                  />
-                </div>
+              <div 
+                v-for="option in getCategoryOptions()" 
+                :key="option.value"
+                class="category-tag"
+                :class="{ active: filters.category === option.value }"
+                @click="filters.category = option.value; handleFilterChange()"
+              >
+                {{ option.label }}
+              </div>
+            </div>
+          </div>
+          
+          <!-- 排序方式 -->
+          <div class="filter-section">
+            <div class="filter-header">
+              <el-icon class="filter-icon"><Sort /></el-icon>
+              <h4>排序方式</h4>
+            </div>
+            <div class="sort-options">
+              <div 
+                class="sort-option"
+                :class="{ active: sortBy === 'newest' }"
+                @click="sortBy = 'newest'; handleSortChange()"
+              >
+                <el-icon><Clock /></el-icon>
+                <span>最新</span>
+              </div>
+              <div 
+                class="sort-option"
+                :class="{ active: sortBy === 'popular' }"
+                @click="sortBy = 'popular'; handleSortChange()"
+              >
+                <el-icon><Star /></el-icon>
+                <span>热门</span>
               </div>
             </div>
           </div>
 
           <!-- 重置筛选按钮 -->
-          <el-button type="primary" @click="resetFilters" class="reset-button">重置筛选</el-button>
+          <div class="filter-actions">
+            <el-button 
+              type="primary" 
+              @click="resetFilters" 
+              class="reset-button"
+              :icon="Refresh"
+            >
+              重置筛选
+            </el-button>
+          </div>
         </div>
       </div>
       
@@ -378,15 +271,14 @@ import {
   Search, 
   ArrowRight, 
   ArrowLeft,
-  ArrowUp,
-  ArrowDown,
-  InfoFilled,
-  QuestionFilled
+  TrendCharts,
+  Sort,
+  Star,
+  Refresh
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { debounce } from 'lodash-es'
 import { getCategoryOptions } from '@/utils/categoryConfig'
-import { getLanguageOptions, getCountryOptions, getSortOptions, getLanguageLabel, getCountryLabel, getSortLabel, getLanguageDescription, getCountryDescription } from '@/utils/gnewsConfig'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -427,22 +319,9 @@ const searchQuery = ref('')
 // 筛选条件
 const filters = reactive({
   difficulty: '',
-  category: '',
-  readStatus: [] as string[],
-  articleStatus: [] as string[],
-  wordCountRange: [0, 2000],
-  readTimeRange: [0, 30]
+  category: ''
 })
 
-// 高级筛选选项
-const advancedFilters = reactive({
-  language: 'en',
-  country: '',
-  sortBy: 'publishedAt',
-  fromDate: '',
-  toDate: '',
-  useAdvanced: false
-})
 
 // 分页信息
 const pagination = reactive({
@@ -478,20 +357,8 @@ const handleSearch = debounce(() => {
 const resetFilters = () => {
   filters.difficulty = ''
   filters.category = ''
-  filters.readStatus = []
-  filters.articleStatus = []
-  filters.wordCountRange = [0, 2000]
-  filters.readTimeRange = [0, 30]
   sortBy.value = 'newest'
   searchQuery.value = ''
-  
-  // 重置高级筛选
-  advancedFilters.language = 'en'
-  advancedFilters.country = ''
-  advancedFilters.sortBy = 'publishedAt'
-  advancedFilters.fromDate = ''
-  advancedFilters.toDate = ''
-  advancedFilters.useAdvanced = false
   
   pagination.currentPage = 1
   fetchArticles()
@@ -529,14 +396,6 @@ const fetchArticles = async () => {
     if (filters.difficulty) params.difficultyLevel = filters.difficulty
     if (filters.category) params.category = filters.category
     if (searchQuery.value) params.keyword = searchQuery.value
-    
-    // 添加词汇量范围筛选
-    params.minWordCount = filters.wordCountRange[0]
-    params.maxWordCount = filters.wordCountRange[1]
-    
-    // 添加阅读时长筛选
-    params.minReadTime = filters.readTimeRange[0]
-    params.maxReadTime = filters.readTimeRange[1]
     
     // 添加排序方式
     if (sortBy.value === 'newest') params.sort = 'create_time,desc'
@@ -822,71 +681,6 @@ onMounted(() => {
   color: var(--text-tertiary);
 }
 
-/* 快捷筛选标签 */
-.quick-filter-tags {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: var(--space-4);
-  margin-bottom: var(--space-8);
-  padding: var(--space-4) var(--space-6);
-  background: var(--bg-primary);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-2xl);
-  box-shadow: 
-    0 6px 24px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
-  align-items: center;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 122, 255, 0.3) transparent;
-}
-
-.quick-filter-tags::-webkit-scrollbar {
-  height: 4px;
-}
-
-.quick-filter-tags::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.quick-filter-tags::-webkit-scrollbar-thumb {
-  background: rgba(0, 122, 255, 0.3);
-  border-radius: 2px;
-}
-
-.quick-filter-tags::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 122, 255, 0.5);
-}
-
-.quick-filter-tags:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.15),
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  border-color: rgba(0, 122, 255, 0.2);
-}
-
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.filter-label {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-}
 
 /* 主体内容区 */
 .main-content {
@@ -1007,6 +801,306 @@ onMounted(() => {
   border-radius: var(--radius-sm);
 }
 
+/* 筛选面板重新设计样式 */
+
+/* 筛选区域标题 */
+.filter-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(0, 122, 255, 0.1);
+}
+
+.filter-icon {
+  color: var(--ios-blue);
+  font-size: 16px;
+}
+
+.filter-header h4 {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+/* 搜索框样式 */
+.search-input {
+  width: 100%;
+}
+
+.search-input :deep(.el-input__wrapper) {
+  border-radius: var(--radius-lg);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+  transition: all var(--transition-normal);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  border-color: rgba(0, 122, 255, 0.4);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--ios-blue);
+  box-shadow: 
+    0 4px 12px rgba(0, 122, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* 难度标签样式 */
+.difficulty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.difficulty-tag {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  color: var(--text-secondary);
+  text-align: center;
+  min-width: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.difficulty-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left var(--transition-slow);
+}
+
+.difficulty-tag:hover::before {
+  left: 100%;
+}
+
+.difficulty-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.difficulty-tag.active {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
+  color: var(--text-inverse);
+  border-color: var(--ios-blue);
+  box-shadow: 
+    0 4px 12px rgba(0, 122, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 难度等级颜色 */
+.difficulty-tag.level-A1,
+.difficulty-tag.level-A2 {
+  border-color: #67c23a;
+}
+
+.difficulty-tag.level-A1.active,
+.difficulty-tag.level-A2.active {
+  background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+  border-color: #67c23a;
+}
+
+.difficulty-tag.level-B1,
+.difficulty-tag.level-B2 {
+  border-color: #e6a23c;
+}
+
+.difficulty-tag.level-B1.active,
+.difficulty-tag.level-B2.active {
+  background: linear-gradient(135deg, #e6a23c 0%, #f0c78a 100%);
+  border-color: #e6a23c;
+}
+
+.difficulty-tag.level-C1,
+.difficulty-tag.level-C2 {
+  border-color: #f56c6c;
+}
+
+.difficulty-tag.level-C1.active,
+.difficulty-tag.level-C2.active {
+  background: linear-gradient(135deg, #f56c6c 0%, #f89898 100%);
+  border-color: #f56c6c;
+}
+
+/* 分类标签样式 */
+.category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.category-tag {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-3xl);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 2px solid rgba(0, 122, 255, 0.2);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  color: var(--text-secondary);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left var(--transition-slow);
+}
+
+.category-tag:hover::before {
+  left: 100%;
+}
+
+.category-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 122, 255, 0.4);
+}
+
+.category-tag.active {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
+  color: var(--text-inverse);
+  border-color: var(--ios-blue);
+  box-shadow: 
+    0 4px 12px rgba(0, 122, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 排序选项样式 */
+.sort-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sort-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: 2px solid rgba(0, 122, 255, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  color: var(--text-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.sort-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left var(--transition-slow);
+}
+
+.sort-option:hover::before {
+  left: 100%;
+}
+
+.sort-option:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 122, 255, 0.3);
+}
+
+.sort-option.active {
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
+  color: var(--text-inverse);
+  border-color: var(--ios-blue);
+  box-shadow: 
+    0 4px 12px rgba(0, 122, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.sort-option .el-icon {
+  font-size: 16px;
+}
+
+/* 筛选操作按钮 */
+.filter-actions {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(0, 122, 255, 0.1);
+}
+
+.reset-button {
+  width: 100%;
+  background: linear-gradient(135deg, var(--ios-blue) 0%, #5AC8FA 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--font-weight-medium);
+  box-shadow: 
+    0 4px 12px rgba(0, 122, 255, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.reset-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--transition-slow);
+}
+
+.reset-button:hover::before {
+  left: 100%;
+}
+
+.reset-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 16px rgba(0, 122, 255, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
 .range-labels {
   display: flex;
   justify-content: space-between;
@@ -1056,110 +1150,6 @@ onMounted(() => {
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-/* 高级筛选面板样式 */
-.advanced-filters {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.filters-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.filters-title h4 {
-  margin: 0 0 6px 0;
-  color: #303133;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.filter-tip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #909399;
-  font-size: 11px;
-}
-
-.help-icon {
-  color: #409eff;
-  cursor: help;
-  font-size: 12px;
-}
-
-.filters-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.filter-row {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 150px;
-  flex: 1;
-}
-
-.filter-item label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #606266;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.option-content {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-}
-
-.option-flag {
-  font-size: 14px;
-  min-width: 16px;
-}
-
-.option-label {
-  font-weight: 500;
-  color: #303133;
-  font-size: 12px;
-}
-
-.option-desc {
-  font-size: 10px;
-  color: #909399;
-  margin-left: auto;
-}
-
-.advanced-toggle {
-  text-align: center;
-  margin: 12px 0;
-}
-
-.advanced-toggle .el-button {
-  color: #409eff;
-  font-size: 12px;
-}
-
-.advanced-toggle .el-button:hover {
-  color: #66b1ff;
-}
 
 /* 右侧文章列表 */
 .article-list-view {
@@ -1200,11 +1190,6 @@ onMounted(() => {
   z-index: 2;
 }
 
-.search-box {
-  width: 250px; /* 稍微缩小宽度确保在一行显示 */
-  flex-shrink: 1; /* 允许在空间不足时缩小 */
-  min-width: 180px; /* 设置最小宽度 */
-}
 
 
 /* 文章网格视图 */

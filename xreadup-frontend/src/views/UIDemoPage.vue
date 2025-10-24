@@ -475,6 +475,145 @@
         </div>
       </section>
 
+      <!-- 筛选面板组件演示 -->
+      <section class="demo-section">
+        <h2 class="section-title">🎛️ 筛选面板组件系统</h2>
+        <div class="filter-showcase">
+          <div class="filter-group">
+            <h3>拟物化筛选面板</h3>
+            <div class="filter-demo-container">
+              <div class="filter-panel">
+                <div class="filter-panel-header">
+                  <h3>筛选</h3>
+                  <el-button type="text" size="small">
+                    <el-icon><ArrowLeft /></el-icon>
+                  </el-button>
+                </div>
+                
+                <div class="filter-panel-content">
+                  <!-- 搜索框 -->
+                  <div class="filter-section">
+                    <div class="filter-header">
+                      <el-icon class="filter-icon"><Search /></el-icon>
+                      <h4>搜索文章</h4>
+                    </div>
+                    <el-input
+                      placeholder="输入关键词搜索..."
+                      prefix-icon="Search"
+                      clearable
+                      class="search-input"
+                    />
+                  </div>
+                  
+                  <!-- 难度筛选 -->
+                  <div class="filter-section">
+                    <div class="filter-header">
+                      <el-icon class="filter-icon"><TrendCharts /></el-icon>
+                      <h4>难度等级</h4>
+                    </div>
+                    <div class="difficulty-tags">
+                      <div class="difficulty-tag active">全部</div>
+                      <div class="difficulty-tag level-A1">A1</div>
+                      <div class="difficulty-tag level-A2">A2</div>
+                      <div class="difficulty-tag level-B1">B1</div>
+                      <div class="difficulty-tag level-B2">B2</div>
+                      <div class="difficulty-tag level-C1">C1</div>
+                      <div class="difficulty-tag level-C2">C2</div>
+                    </div>
+                  </div>
+                  
+                  <!-- 分类筛选 -->
+                  <div class="filter-section">
+                    <div class="filter-header">
+                      <el-icon class="filter-icon"><Collection /></el-icon>
+                      <h4>文章分类</h4>
+                    </div>
+                    <div class="category-tags">
+                      <div class="category-tag active">全部</div>
+                      <div class="category-tag">科技</div>
+                      <div class="category-tag">健康</div>
+                      <div class="category-tag">商业</div>
+                      <div class="category-tag">教育</div>
+                      <div class="category-tag">娱乐</div>
+                    </div>
+                  </div>
+                  
+                  <!-- 排序方式 -->
+                  <div class="filter-section">
+                    <div class="filter-header">
+                      <el-icon class="filter-icon"><Sort /></el-icon>
+                      <h4>排序方式</h4>
+                    </div>
+                    <div class="sort-options">
+                      <div class="sort-option active">
+                        <el-icon><Clock /></el-icon>
+                        <span>最新</span>
+                      </div>
+                      <div class="sort-option">
+                        <el-icon><Star /></el-icon>
+                        <span>热门</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 重置筛选按钮 -->
+                  <div class="filter-actions">
+                    <el-button 
+                      type="primary" 
+                      class="reset-button"
+                      :icon="Refresh"
+                    >
+                      重置筛选
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="filter-demo-info">
+                <h4>拟物化设计特色</h4>
+                <ul>
+                  <li>🎨 <strong>毛玻璃效果</strong>：现代化的半透明背景</li>
+                  <li>🌈 <strong>渐变色彩</strong>：丰富的视觉层次</li>
+                  <li>✨ <strong>微交互</strong>：悬停、点击的流畅动画</li>
+                  <li>💫 <strong>光波效果</strong>：标签悬停时的扫光动画</li>
+                  <li>🎯 <strong>彩色编码</strong>：难度等级的颜色区分</li>
+                  <li>📱 <strong>响应式设计</strong>：适配不同屏幕尺寸</li>
+                </ul>
+                
+                <h4>组件特点</h4>
+                <ul>
+                  <li>🔍 <strong>搜索框</strong>：毛玻璃效果，聚焦时动态提升</li>
+                  <li>🏷️ <strong>难度标签</strong>：A1/A2(绿)、B1/B2(橙)、C1/C2(红)</li>
+                  <li>📂 <strong>分类标签</strong>：胶囊形状，悬停光波效果</li>
+                  <li>🔄 <strong>排序选项</strong>：图标+文字，滑动交互</li>
+                  <li>🎛️ <strong>重置按钮</strong>：全宽设计，渐变背景</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <h3>交互式演示</h3>
+            <div class="interactive-demo">
+              <div class="demo-controls">
+                <h4>点击标签体验交互效果</h4>
+                <div class="demo-tags">
+                  <div class="difficulty-tag level-A1" @click="toggleTag($event)">A1</div>
+                  <div class="difficulty-tag level-B2" @click="toggleTag($event)">B2</div>
+                  <div class="difficulty-tag level-C1" @click="toggleTag($event)">C1</div>
+                  <div class="category-tag" @click="toggleTag($event)">科技</div>
+                  <div class="category-tag" @click="toggleTag($event)">健康</div>
+                  <div class="sort-option" @click="toggleTag($event)">
+                    <el-icon><Clock /></el-icon>
+                    <span>最新</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 响应式演示 -->
       <section class="demo-section">
         <h2 class="section-title">📱 响应式设计</h2>
@@ -506,7 +645,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { Link, Check, Warning, Close, InfoFilled } from '@element-plus/icons-vue'
+import { Link, Check, Warning, Close, InfoFilled, Search, TrendCharts, Collection, Sort, Clock, Star, Refresh, ArrowLeft } from '@element-plus/icons-vue'
 import TactileButton from '@/components/common/TactileButton.vue'
 import SmartLoading from '@/components/common/SmartLoading.vue'
 import ArticleCard from '@/components/ArticleCard.vue'
@@ -567,6 +706,12 @@ const handleReset = () => {
 
 const handleCornerLinkClick = () => {
   console.log('角落链接按钮被点击')
+}
+
+const toggleTag = (event: Event) => {
+  const target = event.target as HTMLElement
+  target.classList.toggle('active')
+  console.log('标签被点击:', target.textContent)
 }
 </script>
 
@@ -1024,6 +1169,92 @@ const handleCornerLinkClick = () => {
   line-height: var(--line-height-relaxed);
 }
 
+/* 筛选面板展示 */
+.filter-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.filter-group h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.filter-demo-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.filter-demo-info {
+  background: var(--bg-secondary);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.filter-demo-info h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.filter-demo-info h4:first-child {
+  margin-top: 0;
+}
+
+.filter-demo-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.filter-demo-info li {
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.filter-demo-info li strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.interactive-demo {
+  background: var(--bg-secondary);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+}
+
+.demo-controls h4 {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.demo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.demo-tags .difficulty-tag,
+.demo-tags .category-tag,
+.demo-tags .sort-option {
+  cursor: pointer;
+  user-select: none;
+}
+
 /* 响应式展示 */
 .responsive-showcase {
   display: flex;
@@ -1141,6 +1372,14 @@ const handleCornerLinkClick = () => {
   
   .corner-demo-card {
     min-height: 100px;
+  }
+  
+  .filter-demo-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .demo-tags {
+    justify-content: center;
   }
 }
 </style>
