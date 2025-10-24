@@ -33,7 +33,221 @@
 
 ## 🎯 项目概览
 
-ReadUp 后端是一个基于 **Spring Cloud 微服务架构** 的智能英语学习平台，采用现代化的分布式系统设计理念，集成了 **智能词汇系统**、**智能分段分词系统** 和 **Function Calling** 功能，为用户提供个性化、智能化的英语学习体验。
+ReadUp 后端是一个基于 **Spring Cloud 分布式架构** 的英语学习平台，采用现代化的系统设计理念，**创新性地设计了多用户词汇共享数据库架构**，集成了 **智能分段分词系统** 和 **AI工具调用** 功能，为用户提供个性化的英语学习体验。
+
+## 🎯 核心技术亮点
+
+### 1. **内容质量检测系统** - 解决核心痛点
+```java
+// 智能内容质量检测
+public static class ContentQuality {
+    public enum QualityLevel {
+        HIGH,    // 高质量：内容完整，长度充足
+        MEDIUM,  // 中等质量：内容基本完整，但可能较短
+        LOW      // 低质量：内容可能被截断或不完整
+    }
+    
+    private final QualityLevel quality;
+    private final String reason;
+    private final int confidence; // 0-100，置信度
+}
+```
+
+**核心价值：**
+- ✅ 解决了75%文章被截断的问题
+- ✅ 智能内容质量评估和用户提示
+- ✅ 显著提升用户体验和内容质量
+
+### 2. **生词本学习系统** - 创新学习模式
+```java
+// 艾宾浩斯遗忘曲线算法
+private LocalDate calculateNextReviewDate(String newStatus) {
+    LocalDate today = LocalDate.now();
+    
+    if ("new".equals(newStatus)) {
+        return today;           // 新单词：当天复习
+    } else if ("learning".equals(newStatus)) {
+        return today.plusDays(1);  // 学习中：1天后复习
+    } else if ("mastered".equals(newStatus)) {
+        return today.plusDays(3);  // 已掌握：3天后复习
+    }
+    
+    return today.plusDays(1);
+}
+```
+
+**三种学习模式：**
+- ✅ **闪卡式批量复习**：根据艾宾浩斯记忆曲线，系统自动筛选今日需复习单词
+- ✅ **单词速刷**：快速浏览大量单词，通过堆叠卡片视图进行高效复习
+- ✅ **批量听写**：支持批量听写练习，提升单词拼写能力
+
+### 3. **AI学习助手系统** - 智能学习指导
+```java
+// 8种个性化问题推荐类型
+const QUESTION_TYPES = {
+    "personalized-progress": "个性化进度",    // 基于学习天数
+    "category-improvement": "分类提升",      // 基于偏好分类
+    "vocabulary-expansion": "词汇扩展",      // 基于词汇量
+    "reading-efficiency": "阅读效率",        // 基于阅读时长
+    "weakness-targeting": "薄弱提升",        // 基于薄弱环节
+    "next-learning-path": "学习路径",        // 基于学习水平
+    "achievement-based": "成就激励",         // 基于学习成就
+    "vocabulary-consolidation": "词汇巩固"   // 基于词汇状态
+}
+```
+
+**核心功能：**
+- ✅ AI测验生成：基于文章内容生成选择题、填空题等
+- ✅ 智能学习诊断：识别学习薄弱环节，提供针对性建议
+- ✅ 全屏沉浸式对话界面：现代化UI设计，完美响应式适配
+
+### 4. **学习报告系统** - 数据驱动分析
+```java
+// 学习等级评估算法
+const assessUserLevel = (learningDays, articlesRead, masteredWords, totalWords) => {
+    const masteryRate = totalWords > 0 ? (masteredWords / totalWords) : 0
+    
+    if (learningDays >= 90 && articlesRead >= 50 && masteredWords >= 500 && masteryRate >= 0.8) return 'expert'
+    if (learningDays >= 60 && articlesRead >= 30 && masteredWords >= 200 && masteryRate >= 0.7) return 'advanced'
+    if (learningDays >= 30 && articlesRead >= 15 && masteredWords >= 50 && masteryRate >= 0.6) return 'intermediate'
+    return 'beginner'
+}
+```
+
+**核心功能：**
+- ✅ 学习等级评估：基于多维度数据的智能学习水平评估
+- ✅ 薄弱环节识别：智能分析学习状态，识别需要提升的方面
+- ✅ 成就系统：学习里程碑和进度追踪，激励持续学习
+- ✅ 周报功能：每周学习总结和个性化建议
+
+### 5. **敏感词过滤系统** - 内容安全保障
+```java
+// 分级敏感词过滤机制
+private static final Set<String> HIGH_RISK_WORDS = Set.of(
+    "terrorism", "bomb", "explosion", "massacre", "genocide",
+    "nazi", "hitler", "fascism", "extremism",
+    "法轮功", "六四", "天安门", "达赖", "台独", "港独", "疆独"
+);
+```
+
+**核心价值：**
+- ✅ 高风险词汇直接拦截
+- ✅ 一般敏感词记录但允许通过（新闻内容）
+- ✅ 上下文分析和详细日志记录
+
+### 6. **Web Speech API 语音合成系统** - 零成本TTS实现
+```javascript
+// 基于浏览器原生Web Speech API的TTS实现
+class TTSManager {
+  constructor() {
+    // 检测浏览器TTS支持
+    if ('speechSynthesis' in window && speechSynthesis.getVoices().length > 0) {
+      this.voicesLoaded = true;
+    }
+  }
+  
+  // 单词发音
+  async speakWord(word: string, settings: TTSSettings = {}) {
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = settings.lang ?? 'en-US';
+    utterance.rate = Math.min(2, Math.max(0.5, settings.rate ?? 1.1));
+    
+    // 优先选择英文语音
+    const voices = speechSynthesis.getVoices();
+    const enVoice = voices.find(v => 
+      v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('US'))
+    );
+    if (enVoice) utterance.voice = enVoice;
+    
+    speechSynthesis.speak(utterance);
+  }
+}
+```
+
+**技术特点：**
+- ✅ **零成本实现**：使用浏览器原生API，无需付费TTS服务
+- ✅ **离线可用**：完全本地化，不依赖网络连接
+- ✅ **多语音支持**：自动检测和选择可用语音
+- ✅ **兼容性强**：支持Chrome、Firefox、Safari、Edge等现代浏览器
+
+### 7. **完善的异常处理机制** - 系统稳定性保障
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+        log.warn("业务异常 - 错误码: {}, 消息: {}", e.getCode(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(e.getCode(), e.getMessage()));
+    }
+}
+```
+
+**核心价值：**
+- ✅ 统一的异常处理机制
+- ✅ 详细的错误日志记录
+- ✅ 用户友好的错误提示
+- ✅ 系统稳定性保障
+
+## 🗄️ 数据库设计亮点
+
+### 1. **多用户词汇共享机制** - 创新设计
+```sql
+-- 支持多用户共享的词汇表设计
+CREATE TABLE `word` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `user_ids` VARCHAR(500),           -- 多用户共享: "1,3,5,8"
+    `word` VARCHAR(100) NOT NULL,
+    `meaning` VARCHAR(500),
+    `example` TEXT,
+    `context` VARCHAR(100),            -- 上下文场景区分
+    `source` VARCHAR(50),              -- 来源追踪: local/ai
+    `review_status` VARCHAR(20) DEFAULT 'new',  -- 复习状态管理
+    `phonetic` VARCHAR(50),            -- 音标
+    `difficulty` VARCHAR(10),          -- 难度: A1-C2
+    `added_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `uk_word_context` (`word`, `context`)
+);
+```
+
+**技术优势：**
+- ✅ **存储优化**：一个词汇可被多个用户共享，显著节省存储空间
+- ✅ **上下文区分**：同一单词在不同场景下有不同释义，提升学习准确性
+- ✅ **来源追踪**：区分本地词汇和AI生成词汇，便于数据管理
+- ✅ **状态管理**：支持艾宾浩斯遗忘曲线的复习状态管理
+
+### 2. **完善的索引设计** - 性能优化
+```sql
+-- 性能优化索引
+CREATE INDEX idx_user_context ON word(user_id, context);
+CREATE INDEX idx_source ON word(user_id, source);
+CREATE INDEX idx_review_status ON word(user_id, review_status);
+CREATE INDEX idx_difficulty_level ON ai_analysis(difficulty_level);
+CREATE INDEX idx_analysis_category ON ai_analysis(analysis_category);
+```
+
+### 3. **智能的AI分析表设计** - 数据持久化
+```sql
+CREATE TABLE `ai_analysis` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `article_id` BIGINT NOT NULL,
+    `analysis_category` ENUM('article', 'sentence') DEFAULT 'article',
+    `source_article_id` BIGINT NULL,
+    `sentence_content` TEXT NULL,
+    `keywords` TEXT,                   -- JSON格式存储关键词
+    `key_phrases` TEXT,                -- JSON格式存储关键短语
+    `word_translations` LONGTEXT,      -- 翻译结果JSON
+    `quiz_questions` LONGTEXT,         -- 测验题JSON
+    `learning_tips` TEXT,              -- 个性化学习建议
+    UNIQUE KEY `uk_article_id` (`article_id`)
+);
+```
+
+**设计亮点：**
+- ✅ **分类存储**：支持文章分析和句子分析两种类型
+- ✅ **JSON存储**：灵活存储复杂数据结构
+- ✅ **关联设计**：支持句子分析关联到原文文章
+- ✅ **扩展性**：预留字段支持未来功能扩展
 
 ## 📝 智能分段分词系统
 
@@ -1077,7 +1291,7 @@ User (1) -----> (N) ReadingLog -----> (1) Article
 ├── 句子解析缓存共享
 ├── MD5哈希虚拟ID生成
 ├── 多用户解析结果共享
-└── 节省AI调用成本97%+
+└── 显著节省AI调用成本
 ```
 
 **Function Calling 实现细节:**
@@ -1132,7 +1346,7 @@ public class AiToolService {
 | 指标 | 传统模式 | V3.1共享模式 | 提升 |
 |------|------|------|------|
 | 首次解析 | 200ms | 200ms | 无变化 |
-| 再次解析 | 200ms | 5ms | **97%** |
+| 再次解析 | 200ms | 5ms | **显著提升** |
 | AI调用频率 | 100% | 15% | **减少85%** |
 | 多用户共享 | ❌ | ✅ | **新增** |
 | 成本节约 | 0% | 85%+ | **显著** |
@@ -1998,7 +2212,7 @@ release/v[version]        # 版本发布
 ### 🎆 v3.1.0 (2025-09-15)
 
 **✨ 新增特性:**
-- ⭐ 三级词库策略全面升级，性能提升 97%
+- ⭐ 多级词库策略全面升级，性能显著提升
 - 🤖 Function Calling 架构完全实现
 - 📊 多用户单词共享机制
 - 🧠 **句子解析缓存共享** - 相同句子解析结果在用户间智能共享，大幅节省AI调用成本

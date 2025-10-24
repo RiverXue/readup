@@ -989,7 +989,10 @@ const updateUserSubscription = async (subscriptionId: string, status: string) =>
 }
 ```
 
-### 2. TTS语音朗读系统
+### 2. Web Speech API 语音合成系统
+
+#### 技术实现
+基于浏览器原生Web Speech API实现零成本TTS功能，无需第三方服务。
 
 #### TTS控制组件 (TTSControl.vue)
 ```vue
@@ -997,47 +1000,11 @@ const updateUserSubscription = async (subscriptionId: string, status: string) =>
   <div class="read-control-sidebar" v-if="showReadControlSidebar">
     <div class="read-control-header">
       <h3>朗读控制</h3>
-      <el-button @click="handleStopSpeaking" type="text">
+      <el-button @click="handleStopSpeaking" type="text" class="close-control">
         <el-icon><CircleClose /></el-icon>
       </el-button>
     </div>
-
-    <div class="read-control-content">
-      <!-- 控制按钮组 -->
-      <div class="control-buttons">
-        <el-button @click="handlePauseResumeSpeaking" type="primary">
-          {{ isPaused ? '继续' : '暂停' }}
-        </el-button>
-        <el-button @click="handleStopSpeaking" type="danger">
-          停止
-        </el-button>
-      </div>
-
-      <!-- 语速调节 -->
-      <div class="speed-control">
-        <label>语速: {{ readingSpeed.toFixed(1) }}</label>
-        <el-slider
-          v-model="readingSpeed"
-          :min="0.5"
-          :max="2.0"
-          :step="0.1"
-          @change="handleSpeedChange"
-        />
-      </div>
-
-      <!-- 语音选择 -->
-      <div class="voice-selection">
-        <label>语音选择</label>
-        <el-select v-model="selectedVoice" @change="handleVoiceChange">
-          <el-option
-            v-for="voice in availableVoices"
-            :key="voice.name"
-            :label="voice.name"
-            :value="voice.name"
-          />
-        </el-select>
-      </div>
-    </div>
+    <!-- 控制按钮、语速调节、语音选择 -->
   </div>
 </template>
 ```
@@ -1045,66 +1012,43 @@ const updateUserSubscription = async (subscriptionId: string, status: string) =>
 #### TTS功能实现
 ```typescript
 // TTS工具函数 (utils/tts.ts)
-export class TTSController {
-  private synthesis: SpeechSynthesis
-  private utterance: SpeechSynthesisUtterance | null = null
-  private isPaused = false
-  private currentText = ''
-  
+class TTSManager {
   constructor() {
-    this.synthesis = window.speechSynthesis
-  }
-
-  // 朗读单词
-  speakWord(word: string, speed: number = 1.0): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.synthesis) {
-        reject(new Error('浏览器不支持语音合成'))
-        return
-      }
-
-      // 停止当前朗读
-      this.stopSpeaking()
-
-      // 创建新的语音合成实例
-      this.utterance = new SpeechSynthesisUtterance(word)
-      this.utterance.rate = speed
-      this.utterance.lang = 'en-US'
-      this.utterance.volume = 1.0
-
-      // 设置事件监听
-      this.utterance.onend = () => resolve()
-      this.utterance.onerror = (error) => reject(error)
-
-      // 开始朗读
-      this.synthesis.speak(this.utterance)
-    })
-  }
-
-  // 暂停/继续朗读
-  pauseResumeSpeaking(): void {
-    if (this.isPaused) {
-      this.synthesis.resume()
-      this.isPaused = false
-    } else {
-      this.synthesis.pause()
-      this.isPaused = true
+    // 检测浏览器TTS支持
+    if ('speechSynthesis' in window && speechSynthesis.getVoices().length > 0) {
+      this.voicesLoaded = true;
     }
   }
 
-  // 停止朗读
-  stopSpeaking(): void {
-    this.synthesis.cancel()
-    this.isPaused = false
-    this.utterance = null
+  // 朗读单词
+  async speakWord(word: string, settings: TTSSettings = {}) {
+    if (!this.isSupported()) return;
+    
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = settings.lang ?? 'en-US';
+    utterance.rate = Math.min(2, Math.max(0.5, settings.rate ?? 1.1));
+    
+    // 优先选择英文语音
+    const voices = speechSynthesis.getVoices();
+    const enVoice = voices.find(v => 
+      v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('US'))
+    );
+    if (enVoice) utterance.voice = enVoice;
+    
+    speechSynthesis.speak(utterance);
   }
-
-  // 获取可用语音列表
-  getAvailableVoices(): SpeechSynthesisVoice[] {
-    return this.synthesis.getVoices()
+  
+  isSupported(): boolean {
+    return 'speechSynthesis' in window;
   }
 }
 ```
+
+#### 技术特点
+- **零成本实现**：使用浏览器原生API，无需付费TTS服务
+- **离线可用**：完全本地化，不依赖网络连接
+- **多语音支持**：自动检测和选择可用语音
+- **兼容性强**：支持Chrome、Firefox、Safari、Edge等现代浏览器
 
 #### 双击朗读功能集成
 ```typescript

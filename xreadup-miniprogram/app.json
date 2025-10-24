@@ -1,0 +1,50 @@
+{
+  "pages": [
+    "src/pages/index/index",
+    "src/pages/login/login",
+    "src/pages/article/list",
+    "src/pages/article/detail",
+    "src/pages/vocabulary/index",
+    "src/pages/profile/index",
+    "src/pages/ai-assistant/chat"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#007AFF",
+    "navigationBarTitleText": "XReadUp",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F5F5F5"
+  },
+  "tabBar": {
+    "color": "#7A7E83",
+    "selectedColor": "#007AFF",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "src/pages/index/index",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png",
+        "text": "首页"
+      },
+      {
+        "pagePath": "src/pages/article/list",
+        "iconPath": "static/tabbar/article.png",
+        "selectedIconPath": "static/tabbar/article-active.png",
+        "text": "文章"
+      },
+      {
+        "pagePath": "src/pages/vocabulary/index",
+        "iconPath": "static/tabbar/vocabulary.png",
+        "selectedIconPath": "static/tabbar/vocabulary-active.png",
+        "text": "生词本"
+      },
+      {
+        "pagePath": "src/pages/profile/index",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png",
+        "text": "我的"
+      }
+    ]
+  }
+}

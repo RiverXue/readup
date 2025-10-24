@@ -192,3 +192,21 @@ nacos-configs/*.yml
 **/.vscode/settings.json
 **/.vscode/launch.json
 **/.vscode/extensions.json
+
+# ========== 个人文档 ==========
+# 周报文件
+**/周报*.docx
+**/周报*.doc
+**/周报*.pdf
+**/周报*.txt
+
+# 简历文件
+**/简历*.html
+**/简历*.pdf
+**/简历*.docx
+**/简历*.doc
+
+# 毕业设计相关个人文档
+**/毕业论文*.txt
+**/毕业设计任务书*.html
+**/毕业设计任务书*.md
