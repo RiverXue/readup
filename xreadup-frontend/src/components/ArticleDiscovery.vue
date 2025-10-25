@@ -37,11 +37,11 @@
           :disabled="!canFetchCategory || isLoadingCategory"
           :tooltip="!canFetchCategory ? '升级基础会员及以上解锁此功能' : ''"
         >
-          <el-option 
-            v-for="option in getCategoryOptions()" 
+          <el-option
+            v-for="option in getCategoryOptions()"
             :key="option.value"
-            :label="option.label" 
-            :value="option.value" 
+            :label="option.label"
+            :value="option.value"
           />
         </el-select>
         <div class="button-with-tag">
@@ -61,20 +61,6 @@
           <!-- 会员等级标签 -->
           <span class="membership-tag basic">基础会员+</span>
         </div>
-        <!-- 为非基础会员显示提示 -->
-        <el-tooltip
-          v-if="userStore.userTier === 'free'"
-          effect="dark"
-          content="升级到基础会员及以上解锁固定主题探索功能"
-          placement="top"
-        >
-          <div class="pro-feature-tag">基础会员功能</div>
-        </el-tooltip>
-        <!-- 基础会员的剩余次数已在下方的配额信息区域显示 -->
-      </div>
-
-      <!-- 自定义主题搜索（修改为所有用户可见，但仅高级会员可用） -->
-      <div class="custom-search">
         <el-input
           v-model="customTopic"
           placeholder="输入自定义主题关键字"
@@ -106,8 +92,8 @@
 
     <!-- 高级筛选切换按钮 -->
     <div class="advanced-toggle" v-if="isProOrEnterpriseUser">
-      <el-button 
-        type="text" 
+      <el-button
+        type="text"
         @click="advancedFilters.useAdvanced = !advancedFilters.useAdvanced"
         :icon="advancedFilters.useAdvanced ? 'ArrowUp' : 'ArrowDown'"
       >
@@ -138,15 +124,15 @@
                   <el-icon class="help-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </label>
-              <el-select 
-                v-model="advancedFilters.language" 
-                placeholder="选择语言" 
+              <el-select
+                v-model="advancedFilters.language"
+                placeholder="选择语言"
                 size="small"
                 clearable
                 @change="handleLanguageChange"
               >
-                <el-option 
-                  v-for="option in getLanguageOptions()" 
+                <el-option
+                  v-for="option in getLanguageOptions()"
                   :key="option.value"
                   :label="getLanguageLabel(option.value)"
                   :value="option.value"
@@ -166,16 +152,16 @@
                   <el-icon class="help-icon"><QuestionFilled /></el-icon>
                 </el-tooltip>
               </label>
-              <el-select 
-                v-model="advancedFilters.country" 
-                placeholder="不限国家" 
-                clearable 
+              <el-select
+                v-model="advancedFilters.country"
+                placeholder="不限国家"
+                clearable
                 size="small"
                 :disabled="!!advancedFilters.language"
                 @change="handleCountryChange"
               >
-                <el-option 
-                  v-for="option in getCountryOptions()" 
+                <el-option
+                  v-for="option in getCountryOptions()"
                   :key="option.value"
                   :label="getCountryLabel(option.value)"
                   :value="option.value"
@@ -191,8 +177,8 @@
           <div class="filter-item">
             <label>排序</label>
             <el-select v-model="advancedFilters.sortBy" placeholder="选择排序" size="small">
-              <el-option 
-                v-for="option in getSortOptions()" 
+              <el-option
+                v-for="option in getSortOptions()"
                 :key="option.value"
                 :label="option.label"
                 :value="option.value"
@@ -224,7 +210,7 @@
             />
           </div>
         </div>
-        
+
         <!-- 筛选条件预览 -->
         <div class="filter-preview" v-if="hasActiveFilters">
           <div class="preview-title">
@@ -232,42 +218,42 @@
             <span>当前筛选条件</span>
           </div>
           <div class="preview-tags">
-            <el-tag 
-              v-if="advancedFilters.language" 
-              type="primary" 
-              closable 
+            <el-tag
+              v-if="advancedFilters.language"
+              type="primary"
+              closable
               @close="advancedFilters.language = ''"
             >
               语言: {{ getLanguageLabel(advancedFilters.language) }}
             </el-tag>
-            <el-tag 
-              v-if="advancedFilters.country" 
-              type="success" 
-              closable 
+            <el-tag
+              v-if="advancedFilters.country"
+              type="success"
+              closable
               @close="advancedFilters.country = ''"
             >
               国家: {{ getCountryLabel(advancedFilters.country) }}
             </el-tag>
-            <el-tag 
-              v-if="advancedFilters.sortBy" 
-              type="info" 
-              closable 
+            <el-tag
+              v-if="advancedFilters.sortBy"
+              type="info"
+              closable
               @close="advancedFilters.sortBy = 'publishedAt'"
             >
               排序: {{ getSortLabel(advancedFilters.sortBy) }}
             </el-tag>
-            <el-tag 
-              v-if="advancedFilters.fromDate" 
-              type="warning" 
-              closable 
+            <el-tag
+              v-if="advancedFilters.fromDate"
+              type="warning"
+              closable
               @close="advancedFilters.fromDate = ''"
             >
               开始: {{ formatDatePreview(advancedFilters.fromDate) }}
             </el-tag>
-            <el-tag 
-              v-if="advancedFilters.toDate" 
-              type="warning" 
-              closable 
+            <el-tag
+              v-if="advancedFilters.toDate"
+              type="warning"
+              closable
               @close="advancedFilters.toDate = ''"
             >
               结束: {{ formatDatePreview(advancedFilters.toDate) }}
@@ -415,13 +401,13 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 加载文章网格 -->
           <div class="loading-grid">
             <div class="loading-card" v-for="n in 6" :key="n" :style="{ animationDelay: (n - 1) * 0.1 + 's' }">
               <!-- 图片区域骨架 -->
               <div class="loading-image"></div>
-              
+
               <!-- 卡片内容骨架 -->
               <div class="loading-card-content">
                 <!-- 顶部信息栏骨架 -->
@@ -435,16 +421,16 @@
                     <div class="loading-difficulty-tag"></div>
                   </div>
                 </div>
-                
+
                 <!-- 标题骨架 -->
                 <div class="loading-card-title"></div>
                 <div class="loading-card-title short"></div>
-                
+
                 <!-- 描述骨架 -->
                 <div class="loading-card-desc"></div>
                 <div class="loading-card-desc"></div>
                 <div class="loading-card-desc short"></div>
-                
+
                 <!-- 底部信息骨架 -->
                 <div class="loading-footer">
                   <div class="loading-reading-info">
@@ -659,10 +645,10 @@ const handleCountryChange = (value: string) => {
 // 计算是否有活跃的筛选条件
 const hasActiveFilters = computed(() => {
   return !!(
-    advancedFilters.value.language || 
-    advancedFilters.value.country || 
+    advancedFilters.value.language ||
+    advancedFilters.value.country ||
     advancedFilters.value.sortBy !== 'publishedAt' ||
-    advancedFilters.value.fromDate || 
+    advancedFilters.value.fromDate ||
     advancedFilters.value.toDate
   )
 })
@@ -699,12 +685,12 @@ onMounted(async () => {
 
   await loadUserQuota()
   loadSavedArticles()
-  
+
   // 确保非专业会员无法使用高级筛选
   if (!isProOrEnterpriseUser.value) {
     advancedFilters.value.useAdvanced = false
   }
-  
+
   // 确保初始状态没有错误
   clearError()
 })
@@ -716,7 +702,7 @@ watch(
     if (newTier !== oldTier) {
       console.log('用户等级发生变化，从', oldTier, '变为', newTier, '，刷新配额')
       await loadUserQuota()
-      
+
       // 如果降级为非专业会员，关闭高级筛选
       if (!isProOrEnterpriseUser.value) {
         advancedFilters.value.useAdvanced = false
@@ -884,7 +870,7 @@ const fetchCategoryArticles = async () => {
   articles.value = [] // 清空文章列表，显示加载状态
   try {
     let response
-    
+
     // 根据是否使用高级筛选选择API（仅专业会员及以上可用）
     if (advancedFilters.value.useAdvanced && isProOrEnterpriseUser.value) {
       // 构建参数，根据GNews API限制，不能同时使用language和country
@@ -895,21 +881,21 @@ const fetchCategoryArticles = async () => {
         toDate: advancedFilters.value.toDate,
         sortBy: advancedFilters.value.sortBy
       }
-      
+
       // 优先使用语言参数，如果同时设置了国家和语言，只使用语言
       if (advancedFilters.value.language) {
         params.language = advancedFilters.value.language
       } else if (advancedFilters.value.country) {
         params.country = advancedFilters.value.country
       }
-      
+
       // 使用增强版API
       response = await articleApi.getArticlesByCategoryAdvanced(params)
     } else {
       // 使用基础版API
       response = await articleApi.getArticlesByCategory(selectedCategory.value, 9)
     }
-    
+
     // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
     articles.value = (response.data || []).map((article: any) => ({
       ...article,
@@ -921,7 +907,7 @@ const fetchCategoryArticles = async () => {
     const categoryLabel = CATEGORY_MAP[selectedCategory.value] || selectedCategory.value
     const languageLabel = getLanguageLabel(advancedFilters.value.language)
     const countryLabel = getCountryLabel(advancedFilters.value.country)
-    
+
     if (advancedFilters.value.useAdvanced) {
       resultTitle.value = `${categoryLabel}主题文章 (${languageLabel} - ${countryLabel})`
     } else {
@@ -966,7 +952,7 @@ const fetchCustomTopicArticles = async () => {
   articles.value = [] // 清空文章列表，显示加载状态
   try {
     let response
-    
+
     // 根据是否使用高级筛选选择API（仅专业会员及以上可用）
     if (advancedFilters.value.useAdvanced && isProOrEnterpriseUser.value) {
       // 构建参数，根据GNews API限制，不能同时使用language和country
@@ -977,28 +963,28 @@ const fetchCustomTopicArticles = async () => {
         toDate: advancedFilters.value.toDate,
         sortBy: advancedFilters.value.sortBy
       }
-      
+
       // 优先使用语言参数，如果同时设置了国家和语言，只使用语言
       if (advancedFilters.value.language) {
         params.language = advancedFilters.value.language
       } else if (advancedFilters.value.country) {
         params.country = advancedFilters.value.country
       }
-      
+
       // 使用增强版API
       response = await articleApi.searchArticlesAdvanced(params)
     } else {
       // 使用基础版API
       response = await articleApi.searchArticles(customTopic.value, 9)
     }
-    
+
     // 将difficultyLevel映射到difficulty属性，并确保wordCount字段存在
     articles.value = (response.data || []).map((article: any) => ({
       ...article,
       difficulty: article.difficultyLevel || '',
       wordCount: article.wordCount || article.word_count || 0
     }))
-    
+
     // 设置结果标题
     if (advancedFilters.value.useAdvanced) {
       const languageLabel = getLanguageLabel(advancedFilters.value.language)
@@ -1752,16 +1738,16 @@ const fetchCustomTopicArticles = async () => {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .empty-actions .el-button {
     width: 100%;
     max-width: 280px;
   }
-  
+
   .empty-title {
     font-size: 20px;
   }
-  
+
   .empty-description {
     font-size: 14px;
   }
@@ -1782,14 +1768,14 @@ const fetchCustomTopicArticles = async () => {
   text-align: center;
   margin-bottom: 40px;
   padding: 40px 20px;
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.95) 0%, 
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
     rgba(248, 250, 252, 0.9) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -2017,8 +2003,8 @@ const fetchCustomTopicArticles = async () => {
 .loading-badge-text {
   width: 40px;
   height: 12px;
-  background: linear-gradient(135deg, 
-    rgba(64, 158, 255, 0.6) 0%, 
+  background: linear-gradient(135deg,
+    rgba(64, 158, 255, 0.6) 0%,
     rgba(103, 194, 58, 0.4) 100%);
   border-radius: 6px;
   animation: shimmer 2s ease-in-out infinite;
@@ -2039,9 +2025,9 @@ const fetchCustomTopicArticles = async () => {
 .loading-image {
   width: 100%;
   height: 180px;
-  background: linear-gradient(135deg, 
-    rgba(240, 244, 248, 0.8) 0%, 
-    rgba(226, 232, 240, 0.6) 50%, 
+  background: linear-gradient(135deg,
+    rgba(240, 244, 248, 0.8) 0%,
+    rgba(226, 232, 240, 0.6) 50%,
     rgba(240, 244, 248, 0.8) 100%);
   border-radius: 12px;
   margin-bottom: 16px;
@@ -2207,15 +2193,15 @@ const fetchCustomTopicArticles = async () => {
     gap: 16px;
     padding: 0 16px;
   }
-  
+
   .loading-card-content {
     padding: 16px;
   }
-  
+
   .loading-image {
     height: 160px;
   }
-  
+
   .loading-title {
     width: 150px;
     height: 24px;
@@ -2228,7 +2214,7 @@ const fetchCustomTopicArticles = async () => {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .trending-selector, .category-selector, .custom-search {
     min-width: 280px;
   }
@@ -2294,41 +2280,41 @@ const fetchCustomTopicArticles = async () => {
     top: -6px;
     right: -6px;
   }
-  
+
   /* 加载卡片移动端样式 */
   .loading-card {
     border-radius: 16px;
   }
-  
+
   .loading-card-content {
     padding: 16px;
     gap: 12px;
   }
-  
+
   .loading-image {
     height: 160px;
   }
-  
+
   .loading-header {
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
   }
-  
+
   .loading-category-tags {
     gap: 6px;
   }
-  
+
   .loading-category-tag,
   .loading-difficulty-tag {
     width: 40px;
     height: 16px;
   }
-  
+
   .loading-reading-info {
     gap: 12px;
   }
-  
+
   .loading-read-time,
   .loading-word-count,
   .loading-discovery-type {

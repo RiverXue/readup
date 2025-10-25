@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -466,6 +467,127 @@ public class SubscriptionController {
                 "success", false,
                 "code", 500,
                 "message", e.getMessage() != null ? e.getMessage() : "更新用户订阅状态失败"
+            ));
+        }
+    }
+
+    /**
+     * 升级订阅套餐
+     */
+    @PostMapping("/upgrade")
+    @Operation(summary = "升级订阅套餐", description = "用户升级到更高级别的套餐，按差价收费")
+    public ResponseEntity<?> upgradeSubscription(
+            @RequestParam Long userId,
+            @RequestParam String newPlanType,
+            @RequestParam String paymentMethod) {
+        try {
+            Subscription upgradedSubscription = subscriptionService.upgradeSubscription(userId, newPlanType, paymentMethod);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "订阅升级成功",
+                "data", upgradedSubscription
+            ));
+        } catch (Exception e) {
+            log.error("升级订阅失败: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : "升级失败，请稍后重试"
+            ));
+        }
+    }
+
+    /**
+     * 计算升级差价
+     */
+    @GetMapping("/upgrade/price")
+    @Operation(summary = "计算升级差价", description = "计算从当前套餐升级到新套餐需要支付的差价")
+    public ResponseEntity<?> calculateUpgradePrice(
+            @RequestParam Long userId,
+            @RequestParam String newPlanType) {
+        try {
+            // 获取当前订阅
+            Subscription currentSubscription = subscriptionService.getCurrentSubscription(userId);
+            
+            String currentPlanType;
+            int remainingDays = 0;
+            String currency = "CNY";
+            
+            if (currentSubscription == null) {
+                // 免费用户
+                currentPlanType = "FREE";
+                remainingDays = 30; // 免费用户按30天计算
+            } else {
+                currentPlanType = currentSubscription.getPlanType();
+                currency = currentSubscription.getCurrency();
+                
+                // 计算剩余天数
+                LocalDateTime now = LocalDateTime.now();
+                if (currentSubscription.getEndDate().isAfter(now)) {
+                    remainingDays = (int) java.time.Duration.between(now, currentSubscription.getEndDate()).toDays();
+                }
+            }
+            
+            // 计算升级差价
+            BigDecimal upgradePrice = subscriptionService.calculateUpgradePrice(
+                currentPlanType, 
+                newPlanType, 
+                remainingDays
+            );
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "data", Map.of(
+                    "currentPlanType", currentPlanType,
+                    "newPlanType", newPlanType,
+                    "remainingDays", remainingDays,
+                    "upgradePrice", upgradePrice,
+                    "currency", currency
+                )
+            ));
+        } catch (Exception e) {
+            log.error("计算升级差价失败: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : "计算失败，请稍后重试"
+            ));
+        }
+    }
+    
+    /**
+     * 开始试用
+     */
+    @PostMapping("/trial/start")
+    @Operation(summary = "开始试用", description = "免费用户开始7天专业版试用")
+    public ResponseEntity<?> startTrial(@RequestBody Map<String, Object> request) {
+        Long userId = Long.valueOf(request.get("userId").toString());
+        log.info("收到试用请求: userId={}", userId);
+        try {
+            Map<String, Object> result = subscriptionService.startTrial(userId);
+            log.info("试用请求处理完成: userId={}, result={}", userId, result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("开始试用失败: userId={}, error={}", userId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : "试用启动失败，请稍后重试"
+            ));
+        }
+    }
+    
+    /**
+     * 检查试用状态
+     */
+    @GetMapping("/trial/status/{userId}")
+    @Operation(summary = "检查试用状态", description = "检查用户的试用状态")
+    public ResponseEntity<?> checkTrialStatus(@PathVariable Long userId) {
+        try {
+            Map<String, Object> result = subscriptionService.checkTrialStatus(userId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("检查试用状态失败: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : "检查试用状态失败，请稍后重试"
             ));
         }
     }

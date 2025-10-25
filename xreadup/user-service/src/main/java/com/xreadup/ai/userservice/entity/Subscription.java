@@ -44,6 +44,8 @@ public class Subscription {
     
     private Boolean prioritySupport;  // 是否优先支持
     
+    private Boolean isTrial;  // 是否为试用订阅
+    
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
     

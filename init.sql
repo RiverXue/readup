@@ -212,12 +212,15 @@ CREATE TABLE subscription (
                               max_words_per_article INT COMMENT '每篇文章最大字数',
                               ai_features_enabled BOOLEAN DEFAULT FALSE COMMENT '是否启用AI功能',
                               priority_support BOOLEAN DEFAULT FALSE COMMENT '是否优先支持',
+                              is_trial BOOLEAN DEFAULT FALSE COMMENT '是否为试用订阅',
                               created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                               updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                               deleted INT DEFAULT 0 COMMENT '逻辑删除标记',
                               INDEX idx_user_id (user_id),
                               INDEX idx_status (status),
                               INDEX idx_end_date (end_date),
+                              INDEX idx_is_trial (is_trial),
+                              INDEX idx_user_trial (user_id, is_trial),
                               FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) COMMENT='用户订阅表';
 

@@ -1,12 +1,12 @@
 package com.xreadup.ai.userservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xreadup.ai.userservice.config.SubscriptionPlanProperties;
 import com.xreadup.ai.userservice.entity.Subscription;
 import com.xreadup.ai.userservice.mapper.SubscriptionMapper;
 import com.xreadup.ai.userservice.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -18,6 +18,7 @@ import java.util.*;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionMapper subscriptionMapper;
@@ -101,27 +102,27 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         switch (planType.toUpperCase()) {
             case "BASIC":
                 config = plans != null ? plans.get("basic") : null;
-                subscription.setPrice(config != null && config.getPriceCny() != null ? config.getPriceCny() : new BigDecimal("19"));
+                subscription.setPrice(config != null && config.getPriceCny() != null ? config.getPriceCny() : new BigDecimal("7"));
                 subscription.setCurrency(defaultCurrency != null ? defaultCurrency : "CNY");
-                subscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 10);
-                subscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 1000);
+                subscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 100);
+                subscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 3000);
                 subscription.setAiFeaturesEnabled(config != null && config.getAiFeaturesEnabled() != null ? config.getAiFeaturesEnabled() : false);
                 subscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : false);
                 break;
             case "PRO":
                 config = plans != null ? plans.get("pro") : null;
-                subscription.setPrice(config != null && config.getPriceCny() != null ? config.getPriceCny() : new BigDecimal("39"));
+                subscription.setPrice(config != null && config.getPriceCny() != null ? config.getPriceCny() : new BigDecimal("17"));
                 subscription.setCurrency(defaultCurrency != null ? defaultCurrency : "CNY");
-                subscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 50);
+                subscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 300);
                 subscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 5000);
                 subscription.setAiFeaturesEnabled(config != null && config.getAiFeaturesEnabled() != null ? config.getAiFeaturesEnabled() : true);
-                subscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : true);
+                subscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : false);
                 break;
             case "ENTERPRISE":
                 config = plans != null ? plans.get("enterprise") : null;
-                subscription.setPrice(config != null && config.getPriceCny() != null ? config.getPriceCny() : new BigDecimal("99"));
+                subscription.setPrice(config != null && config.getPriceCny() != null ? config.getPriceCny() : new BigDecimal("37"));
                 subscription.setCurrency(defaultCurrency != null ? defaultCurrency : "CNY");
-                subscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 200);
+                subscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 1000);
                 subscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 20000);
                 subscription.setAiFeaturesEnabled(config != null && config.getAiFeaturesEnabled() != null ? config.getAiFeaturesEnabled() : true);
                 subscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : true);
@@ -209,5 +210,245 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
         
         return quota;
+    }
+
+    @Override
+    public Subscription upgradeSubscription(Long userId, String newPlanType, String paymentMethod) {
+        // 获取当前订阅
+        Subscription currentSubscription = getCurrentSubscription(userId);
+        
+        // 处理免费用户升级的情况
+        if (currentSubscription == null) {
+            // 免费用户直接创建新订阅，按全价收费
+            return createSubscription(userId, newPlanType, paymentMethod);
+        }
+        
+        // 检查是否已经是最高级别
+        if (currentSubscription.getPlanType().equals("ENTERPRISE")) {
+            throw new IllegalArgumentException("已经是最高级别套餐，无法升级");
+        }
+        
+        // 检查升级方向是否正确
+        String currentPlan = currentSubscription.getPlanType();
+        if (isDowngrade(currentPlan, newPlanType)) {
+            throw new IllegalArgumentException("只能升级到更高级别的套餐");
+        }
+        
+        // 计算剩余天数
+        int remainingDays = calculateRemainingDays(currentSubscription.getEndDate());
+        
+        // 计算升级差价
+        BigDecimal upgradePrice = calculateUpgradePrice(currentPlan, newPlanType, remainingDays);
+        
+        // 创建新的升级订阅
+        Subscription upgradeSubscription = new Subscription();
+        upgradeSubscription.setUserId(userId);
+        upgradeSubscription.setPlanType(newPlanType);
+        upgradeSubscription.setPaymentMethod(paymentMethod);
+        upgradeSubscription.setStartDate(LocalDateTime.now());
+        upgradeSubscription.setPrice(upgradePrice);
+        upgradeSubscription.setCurrency(currentSubscription.getCurrency());
+        
+        // 从配置中获取新套餐参数
+        Map<String, SubscriptionPlanProperties.PlanConfig> plans = subscriptionPlanProperties.getPlans();
+        SubscriptionPlanProperties.PlanConfig config = null;
+        
+        // 根据新套餐类型设置参数
+        switch (newPlanType.toUpperCase()) {
+            case "BASIC":
+                config = plans != null ? plans.get("basic") : null;
+                upgradeSubscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 100);
+                upgradeSubscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 3000);
+                upgradeSubscription.setAiFeaturesEnabled(config != null && config.getAiFeaturesEnabled() != null ? config.getAiFeaturesEnabled() : false);
+                upgradeSubscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : false);
+                break;
+            case "PRO":
+                config = plans != null ? plans.get("pro") : null;
+                upgradeSubscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 300);
+                upgradeSubscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 5000);
+                upgradeSubscription.setAiFeaturesEnabled(config != null && config.getAiFeaturesEnabled() != null ? config.getAiFeaturesEnabled() : true);
+                upgradeSubscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : false);
+                break;
+            case "ENTERPRISE":
+                config = plans != null ? plans.get("enterprise") : null;
+                upgradeSubscription.setMaxArticlesPerMonth(config != null && config.getMaxArticlesPerMonth() != null ? config.getMaxArticlesPerMonth() : 1000);
+                upgradeSubscription.setMaxWordsPerArticle(config != null && config.getMaxWordsPerArticle() != null ? config.getMaxWordsPerArticle() : 20000);
+                upgradeSubscription.setAiFeaturesEnabled(config != null && config.getAiFeaturesEnabled() != null ? config.getAiFeaturesEnabled() : true);
+                upgradeSubscription.setPrioritySupport(config != null && config.getPrioritySupport() != null ? config.getPrioritySupport() : true);
+                break;
+            default:
+                throw new IllegalArgumentException("无效的套餐类型");
+        }
+        
+        // 设置结束日期为原订阅的结束日期
+        upgradeSubscription.setEndDate(currentSubscription.getEndDate());
+        upgradeSubscription.setStatus("ACTIVE");
+        upgradeSubscription.setAutoRenew(currentSubscription.getAutoRenew());
+        upgradeSubscription.setCreatedAt(LocalDateTime.now());
+        upgradeSubscription.setUpdatedAt(LocalDateTime.now());
+        
+        // 取消当前订阅
+        currentSubscription.setStatus("CANCELLED");
+        currentSubscription.setUpdatedAt(LocalDateTime.now());
+        subscriptionMapper.updateById(currentSubscription);
+        
+        // 插入新的升级订阅
+        subscriptionMapper.insert(upgradeSubscription);
+        
+        return upgradeSubscription;
+    }
+
+    @Override
+    public BigDecimal calculateUpgradePrice(String currentPlanType, String newPlanType, int remainingDays) {
+        // 获取套餐价格配置
+        Map<String, SubscriptionPlanProperties.PlanConfig> plans = subscriptionPlanProperties.getPlans();
+        
+        // 获取当前套餐和新套餐的月价格
+        BigDecimal currentMonthlyPrice = getMonthlyPrice(currentPlanType, plans);
+        BigDecimal newMonthlyPrice = getMonthlyPrice(newPlanType, plans);
+        
+        // 如果当前是免费用户，按全价收费
+        if ("FREE".equals(currentPlanType.toUpperCase())) {
+            return newMonthlyPrice;
+        }
+        
+        // 计算每日价格
+        BigDecimal currentDailyPrice = currentMonthlyPrice.divide(new BigDecimal("30"), 2, java.math.RoundingMode.HALF_UP);
+        BigDecimal newDailyPrice = newMonthlyPrice.divide(new BigDecimal("30"), 2, java.math.RoundingMode.HALF_UP);
+        
+        // 计算差价
+        BigDecimal dailyDifference = newDailyPrice.subtract(currentDailyPrice);
+        BigDecimal upgradePrice = dailyDifference.multiply(new BigDecimal(remainingDays));
+        
+        // 确保价格不为负数
+        return upgradePrice.max(BigDecimal.ZERO);
+    }
+    
+    /**
+     * 获取套餐的月价格
+     */
+    private BigDecimal getMonthlyPrice(String planType, Map<String, SubscriptionPlanProperties.PlanConfig> plans) {
+        SubscriptionPlanProperties.PlanConfig config = plans.get(planType.toLowerCase());
+        if (config != null && config.getPriceCny() != null) {
+            return config.getPriceCny();
+        }
+        
+        // 默认价格
+        switch (planType.toUpperCase()) {
+            case "FREE": return BigDecimal.ZERO;
+            case "BASIC": return new BigDecimal("7");
+            case "PRO": return new BigDecimal("17");
+            case "ENTERPRISE": return new BigDecimal("37");
+            default: return BigDecimal.ZERO;
+        }
+    }
+    
+    /**
+     * 计算剩余天数
+     */
+    private int calculateRemainingDays(LocalDateTime endDate) {
+        LocalDateTime now = LocalDateTime.now();
+        if (endDate.isBefore(now)) {
+            return 0;
+        }
+        return (int) java.time.Duration.between(now, endDate).toDays();
+    }
+    
+    /**
+     * 判断是否为降级
+     */
+    private boolean isDowngrade(String currentPlan, String newPlan) {
+        String[] planOrder = {"FREE", "BASIC", "PRO", "ENTERPRISE"};
+        int currentIndex = java.util.Arrays.asList(planOrder).indexOf(currentPlan);
+        int newIndex = java.util.Arrays.asList(planOrder).indexOf(newPlan);
+        return newIndex < currentIndex;
+    }
+    
+    @Override
+    public Map<String, Object> startTrial(Long userId) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 检查用户是否已经使用过试用
+            LambdaQueryWrapper<Subscription> trialQuery = new LambdaQueryWrapper<>();
+            trialQuery.eq(Subscription::getUserId, userId)
+                     .eq(Subscription::getIsTrial, true);
+            
+            Subscription existingTrial = subscriptionMapper.selectOne(trialQuery);
+            
+            if (existingTrial != null) {
+                result.put("success", false);
+                result.put("message", "您已经使用过试用功能");
+                return result;
+            }
+            
+            // 创建试用订阅（等同于PRO套餐）
+            Subscription trialSubscription = new Subscription();
+            trialSubscription.setUserId(userId);
+            trialSubscription.setPlanType("TRIAL");
+            trialSubscription.setPrice(BigDecimal.ZERO); // 试用免费
+            trialSubscription.setCurrency("CNY"); // 设置货币
+            trialSubscription.setStatus("ACTIVE");
+            trialSubscription.setStartDate(LocalDateTime.now());
+            trialSubscription.setEndDate(LocalDateTime.now().plusDays(7)); // 7天试用
+            trialSubscription.setPaymentMethod("TRIAL"); // 试用方式
+            trialSubscription.setAutoRenew(false); // 试用不自动续费
+            trialSubscription.setIsTrial(true);
+            
+            // 设置PRO套餐的权限
+            trialSubscription.setMaxArticlesPerMonth(300);
+            trialSubscription.setMaxWordsPerArticle(5000);
+            trialSubscription.setAiFeaturesEnabled(true);
+            trialSubscription.setPrioritySupport(false);
+            
+            subscriptionMapper.insert(trialSubscription);
+            
+            result.put("success", true);
+            result.put("message", "试用已开始，享受7天专业版功能！");
+            result.put("trialEndDate", trialSubscription.getEndDate());
+            
+        } catch (Exception e) {
+            log.error("开始试用失败: userId={}, error={}", userId, e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "试用启动失败，请稍后重试");
+        }
+        
+        return result;
+    }
+    
+    @Override
+    public Map<String, Object> checkTrialStatus(Long userId) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 检查是否有试用记录
+            LambdaQueryWrapper<Subscription> trialQuery = new LambdaQueryWrapper<>();
+            trialQuery.eq(Subscription::getUserId, userId)
+                     .eq(Subscription::getIsTrial, true);
+            
+            Subscription trialSubscription = subscriptionMapper.selectOne(trialQuery);
+            
+            boolean hasUsedTrial = trialSubscription != null;
+            boolean isTrialActive = false;
+            
+            if (trialSubscription != null && "ACTIVE".equals(trialSubscription.getStatus())) {
+                // 检查是否过期
+                isTrialActive = LocalDateTime.now().isBefore(trialSubscription.getEndDate());
+            }
+            
+            result.put("success", true);
+            result.put("hasUsedTrial", hasUsedTrial);
+            result.put("isTrialActive", isTrialActive);
+            
+            if (trialSubscription != null) {
+                result.put("trialEndDate", trialSubscription.getEndDate());
+            }
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "检查试用状态失败");
+        }
+        
+        return result;
     }
 }

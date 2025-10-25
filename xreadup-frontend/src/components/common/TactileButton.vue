@@ -38,7 +38,7 @@ import { computed, ref, reactive } from 'vue'
 import SmartLoading from './SmartLoading.vue'
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'liquid-glass'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning' | 'liquid-glass' | 'promotion'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   loading?: boolean
@@ -186,10 +186,10 @@ const createRipple = (event: MouseEvent) => {
 
 /* 变体样式 */
 .tactile-button--primary {
-  background: linear-gradient(135deg, var(--ios-green) 0%, #2dd4bf 100%);
+  background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
   color: var(--text-inverse);
   box-shadow: 
-    0 8px 25px rgba(52, 199, 89, 0.3),
+    0 8px 25px rgba(0, 122, 255, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -199,7 +199,7 @@ const createRipple = (event: MouseEvent) => {
 .tactile-button--primary:hover:not(.tactile-button--disabled) {
   transform: translateY(-2px);
   box-shadow: 
-    0 12px 35px rgba(52, 199, 89, 0.4),
+    0 12px 35px rgba(0, 122, 255, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
   border-color: rgba(255, 255, 255, 0.5);
@@ -293,6 +293,26 @@ const createRipple = (event: MouseEvent) => {
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 0 0 1px rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.tactile-button--promotion {
+  background: linear-gradient(135deg, #FF9500 0%, #FF6B6B 100%);
+  color: #ffffff;
+  box-shadow: 
+    0 8px 25px rgba(255, 149, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.tactile-button--promotion:hover:not(.tactile-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 35px rgba(255, 149, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* 特殊样式 */

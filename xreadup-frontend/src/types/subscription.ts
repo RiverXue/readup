@@ -2,13 +2,13 @@
 export interface Subscription {
   id: number
   userId: number
-  planType: 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE'
+  planType: 'FREE' | 'BASIC' | 'PRO' | 'ENTERPRISE' | 'TRIAL'
   price: number
   currency: string
   status: 'ACTIVE' | 'CANCELLED' | 'EXPIRED'
   startDate: string
   endDate: string
-  paymentMethod: 'ALIPAY' | 'WECHAT' | 'CREDIT_CARD'
+  paymentMethod: 'ALIPAY' | 'WECHAT' | 'CREDIT_CARD' | 'TRIAL'
   maxArticlesPerMonth: number
   maxWordsPerArticle: number
   aiFeaturesEnabled: boolean
@@ -16,6 +16,7 @@ export interface Subscription {
   remainingDays?: number
   usedArticlesThisMonth?: number
   nextBillingDate?: string
+  isTrial?: boolean
 }
 
 export interface SubscriptionPlan {

@@ -2,7 +2,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import type { ApiResponse } from '../types/apiResponse'
-import type { ReadingRecordRequest, ReadingTimeData } from '../types/report'
+import type { ReadingTimeData } from '../types/report'
 
 // 创建axios实例
 const api = axios.create({
@@ -439,6 +439,30 @@ export const subscriptionApi = {
   // 获取套餐价格配置
   getPlanPrices: () => {
     return api.get('/api/subscription/plan-prices');
+  },
+
+  // 升级订阅套餐
+  upgradeSubscription: (userId: string | number, newPlanType: string, paymentMethod: string) => {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    return api.post(`/api/subscription/upgrade?userId=${numericUserId}&newPlanType=${newPlanType}&paymentMethod=${paymentMethod}`);
+  },
+
+  // 计算升级差价
+  calculateUpgradePrice: (userId: string | number, newPlanType: string) => {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    return api.get(`/api/subscription/upgrade/price?userId=${numericUserId}&newPlanType=${newPlanType}`);
+  },
+
+  // 开始试用
+  startTrial: (userId: string | number) => {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    return api.post(`/api/subscription/trial/start`, { userId: numericUserId });
+  },
+
+  // 检查试用状态
+  checkTrialStatus: (userId: string | number) => {
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    return api.get(`/api/subscription/trial/status/${numericUserId}`);
   }
 }
 

@@ -1,8 +1,8 @@
 package com.xreadup.ai.userservice.service;
 
 import com.xreadup.ai.userservice.entity.Subscription;
-import com.xreadup.ai.userservice.entity.User;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -50,4 +50,36 @@ public interface SubscriptionService {
      * 获取所有套餐价格配置
      */
     Map<String, Map<String, Object>> getPlanPrices();
+    
+    /**
+     * 升级订阅套餐
+     * @param userId 用户ID
+     * @param newPlanType 新套餐类型
+     * @param paymentMethod 支付方式
+     * @return 升级后的订阅信息
+     */
+    Subscription upgradeSubscription(Long userId, String newPlanType, String paymentMethod);
+    
+    /**
+     * 计算升级差价
+     * @param currentPlanType 当前套餐类型
+     * @param newPlanType 新套餐类型
+     * @param remainingDays 剩余天数
+     * @return 需要支付的差价
+     */
+    BigDecimal calculateUpgradePrice(String currentPlanType, String newPlanType, int remainingDays);
+    
+    /**
+     * 开始试用
+     * @param userId 用户ID
+     * @return 试用结果
+     */
+    Map<String, Object> startTrial(Long userId);
+    
+    /**
+     * 检查试用状态
+     * @param userId 用户ID
+     * @return 试用状态信息
+     */
+    Map<String, Object> checkTrialStatus(Long userId);
 }

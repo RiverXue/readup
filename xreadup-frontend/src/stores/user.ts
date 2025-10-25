@@ -27,6 +27,10 @@ export const useUserStore = defineStore('user', () => {
   const tier = ref<'free' | 'basic' | 'pro' | 'enterprise'>('free')
   const aiCalls = ref<number>(0)
   const subscription = ref<Subscription | null>(null)
+  
+  // 试用状态
+  const isTrialActive = ref<boolean>(false)
+  const hasUsedTrial = ref<boolean>(false)
 
   // 计算属性 - 只根据token判断是否登录，不依赖user对象
   const isLoggedIn = computed(() => !!token.value && token.value.trim() !== '')
@@ -71,8 +75,8 @@ export const useUserStore = defineStore('user', () => {
       console.log(`用户等级计算: 计划类型为${planType}`)
 
       // 返回有效的用户等级
-      if (planType === 'pro') {
-        console.log('用户等级计算: 确认是专业会员，返回pro')
+      if (planType === 'pro' || planType === 'trial') {
+        console.log(`用户等级计算: 确认是${planType === 'trial' ? '试用' : '专业'}会员，返回pro`)
         return 'pro'
       } else if (planType === 'enterprise') {
         console.log('用户等级计算: 确认是企业会员，返回enterprise')
@@ -91,6 +95,12 @@ export const useUserStore = defineStore('user', () => {
 
   // AI功能权限
   const hasAIFeatures = computed(() => {
+    // 如果有试用权限，也允许使用AI功能
+    if (isTrialActive.value) {
+      return true
+    }
+    
+    // 原有逻辑
     return subscription.value?.aiFeaturesEnabled || false
   })
 
@@ -366,7 +376,13 @@ export const useUserStore = defineStore('user', () => {
       if (subscriptionData) {
         console.log('成功获取订阅信息:', subscriptionData)
         subscription.value = subscriptionData
-        tier.value = subscriptionData.planType?.toLowerCase() as 'basic' | 'pro' | 'enterprise' || 'free'
+        // 试用用户应该被当作专业会员对待
+        const planType = subscriptionData.planType?.toLowerCase()
+        if (planType === 'trial') {
+          tier.value = 'pro'
+        } else {
+          tier.value = planType as 'basic' | 'pro' | 'enterprise' || 'free'
+        }
       } else {
         console.log('用户没有有效订阅')
         subscription.value = null
@@ -392,6 +408,8 @@ export const useUserStore = defineStore('user', () => {
     tier,
     aiCalls,
     subscription,
+    isTrialActive,
+    hasUsedTrial,
     isLoggedIn,
     userInfo,
     userStage,
